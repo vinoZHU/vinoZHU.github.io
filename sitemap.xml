@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
+  
+  <url>
+    <loc>http://blog.vino.ren/2016/05/16/hexo-create-blog/</loc>
+    
+    <lastmod>2016-05-16T03:50:07.175Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/2016/05/16/learn-markdown-basic/</loc>
+    
+    <lastmod>2016-05-16T03:19:18.076Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/about/index.html</loc>
+    
+    <lastmod>2016-05-16T02:28:39.912Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/2016/05/16/start-my-blog/</loc>
+    
+    <lastmod>2016-05-16T02:14:51.458Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/categories/index.html</loc>
+    
+    <lastmod>2016-05-15T14:49:38.073Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/tags/index.html</loc>
+    
+    <lastmod>2016-05-15T14:49:34.948Z</lastmod>
+    
+  </url>
+  
+</urlset>
