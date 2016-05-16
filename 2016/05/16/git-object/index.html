@@ -86,7 +86,7 @@
 <link href="/css/main.css?v=5.0.1" rel="stylesheet" type="text/css" />
 
 
-  <meta name="keywords" content="Vino's Blog" />
+  <meta name="keywords" content="Git," />
 
 
 
@@ -104,18 +104,18 @@
 
 
 
-<meta name="description" content="第一次hexo之旅&amp;emsp;&amp;emsp;之前一直用博客园来记录学习的过程，虽说比较方便，只需无脑地写到文本框就行了，但是内心一直是想搞一个独立博客的。前几天在github上fork了一份hexo的博客源码，还没了解hexo是怎么用的就直接在源码上改了起来，花了一个周末把博客内容改成了自己的，但是改的都是代码，这样就没有一个可持续的效果。于是乎就开始研究了这个hexo,花了一天时间把博客配了一下，">
+<meta name="description" content="首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：  如图所示，生成了 3 个对象，一个 commit 对象，一个 tree 对象，一个 blob 对象。图上蓝底是 commit 对象，灰底的是 tree 对象，白底的是 blob 对象，每个对象节点的标题是对象的 key (SHA 摘要)缩略表示。 对于 commit 对象，tree 内容表示这个 commit 对应根目录的">
 <meta property="og:type" content="article">
-<meta property="og:title" content="开始我的hexo之旅">
-<meta property="og:url" content="http://blog.vino.ren/2016/05/16/start-my-blog/index.html">
+<meta property="og:title" content="理解git对象">
+<meta property="og:url" content="http://blog.vino.ren/2016/05/16/git-object/index.html">
 <meta property="og:site_name" content="Vino">
-<meta property="og:description" content="第一次hexo之旅&amp;emsp;&amp;emsp;之前一直用博客园来记录学习的过程，虽说比较方便，只需无脑地写到文本框就行了，但是内心一直是想搞一个独立博客的。前几天在github上fork了一份hexo的博客源码，还没了解hexo是怎么用的就直接在源码上改了起来，花了一个周末把博客内容改成了自己的，但是改的都是代码，这样就没有一个可持续的效果。于是乎就开始研究了这个hexo,花了一天时间把博客配了一下，">
-<meta property="og:image" content="http://blog.vino.ren/images/hexo/first-hexo.jpg">
-<meta property="og:updated_time" content="2016-05-16T06:33:49.253Z">
+<meta property="og:description" content="首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：  如图所示，生成了 3 个对象，一个 commit 对象，一个 tree 对象，一个 blob 对象。图上蓝底是 commit 对象，灰底的是 tree 对象，白底的是 blob 对象，每个对象节点的标题是对象的 key (SHA 摘要)缩略表示。 对于 commit 对象，tree 内容表示这个 commit 对应根目录的">
+<meta property="og:image" content="http://blog.vino.ren/images/git/git-object-head.jpg">
+<meta property="og:updated_time" content="2016-05-16T11:06:16.765Z">
 <meta name="twitter:card" content="summary">
-<meta name="twitter:title" content="开始我的hexo之旅">
-<meta name="twitter:description" content="第一次hexo之旅&amp;emsp;&amp;emsp;之前一直用博客园来记录学习的过程，虽说比较方便，只需无脑地写到文本框就行了，但是内心一直是想搞一个独立博客的。前几天在github上fork了一份hexo的博客源码，还没了解hexo是怎么用的就直接在源码上改了起来，花了一个周末把博客内容改成了自己的，但是改的都是代码，这样就没有一个可持续的效果。于是乎就开始研究了这个hexo,花了一天时间把博客配了一下，">
-<meta name="twitter:image" content="http://blog.vino.ren/images/hexo/first-hexo.jpg">
+<meta name="twitter:title" content="理解git对象">
+<meta name="twitter:description" content="首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：  如图所示，生成了 3 个对象，一个 commit 对象，一个 tree 对象，一个 blob 对象。图上蓝底是 commit 对象，灰底的是 tree 对象，白底的是 blob 对象，每个对象节点的标题是对象的 key (SHA 摘要)缩略表示。 对于 commit 对象，tree 内容表示这个 commit 对应根目录的">
+<meta name="twitter:image" content="http://blog.vino.ren/images/git/git-object-head.jpg">
 
 
 
@@ -133,7 +133,7 @@
   };
 </script>
 
-  <title> 开始我的hexo之旅 | Vino </title>
+  <title> 理解git对象 | Vino </title>
 </head>
 
 <body itemscope itemtype="http://schema.org/WebPage" lang="zh-Hans">
@@ -308,7 +308,7 @@
             
             
               
-                开始我的hexo之旅
+                理解git对象
               
             
           </h1>
@@ -320,19 +320,38 @@
               <i class="fa fa-calendar-o"></i>
             </span>
             <span class="post-meta-item-text">发表于</span>
-            <time itemprop="dateCreated" datetime="2016-05-16T07:51:05+08:00" content="2016-05-16">
+            <time itemprop="dateCreated" datetime="2016-05-16T18:51:22+08:00" content="2016-05-16">
               2016-05-16
             </time>
           </span>
 
+          
+            <span class="post-category" >
+              &nbsp; | &nbsp;
+              <span class="post-meta-item-icon">
+                <i class="fa fa-folder-o"></i>
+              </span>
+              <span class="post-meta-item-text">分类于</span>
+              
+                <span itemprop="about" itemscope itemtype="https://schema.org/Thing">
+                  <a href="/categories/Git/" itemprop="url" rel="index">
+                    <span itemprop="name">Git</span>
+                  </a>
+                </span>
+
+                
+                
+
+              
+            </span>
           
 
           
             
               <span class="post-comments-count">
                 &nbsp; | &nbsp;
-                <a href="/2016/05/16/start-my-blog/#comments" itemprop="discussionUrl">
-                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/16/start-my-blog/" itemprop="commentsCount"></span>
+                <a href="/2016/05/16/git-object/#comments" itemprop="discussionUrl">
+                  <span class="post-comments-count ds-thread-count" data-thread-key="2016/05/16/git-object/" itemprop="commentsCount"></span>
                 </a>
               </span>
             
@@ -363,9 +382,9 @@
           
             <div class="post-gallery-row">
               <a class="post-gallery-img fancybox"
-                 href="/images/hexo/first-hexo.jpg" rel="gallery_cio9wowv7000kl0hzw9ujq523"
+                 href="/images/git/git-object-head.jpg" rel="gallery_cio9wowqk0001l0hzewq1rsdj"
                  itemscope itemtype="http://schema.org/ImageObject" itemprop="url">
-                <img src="/images/hexo/first-hexo.jpg" itemprop="contentUrl"/>
+                <img src="/images/git/git-object-head.jpg" itemprop="contentUrl"/>
               </a>
             
           
@@ -376,8 +395,17 @@
       
 
       
-        <h2 id="第一次hexo之旅-emsp-emsp"><a href="#第一次hexo之旅-emsp-emsp" class="headerlink" title="第一次hexo之旅&emsp;&emsp;"></a>第一次hexo之旅&emsp;&emsp;</h2><p>之前一直用博客园来记录学习的过程，虽说比较方便，只需无脑地写到文本框就行了，但是内心一直是想搞一个独立博客的。前几天在github上fork了一份hexo的博客源码，还没了解hexo是怎么用的就直接在源码上改了起来，花了一个周末把博客内容改成了自己的，但是改的都是代码，这样就没有一个可持续的效果。于是乎就开始研究了这个hexo,花了一天时间把博客配了一下，同时也了解了整个博客发布的流程，学习了一下markdown语法，瞬间觉得写博客变成了一种享受，以后可以好好写了。</p>
-<p>顺便贴一下我的<a href="http://www.cnblogs.com/vinozly/" target="_blank" rel="external">博客园地址</a> ,记录了我之前的学习过程，有兴趣的同学可以去看看，嘻嘻^^。</p>
+        <h5 id="首次提交，提交一个简单的文件-a-txt-，commit-之后的图如下："><a href="#首次提交，提交一个简单的文件-a-txt-，commit-之后的图如下：" class="headerlink" title="首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下："></a>首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：</h5><p> <img src="/images/git/git-object-0.png" alt=""><br> 如图所示，生成了 3 个对象，一个 commit 对象，一个 tree 对象，一个 blob 对象。图上蓝底是 commit 对象，灰底的是 tree 对象，白底的是 blob 对象，每个对象节点的标题是对象的 key (SHA 摘要)缩略表示。<br> 对于 commit 对象，tree 内容表示这个 commit 对应根目录的 tree 对象，parent 表示父 commit 节点，通常commit 只有一个父节点，也可能没有（首次提交时 parent 为空），也可能有多个（合并节点），commit 对象还保存了 commit message 等信息。<br> 对于 tree 对象，里面的内容包含了文件名，文件对应的 blob 对象的 key，或者是目录名和目录对应 tree 对象的 key。<br> 对于 blob 对象，表示一个实际文件对象的内容，但不包括文件名，文件名是在 tree 对象里存的。</p>
+<p> 这个图怎么得到的呢？主要是两个命令：</p>
+<ul>
+<li>通过 git log 命令获取最新 commit 的 key</li>
+<li>通过 git cat-file -p <object key=""> 获取 key 对应 object 的内容，根据 object 里的内容，继续探索，就可以访问到所有关联 object</object></li>
+</ul>
+<h5 id="第-2-次提交，修改了-a-txt-文件："><a href="#第-2-次提交，修改了-a-txt-文件：" class="headerlink" title="第 2 次提交，修改了 a.txt 文件："></a>第 2 次提交，修改了 a.txt 文件：</h5><p><img src="/images/git/git-object-1.png" alt=""><br>因为 a.txt 文件已经修改，生成了一个新的 blob 对象，tree 对象和 commit 对象。如图所示，commit 对象之间是有关联的，新提交的 commit 对象的 parent 是上一次提交的 commit 对象。</p>
+<h5 id="第-3-次提交，这次已稍微复杂一点，增加一个新文件-b-txt-，一个新目录-lib-，lib-里增加一个文件-c-txt"><a href="#第-3-次提交，这次已稍微复杂一点，增加一个新文件-b-txt-，一个新目录-lib-，lib-里增加一个文件-c-txt" class="headerlink" title="第 3 次提交，这次已稍微复杂一点，增加一个新文件 b.txt ，一个新目录 lib ，lib 里增加一个文件 c.txt"></a>第 3 次提交，这次已稍微复杂一点，增加一个新文件 b.txt ，一个新目录 lib ，lib 里增加一个文件 c.txt</h5><p><img src="/images/git/git-object-2.png" alt=""><br>如图所示，目录是有一个 tree 对象表示的，里面的内容指明了目录包含的文件或子目录。</p>
+<h5 id="第-4-次提交，这次弄出一个新的分支-test1，并且在新分支中做了一次-commit"><a href="#第-4-次提交，这次弄出一个新的分支-test1，并且在新分支中做了一次-commit" class="headerlink" title="第 4 次提交，这次弄出一个新的分支 test1，并且在新分支中做了一次 commit"></a>第 4 次提交，这次弄出一个新的分支 test1，并且在新分支中做了一次 commit</h5><p><img src="/images/git/git-object-3.png" alt=""><br>0c5ca 对应的 commit 对象就是生成的分支 test1 中的。分支在 Git 中是一个非常轻量化的操作，建立分支甚至都不增加新的对象。</p>
+<h5 id="第-5-次提交，这次涉及到一个合并操作，图已经变得比较复杂了"><a href="#第-5-次提交，这次涉及到一个合并操作，图已经变得比较复杂了" class="headerlink" title="第 5 次提交，这次涉及到一个合并操作，图已经变得比较复杂了"></a>第 5 次提交，这次涉及到一个合并操作，图已经变得比较复杂了</h5><p><img src="/images/git/git-object-4.png" alt=""><br>def18 就是合并后的 commit 对象。合并生成了一个新的commit ，这个 commit 的 parent 有两个，指向合并的两个原分支对应的 commit 上。</p>
+<p>作者:vincent (谢文威)</p>
 
       
     </div>
@@ -397,18 +425,24 @@
 
     <footer class="post-footer">
       
+        <div class="post-tags">
+          
+            <a href="/tags/Git/" rel="tag">#Git</a>
+          
+        </div>
+      
 
       
         <div class="post-nav">
           <div class="post-nav-next post-nav-item">
             
+              <a href="/2016/05/16/git-operate-command/" rel="next" title="Git操作手册|命令速查表">
+                <i class="fa fa-chevron-left"></i> Git操作手册|命令速查表
+              </a>
+            
           </div>
 
           <div class="post-nav-prev post-nav-item">
-            
-              <a href="/2016/05/16/learn-markdown-basic/" rel="prev" title="Markdown基础语法学习">
-                Markdown基础语法学习 <i class="fa fa-chevron-right"></i>
-              </a>
             
           </div>
         </div>
@@ -423,10 +457,10 @@
 
     <div class="post-spread">
       
-        <div class="ds-share flat" data-thread-key="2016/05/16/start-my-blog/"
-     data-title="开始我的hexo之旅"
+        <div class="ds-share flat" data-thread-key="2016/05/16/git-object/"
+     data-title="理解git对象"
      data-content=""
-     data-url="http://blog.vino.ren/2016/05/16/start-my-blog/">
+     data-url="http://blog.vino.ren/2016/05/16/git-object/">
   <div class="ds-share-inline">
     <ul  class="ds-share-icons-16">
 
@@ -456,8 +490,8 @@
           
   <div class="comments" id="comments">
     
-      <div class="ds-thread" data-thread-key="2016/05/16/start-my-blog/"
-           data-title="开始我的hexo之旅" data-url="http://blog.vino.ren/2016/05/16/start-my-blog/">
+      <div class="ds-thread" data-thread-key="2016/05/16/git-object/"
+           data-title="理解git对象" data-url="http://blog.vino.ren/2016/05/16/git-object/">
       </div>
     
   </div>
@@ -598,7 +632,7 @@
               
             
             
-              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-2"><a class="nav-link" href="#第一次hexo之旅-emsp-emsp"><span class="nav-number">1.</span> <span class="nav-text">第一次hexo之旅  </span></a></li></ol></div>
+              <div class="post-toc-content"><ol class="nav"><li class="nav-item nav-level-5"><a class="nav-link" href="#首次提交，提交一个简单的文件-a-txt-，commit-之后的图如下："><span class="nav-number">1.</span> <span class="nav-text">首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第-2-次提交，修改了-a-txt-文件："><span class="nav-number">2.</span> <span class="nav-text">第 2 次提交，修改了 a.txt 文件：</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第-3-次提交，这次已稍微复杂一点，增加一个新文件-b-txt-，一个新目录-lib-，lib-里增加一个文件-c-txt"><span class="nav-number">3.</span> <span class="nav-text">第 3 次提交，这次已稍微复杂一点，增加一个新文件 b.txt ，一个新目录 lib ，lib 里增加一个文件 c.txt</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第-4-次提交，这次弄出一个新的分支-test1，并且在新分支中做了一次-commit"><span class="nav-number">4.</span> <span class="nav-text">第 4 次提交，这次弄出一个新的分支 test1，并且在新分支中做了一次 commit</span></a></li><li class="nav-item nav-level-5"><a class="nav-link" href="#第-5-次提交，这次涉及到一个合并操作，图已经变得比较复杂了"><span class="nav-number">5.</span> <span class="nav-text">第 5 次提交，这次涉及到一个合并操作，图已经变得比较复杂了</span></a></li></ol></div>
             
           </div>
         </section>

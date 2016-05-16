@@ -4,7 +4,7 @@ date: 2016-05-16 14:23:19
 tags: Git
 categories: Git
 photos:
-- /images/git/git-head.png
+- /images/git/git-head.jpg
 ---
 这篇文章主要介绍Git分布式版本管理与集中式管理的一些差异，总结下Git常用命令作为日后的速查表，最后介绍Git进阶的一些案例。
 本文分为以下几个部分：

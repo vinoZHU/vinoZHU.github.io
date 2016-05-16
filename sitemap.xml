@@ -2,9 +2,16 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.vino.ren/2016/05/16/git-object/</loc>
+    
+    <lastmod>2016-05-16T11:06:16.765Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.vino.ren/2016/05/16/git-operate-command/</loc>
     
-    <lastmod>2016-05-16T07:58:43.828Z</lastmod>
+    <lastmod>2016-05-16T10:50:15.781Z</lastmod>
     
   </url>
   
