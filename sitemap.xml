@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.vino.ren/2016/05/16/git-branch-remote/</loc>
+    
+    <lastmod>2016-05-16T11:47:52.156Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.vino.ren/2016/05/16/git-object/</loc>
     
     <lastmod>2016-05-16T11:06:16.765Z</lastmod>
