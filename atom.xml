@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://blog.vino.ren/"/>
-  <updated>2016-05-17T04:54:50.720Z</updated>
+  <updated>2016-05-17T05:00:25.894Z</updated>
   <id>http://blog.vino.ren/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://blog.vino.ren/2016/05/17/linux-fd-file/"/>
     <id>http://blog.vino.ren/2016/05/17/linux-fd-file/</id>
     <published>2016-05-17T04:37:06.000Z</published>
-    <updated>2016-05-17T04:54:50.720Z</updated>
+    <updated>2016-05-17T05:00:25.894Z</updated>
     
     <content type="html">&lt;h4 id=&quot;概述&quot;&gt;&lt;a href=&quot;#概述&quot; class=&quot;headerlink&quot; title=&quot;概述&quot;&gt;&lt;/a&gt;概述&lt;/h4&gt;&lt;p&gt;在Linux系统中一切皆可以看成是文件，文件又可分为：普通文件、目录文件、链接文件和设备文件。文件描述符（file descriptor）是内核为了高效管理已被打开的文件所创建的索引，其是一个非负整数（通常是小整数），用于指代被打开的文件，所有执行I/O操作的系统调用都通过文件描述符。程序刚刚启动的时候，0是标准输入，1是标准输出，2是标准错误。如果此时去打开一个新的文件，它的文件描述符会是3。&lt;code&gt;POSIX标准要求每次打开文件时（含socket）必须使用当前进程中最小可用的文件描述符号码，因此，在网络通信过程中稍不注意就有可能造成串话。&lt;/code&gt;标准文件描述符图如下：&lt;br&gt;&lt;img src=&quot;/images/linux/linux-fd-file-0.png&quot; alt=&quot;&quot;&gt;&lt;br&gt;文件描述与打开的文件对应模型如下图：&lt;br&gt;&lt;img src=&quot;/images/linux/linux-fd-file-1.png&quot; alt=&quot;&quot;&gt;&lt;/p&gt;
 &lt;h4 id=&quot;文件描述限制&quot;&gt;&lt;a href=&quot;#文件描述限制&quot; class=&quot;headerlink&quot; title=&quot;文件描述限制&quot;&gt;&lt;/a&gt;文件描述限制&lt;/h4&gt;&lt;p&gt;在编写文件操作的或者网络通信的软件时，初学者一般可能会遇到“Too many open files”的问题。这主要是因为文件描述符是系统的一个重要资源，虽然说系统内存有多少就可以打开多少的文件描述符，但是在实际实现过程中内核是会做相应的处理的，一般最大打开文件数会是系统内存的10%（以KB来计算）（称之为系统级限制），查看系统级别的最大打开文件数可以使用&lt;code&gt;sysctl -a | grep fs.file-max&lt;/code&gt;命令查看。与此同时，内核为了不让某一个进程消耗掉所有的文件资源，其也会对单个进程最大打开文件数做默认值处理（称之为用户级限制），默认值一般是1024，使用&lt;code&gt;ulimit -n&lt;/code&gt;命令可以查看。在Web服务器中，通过更改系统默认值文件描述符的最大值来优化服务器是最常见的方式之一，具体优化方式请查看&lt;a href=&quot;http://blog.csdn.net/kumu_linux/article/details/7877770。&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/kumu_linux/article/details/7877770。&lt;/a&gt;&lt;/p&gt;
@@ -49,7 +49,9 @@
 2. 两个不同的文件描述符，若指向同一个打开文件句柄，将共享同一文件偏移量。因此，如果通过其中一个文件描述符来修改文件偏移量（由调用read()、write()或lseek()所致），那么从另一个描述符中也会观察到变化，无论这两个文件描述符是否属于不同进程，还是同一个进程，情况都是如此。
 3. 要获取和修改打开的文件标志（例如：`O_APPEND、O_NONBLOCK`和`O_ASYNC`），可执行`fcntl()`的`F_GETFL`和`F_SETFL`操作，其对作用域的约束与上一条颇为类似。
 4. 文件描述符标志（即，`close-on-exec`）为进程和文件描述符所私有。对这一标志的修改将不会影响同一进程或不同进程中的其他文件描述符
-&lt;/code&gt;&lt;/pre&gt;</content>
+&lt;/code&gt;&lt;/pre&gt;&lt;p&gt;原文地址：&lt;a href=&quot;http://blog.csdn.net/cywosp/article/details/38965239&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/cywosp/article/details/38965239&lt;/a&gt;&lt;/p&gt;
+&lt;p&gt;参考&lt;br&gt;[1] &lt;a href=&quot;http://blog.chinaunix.net/uid-20633888-id-2747146.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.chinaunix.net/uid-20633888-id-2747146.html&lt;/a&gt;&lt;br&gt;[2] &lt;a href=&quot;http://www.cppblog.com/guojingjia2006/archive/2012/11/21/195450.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.cppblog.com/guojingjia2006/archive/2012/11/21/195450.html&lt;/a&gt;&lt;br&gt;[3] &lt;a href=&quot;http://blog.csdn.net/kumu_linux/article/details/7877770&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://blog.csdn.net/kumu_linux/article/details/7877770&lt;/a&gt;&lt;br&gt;[4] 《Linux/UNIX系统编程手册》&lt;/p&gt;
+</content>
     
     <summary type="html">
     

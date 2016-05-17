@@ -47,3 +47,12 @@ photos:
     2. 两个不同的文件描述符，若指向同一个打开文件句柄，将共享同一文件偏移量。因此，如果通过其中一个文件描述符来修改文件偏移量（由调用read()、write()或lseek()所致），那么从另一个描述符中也会观察到变化，无论这两个文件描述符是否属于不同进程，还是同一个进程，情况都是如此。
     3. 要获取和修改打开的文件标志（例如：`O_APPEND、O_NONBLOCK`和`O_ASYNC`），可执行`fcntl()`的`F_GETFL`和`F_SETFL`操作，其对作用域的约束与上一条颇为类似。
     4. 文件描述符标志（即，`close-on-exec`）为进程和文件描述符所私有。对这一标志的修改将不会影响同一进程或不同进程中的其他文件描述符
+
+原文地址：http://blog.csdn.net/cywosp/article/details/38965239
+
+
+参考
+[1] http://blog.chinaunix.net/uid-20633888-id-2747146.html
+[2] http://www.cppblog.com/guojingjia2006/archive/2012/11/21/195450.html
+[3] http://blog.csdn.net/kumu_linux/article/details/7877770
+[4] 《Linux/UNIX系统编程手册》
