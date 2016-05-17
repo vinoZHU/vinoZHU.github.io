@@ -87,4 +87,5 @@ duoshuo_hotartical: true
 # Swiftype Search Key
 swiftype_key: UsFsKU-dEN9iemsTff_F
 
-google_analytics: UA-77794738-1
+#google_analytics: UA-77794738-1
+baidu_analytics: eeeb9003bd66b8104d7f660aa6fdf4e0
