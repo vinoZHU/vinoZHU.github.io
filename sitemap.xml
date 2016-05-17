@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://blog.vino.ren/2016/05/17/linux-fd-file/</loc>
+    <loc>http://blog.vino.ren/2016/05/17/computer-system-roaming/</loc>
     
-    <lastmod>2016-05-17T05:00:25.894Z</lastmod>
+    <lastmod>2016-05-17T11:55:11.036Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://blog.vino.ren/about/index.html</loc>
     
-    <lastmod>2016-05-17T04:31:59.098Z</lastmod>
+    <lastmod>2016-05-17T09:40:14.027Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/2016/05/17/linux-fd-file/</loc>
+    
+    <lastmod>2016-05-17T05:00:25.894Z</lastmod>
     
   </url>
   
