@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.vino.ren/2016/05/18/java-init-order/</loc>
+    
+    <lastmod>2016-05-18T02:30:41.061Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.vino.ren/2016/05/17/linux-vm-rm/</loc>
     
     <lastmod>2016-05-18T02:11:17.372Z</lastmod>
