@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://blog.vino.ren/2016/05/19/java-memory-model-basis/</loc>
+    
+    <lastmod>2016-05-19T01:11:09.877Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://blog.vino.ren/2016/05/18/java-intern-in-depth-analysis/</loc>
     
     <lastmod>2016-05-18T08:07:26.101Z</lastmod>
