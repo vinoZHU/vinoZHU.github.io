@@ -2,16 +2,23 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://blog.vino.ren/2016/05/19/jvm-gc-tactics/</loc>
+    <loc>http://blog.vino.ren/2016/05/19/when-jvm-load-class/</loc>
     
-    <lastmod>2016-05-19T06:14:13.954Z</lastmod>
+    <lastmod>2016-05-19T12:04:15.116Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://blog.vino.ren/2016/05/19/java-memory-model-basis/</loc>
     
-    <lastmod>2016-05-19T05:34:52.381Z</lastmod>
+    <lastmod>2016-05-19T06:30:36.579Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://blog.vino.ren/2016/05/19/jvm-gc-tactics/</loc>
+    
+    <lastmod>2016-05-19T06:14:13.954Z</lastmod>
     
   </url>
   
