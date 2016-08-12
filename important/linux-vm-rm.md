@@ -6,8 +6,7 @@ tags:
 - 内存
 - 理解计算机
 categories: Linux
-photos:
-- /images/linux/linux-common-head.png
+
 ---
 ### 虚拟内存
 #### 一

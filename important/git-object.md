@@ -3,8 +3,7 @@ title: 理解git对象
 date: 2016-05-16 18:51:22
 tags: Git
 categories: Git
-photos:
-- /images/git/git-object-head.jpg
+
 ---
 ##### 首次提交，提交一个简单的文件 a.txt ，commit 之后的图如下：
  ![](/images/git/git-object-0.png)

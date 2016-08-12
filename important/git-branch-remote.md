@@ -3,8 +3,7 @@ title: 理解git分支-远程分支
 date: 2016-05-16 19:16:26
 tags: Git
 categories: Git
-photos:
-- /images/git/git-branch-head.png
+
 ---
 
 ### 远程分支

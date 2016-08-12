@@ -2,11 +2,10 @@
 title: 理解JVM加载class原理--class加载的时机
 date: 2016-05-19 19:00:58
 tags:
-- JVM
+- jvm
 - java
-categories: JVM
-photos:
-- /images/jvm/jvm-common-head.jpg
+categories: jvm
+
 ---
 ### java的动态性
 Java 语言是一种具有动态性的解释型编程语言，当指定程序运行的时候， Java 虚拟机就将编译生成的 . class 文件按照需求和一定的规则加载进内存，并组织成为一个完整的 Java 应用程序。 Java 语言把每个单独的类 Class 和接口 Implements 编译成单独的一个 . class 文件，这些文件对于 Java 运行环境来说就是一个个可以动态加载的单元。正是因为 Java 的这种特性，我们可以在不重新编译其它代码的情况下，只编译需要修改的单元，并把修改文件编译后的 . class 文件放到 Java 的路径当中， 等到下次该 Java 虚拟机器重新激活时，这个逻辑上的 Java 应用程序就会因为加载了新修改的 .class 文件，自己的功能也做了更新，这就是 Java 的动态性。

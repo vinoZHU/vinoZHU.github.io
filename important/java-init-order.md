@@ -3,8 +3,7 @@ title: java类静态域、块，非静态域、块，构造函数的初始化顺
 date: 2016-05-18 10:21:11
 tags: java
 categories: java
-photos:
-- /images/java/java-common-head.jpg
+
 ---
 #### 开始
 面试的时候，经常会遇到这样的考题：给你两个类的代码，它们之间是继承的关系，每个类里只有构造器方法和一些变量，

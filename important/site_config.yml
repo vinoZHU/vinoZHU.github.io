@@ -12,7 +12,7 @@ timezone:
 
 # URL
 ## If your site is put in a subdirectory, set url as 'http://yoursite.com/child' and root as '/child/'
-url: http://blog.vino.ren
+url: http://vinoit.me
 root: /
 permalink: :year/:month/:day/:title/
 permalink_defaults:
@@ -69,8 +69,8 @@ theme: next
 ## Docs: https://hexo.io/docs/deployment.html
 deploy: 
   type: git
-  repo: https://github.com/vinoZHU/vinoZHU.github.io.git
-  branch: master
+  repo: https://git.coding.net/vinozly/vinozly.git
+  branch: coding-pages
   
 # 头像
 avatar: /images/avatar.png
@@ -85,7 +85,7 @@ duoshuo_share: true
 duoshuo_hotartical: true
 
 # Swiftype Search Key
-swiftype_key: UsFsKU-dEN9iemsTff_F
+swiftype_key: it7Yb47jWFvPfGi6ySs6
 
 #google_analytics: UA-77794738-1
-baidu_analytics: eeeb9003bd66b8104d7f660aa6fdf4e0
+baidu_analytics: 3f40b10d467e7138df85fd64143bc8bd

@@ -3,8 +3,7 @@ title: Markdown基础语法学习
 date: 2016-05-16 09:34:01
 tags: markdown
 categories: markdown
-photos:
-- /images/markdown/Markdown.png
+
 ---
 ## 优点&emsp;&emsp;
 

@@ -3,8 +3,7 @@ title: hexo搭建个人博客
 date: 2016-05-16 11:21:13
 tags: hexo
 categories: hexo
-photos:
-- /images/hexo/hexo.png
+
 ---
 不得不说，hexo给程序猿提供了一种高逼格的写作方式。配置也比较方便，而且目录、Rss和sitemap都是自动生成，你只需花几个小时就能掌握用hexo来编写博客。
 

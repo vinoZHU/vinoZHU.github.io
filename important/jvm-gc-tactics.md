@@ -2,11 +2,10 @@
 title: JVM内存模型及垃圾收集策略解析
 date: 2016-05-19 13:26:25
 tags:
-- JVM
+- jvm
 - GC
-categories: JVM
-photos:
-- /images/jvm/jvm-common-head.jpg
+categories: jvm
+
 ---
 ### JVM内存模型
 Java虚拟机的内存模型分为五个部分，分别是：程序计数器、Java虚拟机栈、本地方法栈、堆、方法区。

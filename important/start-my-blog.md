@@ -3,8 +3,7 @@ title: 开始我的hexo之旅
 date: 2016-05-16 07:51:05
 tags:
 categories:
-photos:
-- /images/hexo/first-hexo.jpg
+
 ---
 ## 第一次hexo之旅&emsp;&emsp;
 
