@@ -145,4 +145,5 @@ baz | baz  | baz
 ### 结语
 以上几种格式是比较常用的格式，Markdown 还有其他语法，如想了解和学习更多，可以参考[《Markdown 语法说明 (简体中文版)》](http://wowubuntu.com/markdown/#link)
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+

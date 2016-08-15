@@ -198,4 +198,4 @@ GC的执行时要耗费一定的CPU资源和时间的，因此在JDK1.2以后，
 
 在大量使用反射、动态代理、CGLib等bytecode框架的场景，以及动态生成JSP和OSGi这类频繁自定义ClassLoader的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>

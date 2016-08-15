@@ -110,4 +110,6 @@ buddy system根据参数order，在要求的zone中查找对应的链表。若�
 - [Linux伙伴系统(一)--伙伴系统的概述](http://blog.csdn.net/vanbreaker/article/details/7605367)
 - [内存伙伴系统之查找伙伴算法](http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4)
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+

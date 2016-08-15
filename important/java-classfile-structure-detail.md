@@ -386,4 +386,5 @@ Signature_attribute {
 
 - 参考《JVM规范SE7》
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+

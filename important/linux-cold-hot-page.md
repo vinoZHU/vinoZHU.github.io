@@ -126,4 +126,5 @@ struct per_cpu_pages {
 - [认识Linux/ARM 中的冷热页](http://blog.tek-life.com/%E8%AE%A4%E8%AF%86linuxarm-%E4%B8%AD%E7%9A%84%E5%86%B7%E7%83%AD%E9%A1%B5/)
 - Linux源码
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+

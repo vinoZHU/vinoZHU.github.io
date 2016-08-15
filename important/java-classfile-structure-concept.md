@@ -64,4 +64,5 @@ JVM规范里， Class 文件结构中的 attributes 表的项包括下列定义�
 以上结构便是整个class文件，建议和我的另两篇博文[《理解JVM中class文件结构--具体结构信息》](/2016/05/22/java-classfile-structure-detail/)以及[《理解JVM中class文件结构--实例讲解》](/2016/05/23/java-classfile-structure-example/)结合的来看。
 - 参考《JVM规范SE7》
 
-本作品采用<a rel="license" href="http://creativecommons.org/licenses/by-nc-sa/3.0/">知识共享署名-非商业性使用-相同方式共享 3.0 未本地化版本许可协议</a>进行许可,转载请在正文明显处注明原文地址。
+<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+
