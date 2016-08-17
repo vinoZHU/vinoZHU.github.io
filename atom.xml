@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-08-15T06:51:54.000Z</updated>
+  <updated>2016-08-17T05:26:10.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,140 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>linux内核笔记之进程（二）</title>
+    <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-tow/"/>
+    <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-tow/</id>
+    <published>2016-08-16T12:31:04.000Z</published>
+    <updated>2016-08-17T05:26:10.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h4><p>进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来对进程进行管理。进程描述符的数据结构是<code>struct task_struct</code>,与进程相关的所有信息都包含在该数据结构中，可想而知该数据结构是十分复杂的。</p>
+<p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L1458" target="_blank" rel="external"><strong>这里</strong></a>可以查看<code>task_struct</code>的完整结构，下图示意性地描述了该数据结构：<br><img src="/images/linux-kernel-note/process-two-0.png" alt=""><br>在这里只讨论进程的某几个属性，其余属性在之后有关其他内容的文章中会逐渐涉及到，内核的学习需要联系的思维。</p>
+<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h4><p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L207" target="_blank" rel="external"><strong>这里</strong></a>可以查看进程的所有状态，下面是一些常见的状态：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">状态</th>
+<th style="text-align:left">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">TASK_RUNNING</td>
+<td style="text-align:left">进程正在执行或者进程已经就绪，正在等待cpu时间片的调度。</td>
+</tr>
+<tr>
+<td style="text-align:center">TASK_INTERRUPTIBLE</td>
+<td style="text-align:left">进程因为等待一些条件而被挂起（阻塞）时的状态。此时的进程可以被硬中断、资源的释放、信号等事件（这些事件可以认为是等待的条件）唤醒，然后进程就会从该状态（阻塞）迅速转化成为就绪状态TASK_RUNNING。</td>
+</tr>
+<tr>
+<td style="text-align:center">TASK_UNINTERRUPTIBLE</td>
+<td style="text-align:left">意义与TASK_INTERRUPTIBLE类似，但是该状态的进程只有当等待的条件为true时才能被唤醒。一般情况下很少用到，但是在一些驱动程序中很有用。特别是对于驱动探测相关的硬件过程很重要，这个探测过程不能被一些其他的东西给中断，否则就会让进程进入不可预测的状态。</td>
+</tr>
+<tr>
+<td style="text-align:center">__TASK_STOPPED</td>
+<td style="text-align:left">进程停止执行，当进程接收到SIGSTOP、SIGTTIN、SIGTSTP或者SIGTTOU信号之后就会进入该状态。</td>
+</tr>
+<tr>
+<td style="text-align:center">__TASK_TRACED</td>
+<td style="text-align:left">表示进程被debugger等进程所暂停（<a href="/2016/08/12/how-debugger-work/">ptrac()调用与调试器相关</a>），此时任何一个信号都会让进程进入该状态</td>
+</tr>
+<tr>
+<td style="text-align:center">EXIT_DEAD</td>
+<td style="text-align:left">进程的执行被终止，但是其父进程还没有使用wait()等系统调用来获知它的终止信息，此时进程成为僵尸进程</td>
+</tr>
+<tr>
+<td style="text-align:center">EXIT_ZOMBIE</td>
+<td style="text-align:left">进程的最终状态，由于父进程进行了wait4()或者waitpid()系统调用，进程被系统删除</td>
+</tr>
+</tbody>
+</table>
+<h4 id="进程标识"><a href="#进程标识" class="headerlink" title="进程标识"></a>进程标识</h4><p>类Unix操作系统通过进程标识符（PID）来标识一个进程(包括轻量级进程) ，每个进程的PID存放在进程描述符的pid字段中。PID是按顺序编号的，新创建的进程通常是前一个进程的PID+1。不过，32位系统的PID值在缺省情况中的上限为32767，64位是4194303，系统管理员可以通过修改<code>/proc/sys/kernel/pid_max</code>来改变这些值。</p>
+<p>内核通过管理一个<code>pidmap_array</code>位图来记录当前已使用的PID，因为一个页框的大小为4KB,恰好为32767bit,所以32位体系结构中一个<code>pidmap_array</code>刚好占据一个单独的页。系统会一直保存这些页不被释放。</p>
+<h4 id="标识当前进程"><a href="#标识当前进程" class="headerlink" title="标识当前进程"></a>标识当前进程</h4><p>在内核代码中，经常通过current宏来获得当前在CPU上运行的进程描述符指针，例如，current-&gt;pid返回当前正在执行的进程的PID。我们来看下current宏究竟干了什么：</p>
+<p>(Linux/arch/tile/include/asm/current.h)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> current get_current()</span></div></pre></td></tr></table></figure>
+<p>(Linux/include/asm-generic/current.h)</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> get_current() (current_thread_info()-&gt;task)</span></div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="number">__</span><span class="function">inline__ <span class="keyword">struct</span> task_struct *<span class="title">get_current</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">      <span class="keyword">return</span> current_thread_info()-&gt;task;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>current_thread_info()</code>返回一个<code>struct thread_info</code>结构的指针<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> thread_info &#123;</div><div class="line">          <span class="keyword">struct</span> task_struct      *task;          <span class="comment">/* main task structure */</span></div><div class="line">          <span class="keyword">unsigned</span> <span class="keyword">long</span>           flags;          <span class="comment">/* low level flags */</span></div><div class="line">          <span class="keyword">unsigned</span> <span class="keyword">long</span>           status;         <span class="comment">/* thread-synchronous flags */</span></div><div class="line">          <span class="number">__u</span>32                   cpu;            <span class="comment">/* current CPU */</span></div><div class="line">          <span class="keyword">int</span>                     preempt_count;  <span class="comment">/* 0 =&gt; preemptable, &lt;0 =&gt; BUG */</span></div><div class="line">  </div><div class="line">          <span class="keyword">mm_segment_t</span>            addr_limit;     <span class="comment">/* thread address space:</span></div><div class="line">                                                     0-0xBFFFFFFF for user-thread</div><div class="line">                                                     0-0xFFFFFFFF for kernel-thread</div><div class="line">                                                  */</div><div class="line">  </div><div class="line">          <span class="number">__u</span>8                    supervisor_stack[<span class="number">0</span>];</div><div class="line">  &#125;;</div></pre></td></tr></table></figure></p>
+<p>返回的<code>thread_info</code>指针就是当前进程描述符中的thread_info字段的指针，而该结构中保存着所属进程的进程描述符指针。<code>为什么不直接把进程描述符指针记录在一个全局变量中？</code>早先的Linux版本的确是这么做的,通过强制引入一个全局静态变量current来标识正在运行进程的描述符。</p>
+<p>既然现在是通过<code>thread_info</code>来标识当前进程的，那么如何获得该<code>thread_info</code>的地址呢？</p>
+<p>Linux都把两个不同的数据结构紧凑地存放在一个单独为进程分配的存储区域内，一个是与进程描述符相关的小数据结构thread_info，叫做线程描述符。另一个是内核态的进程堆栈。</p>
+<p>内核态的进程堆栈大小通常为8192个字节。考虑到效率的因素，内核让这8K空间占据连续的两个页框并让第一个页框的起始地址是2^13的倍数。当几乎没有可用的动态内存空间时，就会很难找到这两个连续页框，因为空闲空间可能存在大量碎片。因此，在80x86体系结构中，在编译时可以设置，以使内核堆栈和线程描述符跨越一个单独的页框。<br><img src="/images/linux-kernel-note/process-two-1.png" alt=""></p>
+<p><code>esp</code>寄存器保存着内核态堆栈的栈顶地址，因为内核态堆栈和<code>thread_info</code>处于连续的2个页框，而<code>thread_info</code>处于页框的首地址，只需进行下列的汇编指令就能获得<code>thread_info</code>地址：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">movl $0xffffe000, %ecx</div><div class="line">andl $esp, %ecx</div><div class="line">movl %ecx, p</div></pre></td></tr></table></figure>
+<p>其中变量p中的值便是<code>thread_info</code>的地址，而这3条汇编指令其实也就是<code>current_thread_info()</code>函数所做的事。</p>
+<p>当进程切换到内核态之后，esp指针便保存内核栈的栈顶地址。内核直接通过寄存器的值，进行少许计算便能获得当前进程描述符，相比较于早先的全局静态变量，效率是明显提升了。</p>
+<h4 id="如何组织进程"><a href="#如何组织进程" class="headerlink" title="如何组织进程"></a>如何组织进程</h4><p>对于<code>TASK_RUNNING</code>的进程，内核早先把所有的这些进程放到一个进程双向链表中，但是随着进程数量的增加，维护成本会越来越高。调度程序在扫描链表时花费的时间也随之线性上升。Linix2.6中，优先级相同的进程才会放在一个对应优先级的链表中。如果优先级有n个级别，那么就有n个运行队列。在多处理器系统中，每个CPU都有着n个这样的运行队列。</p>
+<p>关于运行队列，在之后整理进程调度的文章中会再次涉及到。</p>
+<p>对于<code>__TASK_STOPPED</code>、<code>EXIT_DEAD</code>、<code>EXIT_ZOMBIE</code>状态的进程，内核没有建立相应的双向链表。对于这些进程的访问比较简单，或者通过PID，或者通过特定父进程的子进程链表。</p>
+<p>对于<code>TASK_INTERRUPTIBLE</code>、<code>TASK_UNINTERRUPTIBLE</code>状态的进程，由于这些进程所等待的条件并不是同一个。而且进程所提供的信息无法满足快速检索的需要，因此有了等待队列。</p>
+<p>在这里讨论的等待队列都表示进程在特定事件上的等待。一个等待队列表示一组睡眠的进程，这些进程所等待的条件都是同一个。当条件满足时，内核会唤醒这些进程。然而，当两个或多个进程互斥的访问某个资源时，此时内核必须只能唤醒一个进程，其余的进程需要继续睡眠。</p>
+<p>等待队列由双向链表组成，每个等待队列都有一个队列头:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="number">__</span>wait_queue_head &#123;</div><div class="line">         <span class="keyword">spinlock_t</span>              lock;<span class="comment">//自旋锁</span></div><div class="line">         <span class="keyword">struct</span> list_head        task_list;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure>
+<p>等待队列中的元素:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="number">__</span>wait_queue &#123;</div><div class="line">         <span class="keyword">unsigned</span> <span class="keyword">int</span>            flags;</div><div class="line">         <span class="keyword">void</span>                    *<span class="keyword">private</span>;<span class="comment">//指向进程描述符</span></div><div class="line">         <span class="keyword">wait_queue_func_t</span>       func;<span class="comment">//唤醒时需要调用的方法</span></div><div class="line">         <span class="keyword">struct</span> list_head        task_list;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure>
+<p><code>struct list_head</code>在内核中是实现双向链表的关键，在这里不做讨论。</p>
+<h4 id="根据PID找到进程描述符"><a href="#根据PID找到进程描述符" class="headerlink" title="根据PID找到进程描述符"></a>根据PID找到进程描述符</h4><p>Linux中有4个pid类型:</p>
+<ul>
+<li>PID：这是 Linux 中在其命名空间中唯一标识进程而分配给它的一个号码，称做进程ID号，简称PID。在使用 fork 或 clone 系统调用时产生的进程均会由内核分配一个新的唯一的PID值。</li>
+<li>TGID：在一个进程中，如果以CLONE_THREAD标志来调用clone建立的进程就是该进程的一个线程，它们处于一个线程组，该线程组的ID叫做TGID。处于相同的线程组中的所有进程都有相同的TGID；线程组组长的TGID与其PID相同；一个进程没有使用线程，则其TGID与PID也相同。</li>
+<li>PGID：另外，独立的进程可以组成进程组（使用setpgrp系统调用），进程组可以简化向所有组内进程发送信号的操作，例如用管道连接的进程处在同一进程组内。进程组ID叫做PGID，进程组内的所有进程都有相同的PGID，等于该组组长的PID。</li>
+<li>SID：几个进程组可以合并成一个会话组（使用setsid系统调用），可以用于终端程序设计。会话组中所有进程都有相同的SID。</li>
+</ul>
+<p>既然每个进程都有一个与之关联的PID，在进程描述符中的pid字段保存着PID值，如果通过遍历进程链表来比较PID值，虽然可行，但是相当低效。那么内核肯定维护着PID与进程描述符之间的某种映射关系。内核可以通过这种关系，快速地根据PID找到对应的进程描述符。</p>
+<p>内核是通过hash表来解决这个问题的。在内核初始化的时候会动态地为一个散列表数组分配空间,数组长度和机器内存有关。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> hlist_head *pid_hash;</div></pre></td></tr></table></figure>
+<p>初始化函数为:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> <span class="number">__</span><span class="function">init <span class="title">pidhash_init</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div></pre></td></tr></table></figure>
+<p>散列表数组的元素类型为 <code>struct hlist_head</code>，看下具体是什么:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_head &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_node *first;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>其中包含一个<code>struct hlist_node</code>类型的指针:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_node &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_node *next, **pprev;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><code>struct hlist_node</code>中包含一个<code>struct hlist_node</code>类型的指针和<code>struct hlist_node*</code>类型的指针。</p>
+<p>现在散列表和进程之间还没有建立联系，来看下进程中的<code>pids</code>(不是pid)字段的数据结构:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> pid_link</div><div class="line"> &#123;</div><div class="line">         <span class="keyword">struct</span> hlist_node node;</div><div class="line">         <span class="keyword">struct</span> pid *pid;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure></p>
+<p>再看下<code>struct pid</code>是什么东西:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> pid</div><div class="line">&#123;</div><div class="line">        <span class="keyword">atomic_t</span> count;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span> level;</div><div class="line">        <span class="comment">/* lists of tasks that use this pid */</span></div><div class="line">        <span class="keyword">struct</span> hlist_head tasks[PIDTYPE_MAX];</div><div class="line">        <span class="keyword">struct</span> rcu_head rcu;</div><div class="line">        <span class="keyword">struct</span> upid numbers[<span class="number">1</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>其中的<code>tasks</code>字段，这是一个<code>struct hlist_head</code>类型的数组，长度为pid类型数量，也就是4。</p>
+<p>再看下其中的<code>struct upid</code>类型：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> upid &#123;</div><div class="line">        <span class="comment">/* Try to keep pid_chain in the same cacheline as nr for find_vpid */</span></div><div class="line">        <span class="keyword">int</span> nr;<span class="comment">//用于计算hsah值</span></div><div class="line">        <span class="keyword">struct</span> pid_namespace *ns;</div><div class="line">        <span class="keyword">struct</span> hlist_node pid_chain;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>下图用来帮助理解几者之间的联系:<br><img src="/images/linux-kernel-note/process-two-2.png" alt=""></p>
+<ol>
+<li>内核初始化期间为pid_hash数组分配好合适的空间。</li>
+<li>当创建了一个新的进程之后，内核随之分配一个进程描述符，然后初始化其中的字段。</li>
+<li>根据 task_struct-&gt;pids（struct pid_link类型）-&gt;pid-&gt;numbers(struct upid类型)-&gt;nr的值，调用hash函数，取模，然后定位到pid_hash数组中的某一项。</li>
+<li>遍历该项的链表，如果其中没有一项的pid与新创建的相同（线程组的所有进程pid相同），则将该进程插入到链表尾。具体做法是将pids字段(struct pid_link类型)中的node插入到链表末尾。</li>
+<li>如果存在一项pid与新创建的进程相同，说明是同一线程组的进程。则通过task_struct-&gt;pids（struct pid_link类型）-&gt;pid-&gt;numbers(struct upid类型)-&gt;pid_chain（struct hlist_node类型）,将其链接到已存在项的tasks数组中对应pid类型的链表中去，这样的链表一共有4条。</li>
+</ol>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+
+
+
+
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;进程描述符&quot;&gt;&lt;a href=&quot;#进程描述符&quot; class=&quot;headerlink&quot; title=&quot;进程描述符&quot;&gt;&lt;/a&gt;进程描述符&lt;/h4&gt;&lt;p&gt;进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
+    
+      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
+    
+  </entry>
+  
+  <entry>
     <title>linux内核笔记之进程（一）</title>
     <link href="http://vinoit.me/2016/08/15/linux-kernel-note-process-one/"/>
     <id>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</id>
     <published>2016-08-15T05:56:35.000Z</published>
-    <updated>2016-08-15T06:51:54.000Z</updated>
+    <updated>2016-08-17T05:29:32.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="进程定义"><a href="#进程定义" class="headerlink" title="进程定义"></a>进程定义</h4><p>说起进程，真是既熟悉又陌生，感觉知道这个玩意儿，但是又不知该如何说起。按照UTLK中的说法，进程是任何多道程序设计的操作系统中的基本概念，<code>通常把进程定义为程序执行的一个实例</code>,貌似大多数OS教科书也是这么定义的。</p>
 <p>从内核的角度来看，进程就是消耗系统资源（内存，CPU时间片等）的一个实体。因为每个进程都会有他的执行代码，内核通过调度，让不同的进程可以在CPU上分时执行代码，同时每个进程也都会占用相应的RAM资源。</p>
@@ -33,7 +162,7 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_getpid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">  &#123;</div><div class="line">    <span class="keyword">return</span> current-&gt;tgid;</div><div class="line">  &#125;</div><div class="line"> <span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_gettid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line"> &#123;</div><div class="line">   <span class="keyword">return</span> current-&gt;pid;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
 <p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>]]></content>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>]]></content>
     
     <summary type="html">
     
@@ -55,7 +184,7 @@
     <link href="http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/"/>
     <id>http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/</id>
     <published>2016-08-14T07:07:15.000Z</published>
-    <updated>2016-08-14T09:13:56.000Z</updated>
+    <updated>2016-08-17T05:29:23.000Z</updated>
     
     <content type="html"><![CDATA[<p>一个逻辑地址经过<a href="/2016/08/13/linux-kernel-note-segment-mechanism/">分段机制</a>转换为一个线性地址之后，便需要分页单元将线性地址转换为实际的物理地址。</p>
 <h4 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h4><p>从80386开始，所有的80x86处理器都支持分页。是否开启分页通过设置cr0寄存器的PG标志来决定，当PG为0时，表示不开启分页，此时线性地址呗解释为物理地址。</p>
@@ -107,7 +236,7 @@
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>从硬件的角度，32位地址被分成了三部份。不管理软件怎么做，最终落实到硬件，也只识别这3部分。</p>
 <p>从软件的角度，由于多引入了两部份，也就是说，共有五部份。要让二层架构的硬件认识五部分，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。</p>
 <p>这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，软硬件又和谐了。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 
 
@@ -312,7 +441,7 @@
     <link href="http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/"/>
     <id>http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/</id>
     <published>2016-08-13T07:59:27.000Z</published>
-    <updated>2016-08-13T12:22:47.000Z</updated>
+    <updated>2016-08-17T05:29:44.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="为什么要有分段机制？"><a href="#为什么要有分段机制？" class="headerlink" title="为什么要有分段机制？"></a>为什么要有分段机制？</h4><ul>
 <li><p>在8086处理器诞生之前，内存寻址方式就是直接访问物理地址,也就是所谓的实模式。8086处理器为了寻址1M的内存空间，把地址总线扩展到了20位。但是，ALU的宽度<code>只有16位</code>，也就是说，ALU不能计算20位的地址。为了解决这个问题，从而引入了分段机制。<br>为了支持分段，8086处理器设置了四个段寄存器：CS, DS, SS, ES.每个段寄存器都是16位的，都包含着相应段的基址，访存指令中的地址也是16位的。但是，在送入地址总线之前，CPU先把它与某个段寄存器内的值按以下方式相加：<br><code>实际物理地址 = （段寄存器地址 &lt;&lt; 4） + （指令访存地址）</code></p>
@@ -416,7 +545,7 @@
 <p>按照前面段描述符表中的描述，可以把它们展开，发现其16-31位全为0，即四个段的基地址全为0。</p>
 <p>这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，<strong>在Linux下，逻辑地址与线性地址总是一致的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。</strong></p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 ]]></content>
     
     <summary type="html">
@@ -597,7 +726,7 @@
     <link href="http://vinoit.me/2016/08/12/how-debugger-work/"/>
     <id>http://vinoit.me/2016/08/12/how-debugger-work/</id>
     <published>2016-08-12T08:34:29.000Z</published>
-    <updated>2016-08-13T12:24:29.000Z</updated>
+    <updated>2016-08-17T05:25:45.000Z</updated>
     
     <content type="html"><![CDATA[<p>在开发的过程中调试是必不可少的步骤，相应的IDE就能帮我们轻松搞定。但是调试背后的原理我觉得有必要了解，本文描述的是一些调试器方面的基本原理，不当之处欢迎指出。</p>
 <h4 id="ptrace-系统调用"><a href="#ptrace-系统调用" class="headerlink" title="ptrace()系统调用"></a>ptrace()系统调用</h4><p>Linux下的调试器实现的主要组成部分就是<code>ptrace()</code>,这是一个功能众多且相当复杂的工具，能允许一个进程控制另一个进程的运行，而且可以监视和渗入到进程内部。其中这2个进程是父子进程的关系，调试的进程是父进程，被调试的则是子进程。</p>
@@ -652,7 +781,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <p>通过objdump –h导出ELF可执行文件中的段头信息，我们注意到其中有几个段的名字是以.debug_打头的，这些就是DWARF格式的调试段：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="number">26</span> .debug_aranges <span class="number">00000020</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001037</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">27</span> .debug_pubnames <span class="number">00000028</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001057</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">28</span> .debug_info   <span class="number">000000</span>cc  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000107f</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">29</span> .debug_abbrev <span class="number">0000008</span>a  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000114b</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">30</span> .debug_line   <span class="number">0000006b</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">000011</span>d5</div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">31</span> .debug_frame  <span class="number">00000044</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001240</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">32</span> .debug_str    <span class="number">000000</span>ae  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001284</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">33</span> .debug_loc    <span class="number">00000058</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001332</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div></pre></td></tr></table></figure>
 <p>每行的第一个数字表示每个段的大小，而最后一个数字表示距离ELF文件开始处的偏移量。调试器就是利用这个信息来从可执行文件中读取相关的段信息，从而找到可执行程序和源代码之间的关系。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -677,11 +806,11 @@ meaning of the rest of the arguments depends on the operation, but except for on
     <link href="http://vinoit.me/2016/07/05/java-ordernum-generate/"/>
     <id>http://vinoit.me/2016/07/05/java-ordernum-generate/</id>
     <published>2016-07-05T03:31:05.000Z</published>
-    <updated>2016-08-13T12:28:52.000Z</updated>
+    <updated>2016-08-17T05:28:17.000Z</updated>
     
     <content type="html"><![CDATA[<p>分享一个自己在项目里写的订单号生成工具类，不当之处望各位指出。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.project.utils;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">import</span> java.text.SimpleDateFormat;</div><div class="line"><span class="keyword">import</span> java.util.Date;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicInteger;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by Vino on 16/5/7.</div><div class="line"> * 订单生成规则:</div><div class="line"> * 正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+循环自增值(3位)+随机码(2位)共16位</div><div class="line"> * 非正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+随机码(5位)共16位</div><div class="line"> * 注:非正常情况在同时开启1W个线程的情况下并未发生</div><div class="line"> * 业务编码(1位)：自营、通用件、全车件待定</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OrderNumGen</span> </span>&#123;</div><div class="line">    <span class="comment">//循环自增上限,超出则从初始值开始</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> maxLoop = <span class="number">999</span>;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> initNum  = <span class="number">100</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> AtomicInteger atomicInteger;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: DCL获取单例atomicInteger</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AtomicInteger <span class="title">getAtomicInteger</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">synchronized</span> (OrderNumGen.class) &#123;</div><div class="line">                <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>)</div><div class="line">                    atomicInteger = <span class="keyword">new</span> AtomicInteger(initNum);<span class="comment">//初始值为100</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> atomicInteger;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 订单号生成</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">next</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">//获取单例</span></div><div class="line">        AtomicInteger atomicInteger = getAtomicInteger();</div><div class="line">        <span class="comment">//原子性自增并返回自增前的值</span></div><div class="line">        <span class="keyword">int</span> nextValue = atomicInteger.getAndIncrement();</div><div class="line">        <span class="comment">//若循环次数已超过上限</span></div><div class="line">        <span class="keyword">if</span> (nextValue &gt; maxLoop) &#123;</div><div class="line">            <span class="comment">//CAS更新值成功</span></div><div class="line">            <span class="keyword">if</span> (atomicInteger.compareAndSet(nextValue + <span class="number">1</span>, initNum)) &#123;</div><div class="line">                atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">return</span> getNextNormally(initNum);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">else</span> &#123;<span class="comment">//CAS更新值失败</span></div><div class="line">                <span class="comment">//重新获取</span></div><div class="line">                nextValue = atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">if</span> (nextValue &lt;= maxLoop)</div><div class="line">                    <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">                <span class="keyword">else</span>&#123;<span class="comment">//非正常情况下</span></div><div class="line">                    <span class="keyword">return</span> getNextUnNormally();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line"></div><div class="line"></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextNormally</span><span class="params">(<span class="keyword">int</span> nextValue)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum=(<span class="keyword">int</span>)(Math.random()*<span class="number">90</span>)+<span class="number">10</span>;<span class="comment">//2位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+nextValue+randomNum);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextUnNormally</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum = (<span class="keyword">int</span>)(Math.random()*<span class="number">90000</span>)+<span class="number">10000</span>;<span class="comment">//5位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+randomNum);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 获取订单号中的时间部分</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getDateNum</span><span class="params">()</span></span>&#123;</div><div class="line">        Date date = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat simpleDateFormat = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyMMddHHmmss"</span>);</div><div class="line">        String sTime = simpleDateFormat.format(date);</div><div class="line">        Integer nSecond = Integer.valueOf(sTime.substring(<span class="number">6</span>,<span class="number">8</span>)) * <span class="number">60</span> * <span class="number">60</span> +Integer.valueOf(sTime.substring(<span class="number">8</span>,<span class="number">10</span>)) * <span class="number">60</span></div><div class="line">                + Integer.valueOf(sTime.substring(<span class="number">10</span>,<span class="number">12</span>));</div><div class="line">        String sSecond = String.valueOf(nSecond);</div><div class="line">        <span class="keyword">if</span>(sSecond.length() &lt; <span class="number">5</span>)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">5</span>,j = sSecond.length(); i &gt; j; i--)&#123;</div><div class="line">                sSecond = <span class="string">"0"</span> + sSecond;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> sTime.substring(<span class="number">0</span>,<span class="number">6</span>)+sSecond;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -706,7 +835,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
     <link href="http://vinoit.me/2016/06/29/linux-slab-colour/"/>
     <id>http://vinoit.me/2016/06/29/linux-slab-colour/</id>
     <published>2016-06-29T10:52:25.000Z</published>
-    <updated>2016-08-13T12:25:25.000Z</updated>
+    <updated>2016-08-17T05:30:06.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="slab简介"><a href="#slab简介" class="headerlink" title="slab简介"></a>slab简介</h4><p>slab分配器是Linux内存管理中非常重要和复杂的一部分，其工作是针对一些经常分配并释放的对象，如进程描述符等，这些对象的大小一般比较小，如果直接采用伙伴系统来进行分配和释放，不仅会造成大量的内碎片，而且处理速度也太慢。而slab分配器是基于对象进行管理的，相同类型的对象归为一类(如进程描述符就是一类)，每当要申请这样一个对象，slab分配器就从一个slab列表中分配一个这样大小的单元出去，而当要释放时，将其重新保存在该列表中，而不是直接返回给伙伴系统。slab分配对象时，会使用最近释放的对象内存块，因此其驻留在CPU高速缓存的概率较高。</p>
 <h4 id="slab数据结构"><a href="#slab数据结构" class="headerlink" title="slab数据结构"></a>slab数据结构</h4><p>用于描述和管理cache的数据结构是struct kmem_cache，在struct kmem_cache中有一个struct kmem_list3*nodelists[<code>MAX_NUMNODES</code>]，<br>每个nodelists中都有着3条slab双向链表。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> kmem_list3 &#123;  </div><div class="line">    <span class="keyword">struct</span> list_head slabs_partial; <span class="comment">/*slab链表，包含空闲对象和已分配对象的slab描述符*/</span>  </div><div class="line">    <span class="keyword">struct</span> list_head slabs_full;   <span class="comment">/*slab链表，只包含非空闲的slab描述符*/</span>  </div><div class="line">    <span class="keyword">struct</span> list_head slabs_free;   <span class="comment">/*slab链表，只包含空闲的slab描述符*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> free_objects;    <span class="comment">/*高速缓存中空闲对象的个数*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> free_limit;       <span class="comment">/*空闲对象的上限*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> colour_next;       <span class="comment">/*下一个slab使用的颜色*/</span>  </div><div class="line">    <span class="keyword">spinlock_t</span> list_lock;  </div><div class="line">    <span class="keyword">struct</span> array_cache *shared; <span class="comment">/* shared per node */</span>  </div><div class="line">    <span class="keyword">struct</span> array_cache **alien; <span class="comment">/* on other nodes */</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span> next_reap;    <span class="comment">/* updated without locking */</span>  </div><div class="line">    <span class="keyword">int</span> free_touched;       <span class="comment">/* updated without locking */</span>  </div><div class="line">&#125;;</div></pre></td></tr></table></figure></p>
@@ -738,7 +867,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <p>如果让对象B向后移动16个字节，也就是对象B的前16个字节与第二个cache line 交互，后16个与第3个交互。<br>那么第一个为2次，因为只有开头结尾2次要与内存交互，其它每次都在L1 DATACACHE 中写就可以了。第2个cache line为20次左右(后面的只须在CACHE中读写),第3个cache line为20次，<br>3个line一共才41次，你不妨仔细模拟一下。  </p>
 <p>所以进行错位能降低CACHE的交互次数，从而提高CPU处理速度能力。  </p>
 <p>这个错位(也就是上面的16个字节)就是colouroff.</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 ]]></content>
     
     <summary type="html">
@@ -761,7 +890,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
     <link href="http://vinoit.me/2016/06/28/linux-cold-hot-page/"/>
     <id>http://vinoit.me/2016/06/28/linux-cold-hot-page/</id>
     <published>2016-06-28T11:01:36.000Z</published>
-    <updated>2016-08-13T12:27:53.000Z</updated>
+    <updated>2016-08-17T05:29:05.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是冷热页？"><a href="#什么是冷热页？" class="headerlink" title="什么是冷热页？"></a>什么是冷热页？</h4><p>在Linux Kernel的物理内存管理的<a href="/2016/06/28/linux-buddy-system/">Buddy System</a>中，引入了冷热页的概念。冷页表示该空闲页已经不再高速缓存中了(一般是指L2 Cache)，热页表示该空闲页仍然在高速缓存中。冷热页是针对于每CPU的，每个zone中，都会针对于所有的CPU初始化一个冷热页的per-cpu-pageset.</p>
 <h4 id="为什么要有冷热页？"><a href="#为什么要有冷热页？" class="headerlink" title="为什么要有冷热页？"></a>为什么要有冷热页？</h4><p>作用有3点：</p>
@@ -782,7 +911,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li><a href="http://blog.tek-life.com/%E8%AE%A4%E8%AF%86linuxarm-%E4%B8%AD%E7%9A%84%E5%86%B7%E7%83%AD%E9%A1%B5/" target="_blank" rel="external">认识Linux/ARM 中的冷热页</a></li>
 <li>Linux源码</li>
 </ul>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -806,7 +935,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
     <link href="http://vinoit.me/2016/06/28/linux-buddy-system/"/>
     <id>http://vinoit.me/2016/06/28/linux-buddy-system/</id>
     <published>2016-06-28T02:49:31.000Z</published>
-    <updated>2016-08-13T12:27:01.000Z</updated>
+    <updated>2016-08-17T05:28:54.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是Buddy-System"><a href="#什么是Buddy-System" class="headerlink" title="什么是Buddy System?"></a>什么是Buddy System?</h4><p>Buddy System是Linux Kernel 进行物理内存页管理的一个子系统。在Buddy System中，管理的一个基本单位是block，每一个block有若干个连续的物理页组成，物理页的个数为2^n，这个n在buddy system中被称为order。<code>相同order的block，挂载一条双向链表上。</code>当某个block空闲时，只要发现对应的伙伴也是空闲的，就和伙伴组成一个页数为2^（n+1）的block，挂载在order为(n+1)的双向链表上，换句话说一个页数为2^n的block，是由两个页数为2^（n-1）的伙伴block组成的。因此，一个block的伙伴肯定是和这个block在 <strong>物理地址上是连续</strong> 的。在Linux中，order的默认的取值范围是[0,10]。</p>
 <p>linux中用<code>struct zone</code>来描述一个内存管理区(<em>ZONE_DMA:0~16MB  ZONE_NORMAL:16MB~896MB  ZONE_HIGHMEM:896MB~end</em>)<br>其中的struct free_area中的<code>每一个元素</code>表示的是由相同order的block构成的<code>双向链表</code>。free_area[i]表示该free_area处的链表的order为i。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> zone &#123;  </div><div class="line">    ...  </div><div class="line">         ...      </div><div class="line">    <span class="keyword">struct</span> free_area    free_area[MAX_ORDER];  </div><div class="line">    ...  </div><div class="line">    ...  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -843,7 +972,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li><a href="http://blog.csdn.net/vanbreaker/article/details/7605367" target="_blank" rel="external">Linux伙伴系统(一)–伙伴系统的概述</a></li>
 <li><a href="http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4" target="_blank" rel="external">内存伙伴系统之查找伙伴算法</a></li>
 </ul>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 </mmzone.h>]]></content>
     
@@ -1103,7 +1232,7 @@ Host: google.com
     <link href="http://vinoit.me/2016/05/23/java-classfile-structure-example/"/>
     <id>http://vinoit.me/2016/05/23/java-classfile-structure-example/</id>
     <published>2016-05-23T05:25:43.000Z</published>
-    <updated>2016-08-13T12:30:43.000Z</updated>
+    <updated>2016-08-17T05:27:46.000Z</updated>
     
     <content type="html"><![CDATA[<p>本文通过一个简单的例子来讲解class文件结构,<strong>某些具体结构概念和信息需结合我之前的两篇博文<a href="/2016/05/22/java-classfile-structure-concept/">《理解JVM中class文件结构–概念部分》</a>，<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a></strong>，建议可以通过上面的两篇博文先了解这方面的一些知识再看本文。<br>java代码（jdk7）：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> pac1;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by vino on 2016/5/21.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestClass</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> testInt;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        testInt = <span class="number">1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>对应class文件(十六进制)：<br><img src="/images/jvm/java-classfile-structure-example-0.PNG" alt=""><br>接下来的顺序和class文件结构顺序一致</p>
@@ -1153,8 +1282,7 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
-]]></content>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>]]></content>
     
     <summary type="html">
     
@@ -1176,7 +1304,7 @@ Host: google.com
     <link href="http://vinoit.me/2016/05/22/java-classfile-structure-detail/"/>
     <id>http://vinoit.me/2016/05/22/java-classfile-structure-detail/</id>
     <published>2016-05-22T06:21:30.000Z</published>
-    <updated>2016-08-13T12:30:31.000Z</updated>
+    <updated>2016-08-17T05:27:34.000Z</updated>
     
     <content type="html"><![CDATA[<p>本文描述的是class结构的具体信息，排版顺序按照class结构。</p>
 <h4 id="常量池"><a href="#常量池" class="headerlink" title="常量池"></a>常量池</h4><h5 id="通用格式"><a href="#通用格式" class="headerlink" title="通用格式"></a>通用格式</h5><p>所有的常量池项都具有如下通用格式：<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">cp_info &#123;</div><div class="line">    u1 tag;</div><div class="line">    u1 info[];</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
@@ -1523,7 +1651,7 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -1548,7 +1676,7 @@ Host: google.com
     <link href="http://vinoit.me/2016/05/22/java-classfile-structure-concept/"/>
     <id>http://vinoit.me/2016/05/22/java-classfile-structure-concept/</id>
     <published>2016-05-22T05:38:49.000Z</published>
-    <updated>2016-08-13T12:30:06.000Z</updated>
+    <updated>2016-08-17T05:27:22.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是class文件"><a href="#什么是class文件" class="headerlink" title="什么是class文件"></a>什么是class文件</h4><p>java源代码（后缀名是.java）经过编译器编译之后会生成class文件（后缀名是.class），每一个 Class 文件都对应着唯一一个类或接口的定义信息，但是相对地， 类或接口并不一定都得定义在文件里，我们只是通俗地将任意一个有效的类或接口所应当满足的格式称为“ Class 文件格式”， 即使它不一定以磁盘文件的形式存在。</p>
 <p>每个 Class 文件都是由 8 字节为单位的字节流组成，所有的 16 位、 32 位和 64 位长度的数据将被构造成 2 个、 4 个和 8 个 8 字节单位来表示。多字节数据项总是按照 <a href="https://en.wikipedia.org/wiki/Endianness" target="_blank" rel="external">Big-Endian</a>的顺序进行存储。<br>JVM规范还定义了一组私有数据类型来表示 Class 文件的内容，它们包括 <code>u1， u2 和 u4</code>，分别代表了 <code>1、 2 和 4</code>个字节的无符号。</p>
@@ -1561,7 +1689,7 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -1652,7 +1780,7 @@ Host: google.com
     <link href="http://vinoit.me/2016/05/20/linux-memory-alloc/"/>
     <id>http://vinoit.me/2016/05/20/linux-memory-alloc/</id>
     <published>2016-05-20T14:06:51.000Z</published>
-    <updated>2016-08-13T12:28:36.000Z</updated>
+    <updated>2016-08-17T05:29:54.000Z</updated>
     
     <content type="html"><![CDATA[<p>内存分配的原理__进程分配内存有两种方式，分别由两个系统调用完成：brk和mmap（不考虑共享内存）。</p>
 <h4 id="如何查看进程发生缺页中断的次数？"><a href="#如何查看进程发生缺页中断的次数？" class="headerlink" title="如何查看进程发生缺页中断的次数？"></a>如何查看进程发生缺页中断的次数？</h4><p>用<code>ps -o majflt,minflt -C program</code>命令查看。</p>
@@ -1703,7 +1831,7 @@ Host: google.com
 <hr>
 <h4 id="mmap-样例"><a href="#mmap-样例" class="headerlink" title="mmap 样例"></a>mmap 样例</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">1000000</span>, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">1000000</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">int</span> fd;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line"></div><div class="line">	fd = open(<span class="string">"/tmp/mmap"</span>, O_CREAT|O_RDWR, <span class="number">00777</span>);</div><div class="line">	lseek(fd, <span class="number">100</span>, SEEK_SET);</div><div class="line">	write(fd, <span class="string">""</span>, <span class="number">1</span>);</div><div class="line">	mp = <span class="built_in">malloc</span>(<span class="number">1000000</span>);</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">100</span>, PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</div><div class="line">	i = *mp;</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">100</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 ]]></content>
     
     <summary type="html">
@@ -1727,7 +1855,7 @@ Host: google.com
     <link href="http://vinoit.me/2016/05/19/when-jvm-load-class/"/>
     <id>http://vinoit.me/2016/05/19/when-jvm-load-class/</id>
     <published>2016-05-19T11:00:58.000Z</published>
-    <updated>2016-08-13T12:25:01.000Z</updated>
+    <updated>2016-08-17T05:30:35.000Z</updated>
     
     <content type="html"><![CDATA[<h3 id="java的动态性"><a href="#java的动态性" class="headerlink" title="java的动态性"></a>java的动态性</h3><p>Java 语言是一种具有动态性的解释型编程语言，当指定程序运行的时候， Java 虚拟机就将编译生成的 . class 文件按照需求和一定的规则加载进内存，并组织成为一个完整的 Java 应用程序。 Java 语言把每个单独的类 Class 和接口 Implements 编译成单独的一个 . class 文件，这些文件对于 Java 运行环境来说就是一个个可以动态加载的单元。正是因为 Java 的这种特性，我们可以在不重新编译其它代码的情况下，只编译需要修改的单元，并把修改文件编译后的 . class 文件放到 Java 的路径当中， 等到下次该 Java 虚拟机器重新激活时，这个逻辑上的 Java 应用程序就会因为加载了新修改的 .class 文件，自己的功能也做了更新，这就是 Java 的动态性。</p>
 <h3 id="类的生命周期"><a href="#类的生命周期" class="headerlink" title="类的生命周期"></a>类的生命周期</h3><p> 类从被加载到虚拟机内存中开始，到卸载出内存为止，它的整个生命周期包括了：加载（Loading）、验证（Verification）、准备（Preparation）、解析（Resolution）、初始化（Initialization）、使用（using）、和卸载（Unloading）七个阶段。其中验证、准备和解析三个部分统称为连接（Linking），这七个阶段的发生顺序如下图所示：<br> <img src="/images/jvm/when-jvm-load-class-0.PNG" alt=""><br> 如上图所示，加载、验证、准备、初始化和卸载这五个阶段的顺序是确定的，类的加载过程必须按照这个顺序来按部就班地开始，而解析阶段则不一定，它在某些情况下可以在初始化阶段后再开始。</p>
@@ -1749,7 +1877,7 @@ Host: google.com
 <h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><p>主类NotInitialization.java<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> pac1;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by vino on 2016/5/19.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NotInitialization</span> </span>&#123;</div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;  </div><div class="line">          <span class="keyword">new</span> SubClass();</div><div class="line">      &#125;   </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>输出结果：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SuperClass init!</div><div class="line">SubClass init!</div></pre></td></tr></table></figure></p>
 <p>如果此时的父类是一个接口，则只输出<code>SubClass init!</code>。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 ]]></content>
     
@@ -1765,112 +1893,6 @@ Host: google.com
       <category term="jvm" scheme="http://vinoit.me/tags/jvm/"/>
     
       <category term="java" scheme="http://vinoit.me/tags/java/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>JVM内存模型及垃圾收集策略解析</title>
-    <link href="http://vinoit.me/2016/05/19/jvm-gc-tactics/"/>
-    <id>http://vinoit.me/2016/05/19/jvm-gc-tactics/</id>
-    <published>2016-05-19T05:26:25.000Z</published>
-    <updated>2016-08-13T12:29:19.000Z</updated>
-    
-    <content type="html"><![CDATA[<h3 id="JVM内存模型"><a href="#JVM内存模型" class="headerlink" title="JVM内存模型"></a>JVM内存模型</h3><p>Java虚拟机的内存模型分为五个部分，分别是：程序计数器、Java虚拟机栈、本地方法栈、堆、方法区。</p>
-<p>这五个区域既然是存储空间，那么为了避免Java虚拟机在运行期间内存存满的情况，就必须得有一个垃圾收集者的角色，不定期地回收一些无效内存，以保障Java虚拟机能够健康地持续运行。</p>
-<p>这个垃圾收集者就是平常我们所说的“垃圾收集器”，那么垃圾收集器在何时清扫内存？清扫哪些数据？这就是接下来我们要解决的问题。</p>
-<p>程序计数器、Java虚拟机栈、本地方法栈都是线程私有的，也就是每条线程都拥有这三块区域，而且会随着线程的创建而创建，线程的结束而销毁。那么，垃圾收集器在何时清扫这三块区域的问题就解决了。</p>
-<p>此外，Java虚拟机栈、本地方法栈中的栈帧会随着方法的开始而入栈，方法的结束而出栈，并且每个栈帧中的本地变量表都是在类被加载的时候就确定的。因此以上三个区域的垃圾收集工作具有确定性，垃圾收集器能够清楚地知道何时清扫这三块区域中的哪些数据。</p>
-<p>然而，堆和方法区中的内存清理工作就没那么容易了。<br>堆和方法区所有线程共享，并且都在JVM启动时创建，一直得运行到JVM停止时。因此它们没办法根据线程的创建而创建、线程的结束而释放。</p>
-<p>堆中存放JVM运行期间的所有对象，虽然每个对象的内存大小在加载该对象所属类的时候就确定了，但究竟创建多少个对象只有在程序运行期间才能确定。</p>
-<p>方法区中存放类信息、静态成员变量、常量。类的加载是在程序运行过程中，当需要创建这个类的对象时才会加载这个类。因此，JVM究竟要加载多少个类也需要在程序运行期间确定。<br>因此，堆和方法区的内存回收具有不确定性。</p>
-<h4 id="Generation"><a href="#Generation" class="headerlink" title="Generation"></a>Generation</h4><p>JVM堆一般又可以分为以下三部分：<br><img src="/images/jvm/jvm-gc-tactics-0.jpg" alt=""></p>
-<ul>
-<li>Perm</li>
-</ul>
-<p>Perm代主要保存class,method,filed对象，这部门的空间一般不会溢出，除非一次性加载了很多的类，不过在涉及到热部署的应用服务器的时候，有时候会遇到java.lang.OutOfMemoryError : PermGen space 的错误，造成这个错误的很大原因就有可能是每次都重新部署，但是重新部署后，类的class没有被卸载掉，这样就造成了大量的class对象保存在了perm中，这种情况下，一般重新启动应用服务器可以解决问题。</p>
-<ul>
-<li>Tenured</li>
-</ul>
-<p>Tenured区主要保存生命周期长的对象，一般是一些老的对象，当一些对象在Young复制转移一定的次数以后，对象就会被转移到Tenured区，一般如果系统中用了application级别的缓存，缓存中的对象往往会被转移到这一区间。</p>
-<ul>
-<li>Young</li>
-</ul>
-<p>Young区被划分为三部分，Eden区和两个大小严格相同的Survivor区，其中Survivor区间中，某一时刻只有其中一个是被使用的，另外一个留做垃圾收集时复制对象用，在Young区间变满的时候，minor GC就会将存活的对象移到空闲的Survivor区间中，根据JVM的策略，在经过几次垃圾收集后，任然存活于Survivor的对象将被移动到Tenured区间。</p>
-<h4 id="Sizing-the-Generations"><a href="#Sizing-the-Generations" class="headerlink" title="Sizing the Generations"></a>Sizing the Generations</h4><p>JVM提供了相应的参数来对内存大小进行配置。正如上面描述，JVM中堆被分为了3个大的区间，同时JVM也提供了一些选项对Young,Tenured的大小进行控制。<br><img src="/images/jvm/jvm-gc-tactics-1.jpg" alt=""></p>
-<ul>
-<li>Total Heap</li>
-</ul>
-<p><code>-Xms:</code>指定了JVM初始启动以后初始化内存</p>
-<p><code>-Xmx：</code>指定JVM堆得最大内存，在JVM启动以后，会分配<code>-Xmx</code>参数指定大小的内存给JVM，但是不一定全部使用，JVM会根据-Xms参数来调节真正用于JVM的内存</p>
-<p><code>-Xmx -Xms</code>之差就是三个Virtual空间的大小</p>
-<ul>
-<li>Young Generation</li>
-</ul>
-<p><code>-XX:NewRatio=8</code>意味着tenured 和 young的比值8：1，这样eden+2*survivor=1/9</p>
-<p>堆内存</p>
-<p><code>-XX:SurvivorRatio=32</code>意味着eden和一个survivor的比值是32：1，这样一个Survivor就占Young区的1/34.</p>
-<p><code>-Xmn</code> 参数设置了年轻代的大小</p>
-<ul>
-<li>Perm Generation</li>
-</ul>
-<p><code>-XX:PermSize=16M -XX:MaxPermSize=64M</code></p>
-<p>Thread Stack</p>
-<p><code>-XX:Xss=128K</code></p>
-<h4 id="堆栈分离的好处"><a href="#堆栈分离的好处" class="headerlink" title="堆栈分离的好处"></a>堆栈分离的好处</h4><p>如果从JAVA内存模型的角度去理解面向对象的设计，我们就会发现对象它完美的表示了堆和栈，对象的数据放在堆中，而我们编写的那些方法一般都是运行在栈中，因此面向对象的设计是一种非常完美的设计方式，它完美的统一了数据存储和运行。</p>
-<h3 id="JAVA垃圾收集器"><a href="#JAVA垃圾收集器" class="headerlink" title="JAVA垃圾收集器"></a>JAVA垃圾收集器</h3><h4 id="常见的垃圾收集策略"><a href="#常见的垃圾收集策略" class="headerlink" title="常见的垃圾收集策略"></a>常见的垃圾收集策略</h4><p><img src="/images/jvm/jvm-gc-tactics-2.jpg" alt=""></p>
-<p>所有的垃圾收集算法都面临同一个问题，那就是找出应用程序不可到达的内存块，将其释放，这里面得不可到达主要是指应用程序已经没有内存块的引用了，而在JAVA中，某个对象对应用程序是可到达的是指：这个对象被根（根主要是指类的静态变量，或者活跃在所有线程栈的对象的引用）引用或者对象被另一个可到达的对象引用。</p>
-<h5 id="Reference-Counting-引用计数）"><a href="#Reference-Counting-引用计数）" class="headerlink" title="Reference Counting(引用计数）"></a>Reference Counting(引用计数）</h5><p>  引用计数是最简单直接的一种方式，这种方式在每一个对象中增加一个引用的计数，这个计数代表当前程序有多少个引用引用了此对象，如果此对象的引用计数变为0，那么此对象就可以作为垃圾收集器的目标对象来收集。</p>
-<p><code>优点：</code><br>简单，直接，不需要暂停整个应用<br><code>缺点：</code><br>1.需要编译器的配合，编译器要生成特殊的指令来进行引用计数的操作，比如每次将对象赋值给新的引用，或者者对象的引用超出了作用域等。<br>2.不能处理循环引用的问题</p>
-<h5 id="跟踪收集器"><a href="#跟踪收集器" class="headerlink" title="跟踪收集器"></a>跟踪收集器</h5><p>跟踪收集器首先要暂停整个应用程序，然后开始从根对象扫描整个堆，判断扫描的对象是否有对象引用，这里面有三个问题需要搞清楚：<br><img src="/images/jvm/jvm-gc-tactics-3.jpg" alt=""><br>1．如果每次扫描整个堆，那么势必让GC的时间变长，从而影响了应用本身的执行。因此在JVM里面采用了分代收集，在新生代收集的时候minor gc只需要扫描新生代，而不需要扫描老生代。</p>
-<p>2．JVM采用了分代收集以后，minor gc只扫描新生代，但是minor gc怎么判断是否有老生代的对象引用了新生代的对象，JVM采用了卡片标记的策略，卡片标记将老生代分成了一块一块的，划分以后的每一个块就叫做一个卡片，JVM采用卡表维护了每一个块的状态，当JAVA程序运行的时候，如果发现老生代对象引用或者释放了新生代对象的引用，那么就JVM就将卡表的状态设置为脏状态，这样每次minor gc的时候就会只扫描被标记为脏状态的卡片，而不需要扫描整个堆。具体如下图：<br>3．GC在收集一个对象的时候会判断是否有引用指向对象，在JAVA中的引用主要有四种：Strong reference,Soft reference,Weak reference,Phantom reference.</p>
-<ul>
-<li>Strong Reference</li>
-</ul>
-<p>强引用是JAVA中默认采用的一种方式，我们平时创建的引用都属于强引用。如果一个对象没有强引用，那么对象就会被回收。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">testStrongReference</span><span class="params">()</span></span>&#123;  </div><div class="line">      Object referent = <span class="keyword">new</span> Object();  </div><div class="line">      Object strongReference = referent;  </div><div class="line">      referent = <span class="keyword">null</span>;  </div><div class="line">      System.gc();  </div><div class="line">      assertNotNull(strongReference);  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<ul>
-<li>Soft Reference</li>
-</ul>
-<p>软引用的对象在GC的时候不会被回收，只有当内存不够用的时候才会真正的回收，因此软引用适合缓存的场合，这样使得缓存中的对象可以尽量的再内存中待长久一点。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function">Public <span class="keyword">void</span> <span class="title">testSoftReference</span><span class="params">()</span></span>&#123;  </div><div class="line">      String  str =  <span class="string">"test"</span>;  </div><div class="line">      SoftReference&lt;String&gt; softreference = <span class="keyword">new</span> SoftReference&lt;String&gt;(str);  </div><div class="line">      str=<span class="keyword">null</span>;  </div><div class="line">      System.gc();  </div><div class="line">      assertNotNull(softreference.get());  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<ul>
-<li>Weak reference</li>
-</ul>
-<p>弱引用有利于对象更快的被回收，假如一个对象没有强引用只有弱引用，那么在GC后，这个对象肯定会被回收。<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function">Public <span class="keyword">void</span> <span class="title">testWeakReference</span><span class="params">()</span></span>&#123;  </div><div class="line">      String  str =  <span class="string">"test"</span>;  </div><div class="line">      WeakReference&lt;String&gt; weakReference = <span class="keyword">new</span> WeakReference&lt;String&gt;(str);  </div><div class="line">      str=<span class="keyword">null</span>;  </div><div class="line">      System.gc();  </div><div class="line">      assertNull(weakReference.get());  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<ul>
-<li>Phantom reference</li>
-</ul>
-<h6 id="Mark-Sweep-Collector-标记-清除收集器）"><a href="#Mark-Sweep-Collector-标记-清除收集器）" class="headerlink" title="Mark-Sweep Collector(标记-清除收集器）"></a>Mark-Sweep Collector(标记-清除收集器）</h6><p>标记清除收集器最早由Lisp的发明人于1960年提出，标记清除收集器停止所有的工作，从根扫描每个活跃的对象，然后标记扫描过的对象，标记完成以后，清除那些没有被标记的对象。</p>
-<p><code>优点：</code><br>1.解决循环引用的问题<br>2.不需要编译器的配合，从而就不执行额外的指令<br><code>缺点：</code><br>1.每个活跃的对象都要进行扫描，收集暂停的时间比较长。</p>
-<h6 id="Copying-Collector-复制收集器）"><a href="#Copying-Collector-复制收集器）" class="headerlink" title="Copying Collector(复制收集器）"></a>Copying Collector(复制收集器）</h6><p>复制收集器将内存分为两块一样大小空间，某一个时刻，只有一个空间处于活跃的状态，当活跃的空间满的时候，GC就会将活跃的对象复制到未使用的空间中去，原来不活跃的空间就变为了活跃的空间。复制收集器具体过程可以参考下图：<br><img src="/images/jvm/jvm-gc-tactics-4.jpg" alt=""><br><code>优点：</code><br>1.只扫描可以到达的对象，不需要扫描所有的对象，从而减少了应用暂停的时间<br><code>缺点：</code><br>1.需要额外的空间消耗，某一个时刻，总是有一块内存处于未使用状态<br>2.复制对象需要一定的开销</p>
-<h6 id="Mark-Compact-Collector-标记-整理收集器）"><a href="#Mark-Compact-Collector-标记-整理收集器）" class="headerlink" title="Mark-Compact Collector(标记-整理收集器）"></a>Mark-Compact Collector(标记-整理收集器）</h6><p>标记整理收集器汲取了标记清除和复制收集器的优点，它分两个阶段执行，在第一个阶段，首先扫描所有活跃的对象，并标记所有活跃的对象，第二个阶段首先清除未标记的对象，然后将活跃的的对象复制到堆得底部。标记整理收集器的过程示意图请参考下图：Mark-compact策略极大的减少了内存碎片，并且不需要像Copy Collector一样需要两倍的空间。<br><img src="/images/jvm/jvm-gc-tactics-5.jpg" alt=""></p>
-<h4 id="JVM的垃圾收集策略"><a href="#JVM的垃圾收集策略" class="headerlink" title="JVM的垃圾收集策略"></a>JVM的垃圾收集策略</h4><p>GC的执行时要耗费一定的CPU资源和时间的，因此在JDK1.2以后，JVM引入了分代收集的策略，其中对新生代采用<code>&quot;Copying Collector&quot;</code>策略，而对老生代采用了<code>“Mark-Compact&quot;</code>的策略。其中新生代的垃圾收集器命名为<code>“minor gc”</code>，老生代的GC命名为<code>&quot;Full Gc</code> 或者<code>Major GC&quot;</code>.其中用<code>System.gc()</code>强制执行的是<code>Full Gc</code>.</p>
-<h5 id="新生代垃圾收集"><a href="#新生代垃圾收集" class="headerlink" title="新生代垃圾收集"></a>新生代垃圾收集</h5><p>在新生代中，由于大量的对象都是“朝生夕死”，也就是一次垃圾收集后只有少量对象存活，因此我们可以将内存划分成三块：Eden、Survior1、Survior2，内存大小分别是8:1:1。分配内存时，只使用Eden和一块Survior1。当发现Eden+Survior1的内存即将满时，JVM会发起一次MinorGC，清除掉废弃的对象，并将所有存活下来的对象复制到另一块Survior2中。那么，接下来就使用Survior2+Eden进行内存分配。</p>
-<p>通过这种方式，只需要浪费10%的内存空间即可实现带有压缩功能的垃圾收集方法，避免了内存碎片的问题。</p>
-<p>但是，当一个对象要申请内存空间时，发现Eden+Survior中剩下的空间无法放置该对象，此时需要进行Minor GC，如果MinorGC过后空闲出来的内存空间仍然无法放置该对象，那么此时就需要将对象转移到老年代中，这种方式叫做“分配担保”。</p>
-<h5 id="什么是分配担保？"><a href="#什么是分配担保？" class="headerlink" title="什么是分配担保？"></a>什么是分配担保？</h5><p>当JVM准备为一个对象分配内存空间时，发现此时Eden+Survior中空闲的区域无法装下该对象，那么就会触发MinorGC，对该区域的废弃对象进行回收。但如果MinorGC过后只有少量对象被回收，仍然无法装下新对象，那么此时需要将Eden+Survior中的所有对象都转移到老年代中，然后再将新对象存入Eden区。这个过程就是“分配担保”。</p>
-<h5 id="老年代垃圾收集"><a href="#老年代垃圾收集" class="headerlink" title="老年代垃圾收集"></a>老年代垃圾收集</h5><p>老年代中的对象一般寿命比较长，因此每次垃圾回收会有大量对象存活，因此如果选用“复制”算法，每次需要复制大量存活的对象，会导致效率很低。而且，在新生代中使用“复制”算法，当Eden+Survior中都装不下某个对象时，可以使用老年代的内存进行“分配担保”，而如果在老年代使用该算法，那么在老年代中如果出现Eden+Survior装不下某个对象时，没有其他区域给他作分配担保。因此，老年代中一般使用“标记-整理”算法。</p>
-<h5 id="方法区垃圾收集"><a href="#方法区垃圾收集" class="headerlink" title="方法区垃圾收集"></a>方法区垃圾收集</h5><p>很多人认为方法区（或者HotSpot虚拟机中的永久代）是没有垃圾收集的，Java虚拟机规范中确实说过可以不要求虚拟机在方法区实现垃圾收集，而且在方法区进行垃圾收集的“性价比”一般比较低：在堆中，尤其是在新生代中，常规应用进行一次垃圾收集一般可以回收70%~95%的空间，而永久代的垃圾收集效率远低于此。</p>
-<p>永久代的垃圾收集主要回收两部分内容：废弃常量和无用的类。回收废弃常量与回收Java堆中的对象非常类似。以常量池中字面量的回收为例，假如一个字符串“abc”已经进入了常量池中，但是当前系统没有任何一个String对象是叫做“abc”的，换句话说是没有任何String对象引用常量池中的“abc”常量，也没有其他地方引用了这个字面量，如果在这时候发生内存回收，而且必要的话，这个“abc”常量就会被系统“请”出常量池。常量池中的其他类（接口）、方法、字段的符号引用也与此类似。</p>
-<p>判定一个常量是否是“废弃常量”比较简单，而要判定一个类是否是“无用的类”的条件则相对苛刻许多。类需要同时满足下面3个条件才能算是“无用的类”：</p>
-<p>该类所有的实例都已经被回收，也就是Java堆中不存在该类的任何实例。</p>
-<p>加载该类的ClassLoader已经被回收。</p>
-<p>该类对应的java.lang.Class 对象没有在任何地方被引用，无法在任何地方通过反射访问该类的方法。</p>
-<p>虚拟机可以对满足上述3个条件的无用类进行回收，这里说的仅仅是“可以”，而不是和对象一样，不使用了就必然会回收。是否对类进行回收，HotSpot虚拟机提供了<code>-Xnoclassgc</code>参数进行控制，还可以使用<code>-verbose:class及-XX:+TraceClassLoading、 -XX:+TraceClassUnLoading</code>查看类的加载和卸载信息。</p>
-<p>在大量使用反射、动态代理、CGLib等bytecode框架的场景，以及动态生成JSP和OSGi这类频繁自定义ClassLoader的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。</p>
-<font color="Darkorange">尊重他人劳动,转载请在正文明显处注明原文地址。</font>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h3 id=&quot;JVM内存模型&quot;&gt;&lt;a href=&quot;#JVM内存模型&quot; class=&quot;headerlink&quot; title=&quot;JVM内存模型&quot;&gt;&lt;/a&gt;JVM内存模型&lt;/h3&gt;&lt;p&gt;Java虚拟机的内存模型分为五个部分，分别是：程序计数器、Java虚拟机栈、本地方法栈、堆、方法区。
-    
-    </summary>
-    
-      <category term="jvm" scheme="http://vinoit.me/categories/jvm/"/>
-    
-    
-      <category term="jvm" scheme="http://vinoit.me/tags/jvm/"/>
-    
-      <category term="GC" scheme="http://vinoit.me/tags/GC/"/>
     
   </entry>
   

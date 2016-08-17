@@ -111,5 +111,5 @@ buddy system根据参数order，在要求的zone中查找对应的链表。若�
 - [内存伙伴系统之查找伙伴算法](http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4)
 
 
-<font color= Darkorange>尊重他人劳动,转载请在正文明显处注明原文地址。</font>
+<font color= Darkorange>如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
