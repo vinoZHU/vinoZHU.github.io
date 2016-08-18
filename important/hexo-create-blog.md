@@ -100,4 +100,4 @@ photos:
 
 参考：[Jekyll迁移到Hexo搭建个人博客](http://www.ezlippi.com//blog/2016/02/jekyll-to-hexo.html)
 
-<font color= Darkorange>如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+><font color= Darkorange>如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>

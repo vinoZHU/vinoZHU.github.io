@@ -4,6 +4,102 @@
   
     
     <entry>
+      <title><![CDATA[Maven小教]]></title>
+      <url>http://vinoit.me/2016/08/18/maven-tutorial/</url>
+      <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
+<ul>
+<li>在条件允许的情况下能自动生成源代码。</li>
+<li>根据源代码能自动生成文档</li>
+<li>能编译源代码</li>
+<li>对于java项目，要能将编译好的代码打包成JAR包，WAR包等。</li>
+<li>能将打包后的文件部署在服务器、仓库或者其他地方。</li>
+<li>。。。</li>
+</ul>
+<p>这些步骤虽然也可以人工手动完成，但是效率比不上构建工具，况且人工出错的概率更大。</p>
+<h4 id="Maven总览–核心概念"><a href="#Maven总览–核心概念" class="headerlink" title="Maven总览–核心概念"></a>Maven总览–核心概念</h4><h5 id="pom-xml"><a href="#pom-xml" class="headerlink" title="pom.xml"></a>pom.xml</h5><p>Maven最核心的就是一个叫做<code>pom.xml</code>的文件，使用Maven构建项目时所需要的所有信息都包含在该文件中，例如项目的版本号，需要的依赖包等等。当你执行一条<code>mvn *</code>命令时，Maven需要根据<code>pom.xml</code>中的描述来进行操作。</p>
+<h5 id="Build-Life-Cycles-Phases-and-Goals"><a href="#Build-Life-Cycles-Phases-and-Goals" class="headerlink" title="Build Life Cycles, Phases and Goals"></a>Build Life Cycles, Phases and Goals</h5><p>Maven的构建过程被分成几个生命周期，一个生命周期又被分为若干个阶段，同时一个阶段中又会有若干个目标(相当于一个特定任务)。一条Maven命令通常为<code>mvn *</code>,其中<code>*</code>的内容为某个生命周期的名字，或者某个阶段的名字，又或者某个目标的名字。这三者在后文会给出具体解释。</p>
+<h5 id="Dependencies-and-Repositories"><a href="#Dependencies-and-Repositories" class="headerlink" title="Dependencies and Repositories"></a>Dependencies and Repositories</h5><p>所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。通过修改<code>pom.xml</code>中<code>&lt;dependency&gt;</code>的某个标签内容，你可以选择下载某个远程仓库中的某个依赖，在后文会涉及到。</p>
+<h5 id="Build-Plugins"><a href="#Build-Plugins" class="headerlink" title="Build Plugins"></a>Build Plugins</h5><p>插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，<a href="http://maven.apache.org/plugin-developers/index.html。" target="_blank" rel="external">http://maven.apache.org/plugin-developers/index.html。</a></p>
+<h5 id="Build-Profiles"><a href="#Build-Profiles" class="headerlink" title="Build Profiles"></a>Build Profiles</h5><p>在开发过程中项目可能需要处于不同的环境，这时候<code>pom.xml</code>中的一些配置可能需要修改。<code>Profiles</code>的作用就是当你在<code>pom.xml</code>中声明了一个<code>&lt;profile&gt;&lt;/profile&gt;</code>标签对之后，标签对里面的内容可以用来替换原本的配置值，具体在后文给出。</p>
+<h4 id="Maven和Ant的区别"><a href="#Maven和Ant的区别" class="headerlink" title="Maven和Ant的区别"></a>Maven和Ant的区别</h4><p>Ant也是Apache的一个构建工具，两者之间的最大区别是:Ant必须要求指定具体动作，细化程度达到如拷贝一个文件之类的操作。而Maven只要告诉它要做什么，具体做法在Maven中已经预先在<code>Phases</code>和<code>Goals</code>中定义过了。Ant强调怎么去做，而Maven则强调做什么。</p>
+<h4 id="Maven-pom-xml分析"><a href="#Maven-pom-xml分析" class="headerlink" title="Maven pom.xml分析"></a>Maven pom.xml分析</h4><p>pom是（Project Object Model）的缩写，每个Maven项目都有一个<code>pom.xml</code>与之对应，文件处于项目的根目录。当一个项目含有多个子项目时，主项目和每个子项目都对应一个<code>pom.xml</code>。此时既可以把整个项目一同构建，也可以只根据子项目的<code>pom.xml</code>来单独构建每个子项目。</p>
+<p>文件内容描述了该Maven项目的本身信息，需要的依赖（JAR files），应该构建哪些内容，需要的资源等等。以下是一个最简化的<code>pom.xml</code>文件：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">                      http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure>
+<ul>
+<li><code>modelVersion</code>元素指定你所使用的POM模型，4.0.0版本对应Maven 2.x或者3.x版本。</li>
+<li><code>groupId</code>元素对于开源项目(e.g.中央仓库的依赖）来说必须是唯一的，因为Maven寻找依赖时必须根据groupId。对于大多数普通使用者来说，groupId和项目包名类似。如果是个网站项目，也可以是网站的域名。这里提一点，假如想让自己的项目变成一个Maven库，以上<code>pom.xml</code>的groupId为<code>com.vino</code>,则在Maven库中的文件目录存在形式为:<code>MAVEN_REPO/com/vino/</code>。</li>
+<li><code>artifactId</code>元素包含着项目名。将项目打包时，包名就是该元素内的值。该值中的点号不会变成文件分隔符。假如我有2个项目，groupId都为<code>com.vino</code>, artifactId一个为<code>app1</code>，一个为<code>maven.app2</code>,当我将2个项目部署成本地Maven库时，目录形式为:<code>MAVEN_REPO/com/vino/app1/</code>、<code>MAVEN_REPO/com/vino/maven.app2/</code>。</li>
+<li><code>version</code>元素表明当前项目的版本号，相当于在一个项目下面再划分了一个层次。</li>
+</ul>
+<p>使用上述<code>pom.xml</code>部署成本地Maven库的文件为:<code>MAVEN_REPO/com/vino/maven-app/1.0.0/maven-app-1.0.0.jar</code></p>
+<h4 id="Maven依赖"><a href="#Maven依赖" class="headerlink" title="Maven依赖"></a>Maven依赖</h4><p>只要不是太小的项目，基本上都需要第三方的JAR包。但是这些JAR包一般都是有不同的版本的，如果手动更新、管理这些JAR包，必定又麻烦又费时。Maven内置了依赖管理，只需要在<code>pom.xml</code>中声明，在构建项目时Maven便会将依赖从中央仓库下载到你的本地仓库。如果这些第三方的依赖同时也需要一些其他依赖，Maven会将这些依赖统统下载到你的本地仓库。以下是使用的一个样例:<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">   http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    </div><div class="line">      <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jsoup<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jsoup<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.7.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.8.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line"></div><div class="line">      <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div><div class="line">    </div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">build</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">build</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p>项目中需要的每个依赖，都放在一个<code>&lt;dependency&gt;&lt;/dependency&gt;</code>标签对中，并且用<code>groupId</code>,<code>artifactId</code>,<code>version</code>进行描述。下载到本地之后，两个依赖的目录形式为:<code>MAVEN_REPO/junit/junit/4.8.1/</code>、<code>MAVEN_REPO/org/jsoup/jsoup/1.7.1/</code>。目录内容中除了JAR包，还有一个该依赖的<code>pom.xml</code>文件和一些用于校对内容完整性的文件。</p>
+<p><strong>将本地JAR包作为依赖</strong><br>有时候某些开源项目没有放在Maven的中央仓库，需要单独下载。这时候需要将下载到本地的JAR包作为一个项目依赖来使用，具体用法如下:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>mydependency<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mydependency<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">scope</span>&gt;</span>system<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">systemPath</span>&gt;</span>$&#123;basedir&#125;/war/WEB-INF/lib/mydependency.jar<span class="tag">&lt;/<span class="name">systemPath</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>这里需要注意的是: <code>groupId</code>和<code>artifactId</code>可以乱填（但一般是依赖的名字），<code>scope</code>必须填<code>system</code>,表明是本系统的文件，<code>version</code>同样可以乱填，<code>systemPath</code>就是JAR包的位置，<code>${basedir}</code>代表<code>pom.xml</code>所在的目录。</p>
+<p><strong>快照依赖</strong><br>所谓快照依赖，就是一些仍处于开发状态的依赖。当使用快照依赖时，你不需要经常性地去手动更新版本号来获得最新的依赖。你可以设置一个时间间隔，Maven会自动的每隔一段时间将依赖下载的本地，即使中央仓库的依赖并未更新。但前提是，该依赖的版本号中的大版本号与<code>pom.xml</code>中的对应:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>假如中央仓库的版本号变成了2.0-SNAPSHOT,则Maven不会下载该依赖。</p>
+<h4 id="中央仓库与远程仓库的区别"><a href="#中央仓库与远程仓库的区别" class="headerlink" title="中央仓库与远程仓库的区别"></a>中央仓库与远程仓库的区别</h4><p>中央仓库是Maven官方的一个仓库，而远程仓库放在一个其他的服务器上，Maven可以从该服务器下载依赖。github就可以作为一个远程仓库，当我们把开源项目以约定好的的形式放到到github上之后，可以通过如下方式引用:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">repositories</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">repository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>your-mvn-repository<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>https://raw.github.com/yourGitHubId/mvn-repository/master/releases<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">repository</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div></pre></td></tr></table></figure>
+<h4 id="Maven-Build-Life-Cycles-Phases-and-Goals"><a href="#Maven-Build-Life-Cycles-Phases-and-Goals" class="headerlink" title="Maven Build Life Cycles, Phases and Goals"></a>Maven Build Life Cycles, Phases and Goals</h4><p>生命周期这个概念听上去感觉很模糊，可以把生命周期理解成一个完整的过程。Maven有3种内置的构建生命周期，相当于3种不同功能的过程:</p>
+<ol>
+<li>default</li>
+<li>clean</li>
+<li>site </li>
+</ol>
+<p>3者之间相互独立，分开执行。</p>
+<p><code>clean</code>的功能是就是将已生成的资源文件，编译后文件，JAR包，WAR包等清除，使用方法为:<br><code>mvn clean</code>。</p>
+<p><code>site</code>的功能是将当前项目的信息整理成一个文档，执行<code>mvn site</code>后，在项目的<code>target</code>目录下回生成一个<code>site</code>文件夹，其中的内容便是项目文档的html文件。</p>
+<p><code>default</code>生命周期做的事就是Maven主要功能，无法直接执行<code>mvn default</code>，只能执行它的阶段(Phases)或者目标(Goals)。</p>
+<p>它最常用的阶段(Phases)如下：</p>
+<table>
+<thead>
+<tr>
+<th style="text-align:center">Build Phase</th>
+<th style="text-align:left">Description</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:center">validate</td>
+<td style="text-align:left">验证项目是否无错误，所有的必须的信息都具备了，包括所需要的依赖是否已经下载。</td>
+</tr>
+<tr>
+<td style="text-align:center">compile</td>
+<td style="text-align:left">编译项目源代码</td>
+</tr>
+<tr>
+<td style="text-align:center">test</td>
+<td style="text-align:left">运行单元测试中的代码，这些测试的代码不应该没被打包或者部署。</td>
+</tr>
+<tr>
+<td style="text-align:center">package</td>
+<td style="text-align:left">将编译好的代码打包成某种格式，比如JAR或者WAR等</td>
+</tr>
+<tr>
+<td style="text-align:center">install</td>
+<td style="text-align:left">将package后的包安装到本地仓库，可以作为一个依赖来使用</td>
+</tr>
+<tr>
+<td style="text-align:center">deploy</td>
+<td style="text-align:left">将最终的包拷贝到远程仓库，供他人使用</td>
+</tr>
+</tbody>
+</table>
+<p>当我想使用<code>package</code>，只需在<code>pom.xml</code>目录执行<code>mvn package</code>,这时候在项目的<code>target</code>下会出现一个WAR包（如果是webapp）。但是我都没编译，怎么就可以打包了呢？事实上，当执行某个阶段命令时，该命令所属的生命周期之前的所有阶段步骤都会按照顺序被执行一遍。所以在<code>mvn package</code>被执行时，之前的命令（包括 mvn compile）已经执行过了。</p>
+<p>现在构建阶段已经知道了是怎么回事，现在就剩下目标了，目标可以理解为构建阶段中的一个具体任务。比如<code>dependency:copy-dependencies</code>就是一个目标（任务），执行<code>mvn dependency:copy-dependencies</code>时,会在<code>target</code>目录下生成一个<code>dependency</code>文件夹，内容为该项目使用的所有依赖(JAR files)。</p>
+<p>关于这三者的完整的信息可以查看官网，<a href="http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html。" target="_blank" rel="external">http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html。</a></p>
+<h4 id="Maven-Build-Profiles"><a href="#Maven-Build-Profiles" class="headerlink" title="Maven Build Profiles"></a>Maven Build Profiles</h4><p>上面提到过，profile可以简单地认为是一个环境。使用方法很简单，如下:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">   http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">  <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">profiles</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">profile</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>test<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">activation</span>&gt;</span>...<span class="tag">&lt;/<span class="name">activation</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">build</span>&gt;</span>...<span class="tag">&lt;/<span class="name">build</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">modules</span>&gt;</span>...<span class="tag">&lt;/<span class="name">modules</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">repositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">pluginRepositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">pluginRepositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">reporting</span>&gt;</span>...<span class="tag">&lt;/<span class="name">reporting</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencyManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencyManagement</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">distributionManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">distributionManagement</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>以上是我整理的一些Maven相关的信息，主要是一些基础的原理性的内容。</p>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[linux内核笔记之进程（二）]]></title>
       <url>http://vinoit.me/2016/08/16/linux-kernel-note-process-tow/</url>
       <content type="html"><![CDATA[<h4 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h4><p>进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来对进程进行管理。进程描述符的数据结构是<code>struct task_struct</code>,与进程相关的所有信息都包含在该数据结构中，可想而知该数据结构是十分复杂的。</p>
@@ -106,11 +202,13 @@
 <li>如果存在一项pid与新创建的进程相同，说明是同一线程组的进程。则通过task_struct-&gt;pids（struct pid_link类型）-&gt;pid-&gt;numbers(struct upid类型)-&gt;pid_chain（struct hlist_node类型）,将其链接到已存在项的tasks数组中对应pid类型的链表中去，这样的链表一共有4条。</li>
 </ol>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 
 
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -128,7 +226,9 @@
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_getpid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">  &#123;</div><div class="line">    <span class="keyword">return</span> current-&gt;tgid;</div><div class="line">  &#125;</div><div class="line"> <span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_gettid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line"> &#123;</div><div class="line">   <span class="keyword">return</span> current-&gt;pid;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
 <p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>]]></content>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+]]></content>
     </entry>
     
     <entry>
@@ -184,6 +284,7 @@
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>从硬件的角度，32位地址被分成了三部份。不管理软件怎么做，最终落实到硬件，也只识别这3部分。</p>
 <p>从软件的角度，由于多引入了两部份，也就是说，共有五部份。要让二层架构的硬件认识五部分，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。</p>
 <p>这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，软硬件又和谐了。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
 
@@ -191,6 +292,7 @@
 
 
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -440,7 +542,9 @@
 <p>按照前面段描述符表中的描述，可以把它们展开，发现其16-31位全为0，即四个段的基地址全为0。</p>
 <p>这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，<strong>在Linux下，逻辑地址与线性地址总是一致的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。</strong></p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -625,8 +729,10 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <p>通过objdump –h导出ELF可执行文件中的段头信息，我们注意到其中有几个段的名字是以.debug_打头的，这些就是DWARF格式的调试段：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="number">26</span> .debug_aranges <span class="number">00000020</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001037</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">27</span> .debug_pubnames <span class="number">00000028</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001057</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">28</span> .debug_info   <span class="number">000000</span>cc  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000107f</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">29</span> .debug_abbrev <span class="number">0000008</span>a  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000114b</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">30</span> .debug_line   <span class="number">0000006b</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">000011</span>d5</div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">31</span> .debug_frame  <span class="number">00000044</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001240</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">32</span> .debug_str    <span class="number">000000</span>ae  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001284</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">33</span> .debug_loc    <span class="number">00000058</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001332</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div></pre></td></tr></table></figure>
 <p>每行的第一个数字表示每个段的大小，而最后一个数字表示距离ELF文件开始处的偏移量。调试器就是利用这个信息来从可执行文件中读取相关的段信息，从而找到可执行程序和源代码之间的关系。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -635,8 +741,10 @@ meaning of the rest of the arguments depends on the operation, but except for on
       <url>http://vinoit.me/2016/07/05/java-ordernum-generate/</url>
       <content type="html"><![CDATA[<p>分享一个自己在项目里写的订单号生成工具类，不当之处望各位指出。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.project.utils;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">import</span> java.text.SimpleDateFormat;</div><div class="line"><span class="keyword">import</span> java.util.Date;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicInteger;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by Vino on 16/5/7.</div><div class="line"> * 订单生成规则:</div><div class="line"> * 正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+循环自增值(3位)+随机码(2位)共16位</div><div class="line"> * 非正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+随机码(5位)共16位</div><div class="line"> * 注:非正常情况在同时开启1W个线程的情况下并未发生</div><div class="line"> * 业务编码(1位)：自营、通用件、全车件待定</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OrderNumGen</span> </span>&#123;</div><div class="line">    <span class="comment">//循环自增上限,超出则从初始值开始</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> maxLoop = <span class="number">999</span>;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> initNum  = <span class="number">100</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> AtomicInteger atomicInteger;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: DCL获取单例atomicInteger</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AtomicInteger <span class="title">getAtomicInteger</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">synchronized</span> (OrderNumGen.class) &#123;</div><div class="line">                <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>)</div><div class="line">                    atomicInteger = <span class="keyword">new</span> AtomicInteger(initNum);<span class="comment">//初始值为100</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> atomicInteger;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 订单号生成</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">next</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">//获取单例</span></div><div class="line">        AtomicInteger atomicInteger = getAtomicInteger();</div><div class="line">        <span class="comment">//原子性自增并返回自增前的值</span></div><div class="line">        <span class="keyword">int</span> nextValue = atomicInteger.getAndIncrement();</div><div class="line">        <span class="comment">//若循环次数已超过上限</span></div><div class="line">        <span class="keyword">if</span> (nextValue &gt; maxLoop) &#123;</div><div class="line">            <span class="comment">//CAS更新值成功</span></div><div class="line">            <span class="keyword">if</span> (atomicInteger.compareAndSet(nextValue + <span class="number">1</span>, initNum)) &#123;</div><div class="line">                atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">return</span> getNextNormally(initNum);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">else</span> &#123;<span class="comment">//CAS更新值失败</span></div><div class="line">                <span class="comment">//重新获取</span></div><div class="line">                nextValue = atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">if</span> (nextValue &lt;= maxLoop)</div><div class="line">                    <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">                <span class="keyword">else</span>&#123;<span class="comment">//非正常情况下</span></div><div class="line">                    <span class="keyword">return</span> getNextUnNormally();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line"></div><div class="line"></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextNormally</span><span class="params">(<span class="keyword">int</span> nextValue)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum=(<span class="keyword">int</span>)(Math.random()*<span class="number">90</span>)+<span class="number">10</span>;<span class="comment">//2位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+nextValue+randomNum);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextUnNormally</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum = (<span class="keyword">int</span>)(Math.random()*<span class="number">90000</span>)+<span class="number">10000</span>;<span class="comment">//5位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+randomNum);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 获取订单号中的时间部分</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getDateNum</span><span class="params">()</span></span>&#123;</div><div class="line">        Date date = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat simpleDateFormat = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyMMddHHmmss"</span>);</div><div class="line">        String sTime = simpleDateFormat.format(date);</div><div class="line">        Integer nSecond = Integer.valueOf(sTime.substring(<span class="number">6</span>,<span class="number">8</span>)) * <span class="number">60</span> * <span class="number">60</span> +Integer.valueOf(sTime.substring(<span class="number">8</span>,<span class="number">10</span>)) * <span class="number">60</span></div><div class="line">                + Integer.valueOf(sTime.substring(<span class="number">10</span>,<span class="number">12</span>));</div><div class="line">        String sSecond = String.valueOf(nSecond);</div><div class="line">        <span class="keyword">if</span>(sSecond.length() &lt; <span class="number">5</span>)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">5</span>,j = sSecond.length(); i &gt; j; i--)&#123;</div><div class="line">                sSecond = <span class="string">"0"</span> + sSecond;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> sTime.substring(<span class="number">0</span>,<span class="number">6</span>)+sSecond;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -673,7 +781,9 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <p>如果让对象B向后移动16个字节，也就是对象B的前16个字节与第二个cache line 交互，后16个与第3个交互。<br>那么第一个为2次，因为只有开头结尾2次要与内存交互，其它每次都在L1 DATACACHE 中写就可以了。第2个cache line为20次左右(后面的只须在CACHE中读写),第3个cache line为20次，<br>3个line一共才41次，你不妨仔细模拟一下。  </p>
 <p>所以进行错位能降低CACHE的交互次数，从而提高CPU处理速度能力。  </p>
 <p>这个错位(也就是上面的16个字节)就是colouroff.</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -699,8 +809,10 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li><a href="http://blog.tek-life.com/%E8%AE%A4%E8%AF%86linuxarm-%E4%B8%AD%E7%9A%84%E5%86%B7%E7%83%AD%E9%A1%B5/" target="_blank" rel="external">认识Linux/ARM 中的冷热页</a></li>
 <li>Linux源码</li>
 </ul>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -742,8 +854,10 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li><a href="http://blog.csdn.net/vanbreaker/article/details/7605367" target="_blank" rel="external">Linux伙伴系统(一)–伙伴系统的概述</a></li>
 <li><a href="http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4" target="_blank" rel="external">内存伙伴系统之查找伙伴算法</a></li>
 </ul>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 </mmzone.h>]]></content>
     </entry>
     
@@ -1017,7 +1131,9 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>]]></content>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+]]></content>
     </entry>
     
     <entry>
@@ -1368,8 +1484,10 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -1387,8 +1505,10 @@ Host: google.com
 <ul>
 <li>参考《JVM规范SE7》</li>
 </ul>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -1495,7 +1615,6 @@ Host: google.com
 <hr>
 <h4 id="mmap-样例"><a href="#mmap-样例" class="headerlink" title="mmap 样例"></a>mmap 样例</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">1000000</span>, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">1000000</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">int</span> fd;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line"></div><div class="line">	fd = open(<span class="string">"/tmp/mmap"</span>, O_CREAT|O_RDWR, <span class="number">00777</span>);</div><div class="line">	lseek(fd, <span class="number">100</span>, SEEK_SET);</div><div class="line">	write(fd, <span class="string">""</span>, <span class="number">1</span>);</div><div class="line">	mp = <span class="built_in">malloc</span>(<span class="number">1000000</span>);</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">100</span>, PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</div><div class="line">	i = *mp;</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">100</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 ]]></content>
     </entry>
     
@@ -1522,8 +1641,10 @@ Host: google.com
 <h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><p>主类NotInitialization.java<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> pac1;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by vino on 2016/5/19.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">NotInitialization</span> </span>&#123;</div><div class="line">  <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> </span>&#123;  </div><div class="line">          <span class="keyword">new</span> SubClass();</div><div class="line">      &#125;   </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
 <p>输出结果：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SuperClass init!</div><div class="line">SubClass init!</div></pre></td></tr></table></figure></p>
 <p>如果此时的父类是一个接口，则只输出<code>SubClass init!</code>。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
 
+</blockquote>
 ]]></content>
     </entry>
     
@@ -1611,7 +1732,9 @@ Host: google.com
 <p>该类对应的java.lang.Class 对象没有在任何地方被引用，无法在任何地方通过反射访问该类的方法。</p>
 <p>虚拟机可以对满足上述3个条件的无用类进行回收，这里说的仅仅是“可以”，而不是和对象一样，不使用了就必然会回收。是否对类进行回收，HotSpot虚拟机提供了<code>-Xnoclassgc</code>参数进行控制，还可以使用<code>-verbose:class及-XX:+TraceClassLoading、 -XX:+TraceClassUnLoading</code>查看类的加载和卸载信息。</p>
 <p>在大量使用反射、动态代理、CGLib等bytecode框架的场景，以及动态生成JSP和OSGi这类频繁自定义ClassLoader的场景都需要虚拟机具备类卸载的功能，以保证永久代不会溢出。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -1947,7 +2070,9 @@ Host: google.com
 <p>slab高速缓存分专用缓存和通用缓存。专用缓存是对特定的对象，比如为内存描述符创建高速缓存。通用缓存则是针对一般情况，适合分配任意大小的物理内存，其接口即为<code>kmalloc()</code>。</p>
 <h5 id="非连续内存区的分配"><a href="#非连续内存区的分配" class="headerlink" title="非连续内存区的分配"></a>非连续内存区的分配</h5><p>内核通过<code>vmalloc()</code>来申请非连续的物理内存，若申请成功，该函数返回连续内存区的起始地址，否则，返回<code>NULL</code>。<code>vmalloc()</code>和<code>kmalloc()</code>申请的内存有所不同，<code>kmalloc()</code>所申请内存的线性地址与物理地址都是连续的，而<code>vmalloc()</code>所申请的内存线性地址连续而物理地址则是离散的，两个地址之间通过内核页表进行映射。 <code>vmalloc()</code>的工作方式理解起来很简单：<br>1). 寻找一个新的连续线性地址空间；<br>2). 依次分配一组非连续的页框；<br>3). 为线性地址空间和非连续页框建立映射关系，即修改内核页表；</p>
 <p><code>vmalloc()</code>的内存分配原理与用户态的内存分配相似，都是通过连续的虚拟内存来访问离散的物理内存，并且虚拟地址和物理地址之间是通过页表进行连接的，通过这种方式可以有效的使用物理内存。但是应该注意的是，<code>vmalloc()</code>申请物理内存时是立即分配的，因为内核认为这种内存分配请求是正当而且紧急的；相反，用户态有内存请求时，内核总是尽可能的延后，毕竟用户态跟内核态不在一个特权级。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -1963,7 +2088,9 @@ Host: google.com
 <h4 id="翻译虚拟地址"><a href="#翻译虚拟地址" class="headerlink" title="翻译虚拟地址"></a>翻译虚拟地址</h4><p>获取到虚拟地址之后，需要将虚拟地址转换为物理地址。这时候用到了页表和TLB，这个时候如果页表命中，则将物理地址返回。如果不命中，将产生缺页异常，需要从磁盘中获取数据，并将数据加载到主存，然后将对应地址记录到页表中。接着翻译机制再从页表中获取物理地址。具体细节以后再整理。</p>
 <h4 id="根据物理地址获取数据"><a href="#根据物理地址获取数据" class="headerlink" title="根据物理地址获取数据"></a>根据物理地址获取数据</h4><p>cache中存放着主存中的数据，如果缓存命中，则直接将缓存中的数据返回。如果不命中，则cache从主存中获取值，存放到本地（cache）。cpu再向cache发送一次请求，cache将数据发给cpu。</p>
 <h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><p>以上是一个很粗糙的cpu加载数据的流程，但是基本上几个核心都提到了，以后整理细节的时候就根据这个流程来了。</p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -2226,7 +2353,9 @@ Host: google.com
 <h2 id="fancybox"><a href="#fancybox" class="headerlink" title="fancybox"></a>fancybox</h2><p>本篇博客开头的图片是这样实现的，只需要在你的文章*.md文件的头上添加photos项即可，然后一行行添加你要展示的照片:<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line">---</div><div class="line">title: hexo搭建个人博客</div><div class="line">date: 2016-05-16 11:21:13</div><div class="line">tags: hexo</div><div class="line">categories: hexo</div><div class="line">photos:</div><div class="line">- http://bruce.u.qiniudn.com/2013/11/27/reading/photos-1.jpg</div><div class="line">---</div></pre></td></tr></table></figure></p>
 <h2 id="主题设置"><a href="#主题设置" class="headerlink" title="主题设置"></a>主题设置</h2><p>本博客采用了iissnan的Next主题，他的博客有详细的安装教程，这里贴下链接<a href="http://theme-next.iissnan.com/" target="_blank" rel="external">next</a>，其中对next主题的设置讲的很详细了，我在这就不多讲了。</p>
 <p>参考：<a href="http://www.ezlippi.com//blog/2016/02/jekyll-to-hexo.html" target="_blank" rel="external">Jekyll迁移到Hexo搭建个人博客</a></p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
@@ -2324,7 +2453,9 @@ Host: google.com
 <h3 id="代码"><a href="#代码" class="headerlink" title="代码"></a>代码</h3><p>行内的一小段代码，可以使用反引号（在TAB上面的那位）来将其包起来<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">``There is a back door here.``</div></pre></td></tr></table></figure></p>
 <p>整段代码可以用三个反引号</p>
 <h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>以上几种格式是比较常用的格式，Markdown 还有其他语法，如想了解和学习更多，可以参考<a href="http://wowubuntu.com/markdown/#link" target="_blank" rel="external">《Markdown 语法说明 (简体中文版)》</a></p>
+<blockquote>
 <font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
 ]]></content>
     </entry>
     
