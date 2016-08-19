@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-08-18T14:21:55.000Z</updated>
+  <updated>2016-08-19T08:28:16.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,90 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Maven常用命令和操作</title>
+    <link href="http://vinoit.me/2016/08/19/maven-common-command-and-operation/"/>
+    <id>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</id>
+    <published>2016-08-19T02:15:15.000Z</published>
+    <updated>2016-08-19T08:28:16.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="Maven-Archetypes"><a href="#Maven-Archetypes" class="headerlink" title="Maven Archetypes"></a>Maven Archetypes</h4><p>Maven archetypes是一个项目模板，可以让Maven按照指定的模板构建出一个项目最基本的文件结构，以及创建一些文件。Maven中有许多项目模板供我们使用，使用方式如下:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mvn archetype:generate</div></pre></td></tr></table></figure>
+<p>执行完上述命令之后，Maven会将当前可用的模板全部列出，我这边是一共列出了1648条。<br><img src="/images/maven/maven-command-and-operation-0.png" alt=""><br>你可以输入一个模板前面的数字或者一个过滤器(按照提示)选择你想要的模板，但这样不怎么方便去找到自己想要的模板。这里有3种解决的办法:</p>
+<ol>
+<li>你可以将结果导入到一个文本文件中，然后在文件中可以通过关键字查找你所需要的模板信息。例如：<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mvn archetype:generate &gt; archetypes.txt</div></pre></td></tr></table></figure>
+</li>
+</ol>
+<p>2.<code>mvn archetype:create -DgroupId=[your group id] -DartifactId=[your archetype id] -DarchetypeArtifactId=maven-archetype-webapp</code>指定<code>archetypeArtifactId</code>,这样的话就会直接按照所指定的模板构建项目结构。<br>3.<code>mvn archetype:generate -DarchetypeCatalog=internal</code>其中的-DarchetypeCatalog=internal表明使用内置的模板（默认使用中央仓库的模板），这样的话只会列出一些内置的模板，这些内置的模板一般情况下都是能够满足使用的。<br><img src="/images/maven/maven-command-and-operation-1.png" alt=""><br>现在只列出了10条模板，选择第10条模板，然后构建一个webapp的项目结构。<br><img src="/images/maven/maven-command-and-operation-2.png" alt=""><br>按照提示填写一些项目的信息，然后回车，项目结构构建完成，在当前目录下会出现一个以项目名命名的文件夹。<br><img src="/images/maven/maven-command-and-operation-3.png" alt=""></p>
+<h4 id="编译项目"><a href="#编译项目" class="headerlink" title="编译项目"></a>编译项目</h4><p>进入到创建好的项目<code>cd maven-webapp/</code>,执行如下命令:<code>mvn compile</code>。成功之后，在项目根目录会出现一个<code>targer</code>文件夹。因为没有java文件，所以其中的<code>classes</code>文件夹为空。<br><img src="/images/maven/maven-command-and-operation-4.png" alt=""></p>
+<h4 id="打包"><a href="#打包" class="headerlink" title="打包"></a>打包</h4><p>执行<code>mvn package</code>,<code>target</code>文件夹的内容如下。<br><img src="/images/maven/maven-command-and-operation-5.png" alt=""><br>WAR包解压之后就是一个<code>maven-webapp</code>文件夹。<br><code>maven-archiver</code>文件夹中的<code>pom.properties</code>放了一些项目的基本信息:<br><img src="/images/maven/maven-command-and-operation-6.png" alt=""><br>假如该项目引入了其他依赖，则会将所有需要的JAR包放置在WEB-INF文件夹下的lib文件夹中。</p>
+<h4 id="部署到本地仓库"><a href="#部署到本地仓库" class="headerlink" title="部署到本地仓库"></a>部署到本地仓库</h4><p>执行<code>mvn install</code>,在本地仓库中出现了该项目的一个库。<br><img src="/images/maven/maven-command-and-operation-7.png" alt=""><br>如果项目产生的是JAR包，则可以在本地的项目中引入并使用该依赖。</p>
+<h4 id="部署到github远程仓库"><a href="#部署到github远程仓库" class="headerlink" title="部署到github远程仓库"></a>部署到github远程仓库</h4><p>首先在Maven的<code>setting.xml</code>中按如下方式配置：<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">settings</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">servers</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">server</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">id</span>&gt;</span>github<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">username</span>&gt;</span>YOUR-GITHUB-USERNAME<span class="tag">&lt;/<span class="name">username</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">password</span>&gt;</span>YOUR-GITHUB-PASSWORD<span class="tag">&lt;/<span class="name">password</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">server</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">servers</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">settings</span>&gt;</span></div></pre></td></tr></table></figure></p>
+<p><code>id</code>可以随意取，在<code>pom.xml</code>中通过该id来引用该信息。<br>在<code>pom.xml</code>中按如下方式配置:</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">properties</span>&gt;</span></div><div class="line">    <span class="comment">&lt;!-- github server corresponds to entry in ~/.m2/settings.xml --&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">github.global.server</span>&gt;</span>github<span class="tag">&lt;/<span class="name">github.global.server</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">properties</span>&gt;</span></div><div class="line"><span class="tag">&lt;<span class="name">distributionManagement</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">repository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>internal.repo<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">name</span>&gt;</span>Temporary Staging Repository<span class="tag">&lt;/<span class="name">name</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>file://$&#123;project.build.directory&#125;/mvn-repo<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">repository</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">distributionManagement</span>&gt;</span></div><div class="line"> </div><div class="line"><span class="tag">&lt;<span class="name">build</span>&gt;</span></div><div class="line"> <span class="tag">&lt;<span class="name">plugins</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-deploy-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">version</span>&gt;</span>2.8.2<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></div><div class="line">               <span class="tag">&lt;<span class="name">altDeploymentRepository</span>&gt;</span>internal.repo::default::file://$&#123;project.build.directory&#125;/mvn-repo<span class="tag">&lt;/<span class="name">altDeploymentRepository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">plugin</span>&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.github.github<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>site-maven-plugin<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">version</span>&gt;</span>0.12<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">configuration</span>&gt;</span></div><div class="line">              <span class="comment">&lt;!-- git commit message --&gt;</span></div><div class="line">              <span class="tag">&lt;<span class="name">message</span>&gt;</span>Maven artifacts for $&#123;project.version&#125;<span class="tag">&lt;/<span class="name">message</span>&gt;</span></div><div class="line">              <span class="comment">&lt;!-- disable webpage processing --&gt;</span></div><div class="line">              <span class="tag">&lt;<span class="name">noJekyll</span>&gt;</span>true<span class="tag">&lt;/<span class="name">noJekyll</span>&gt;</span></div><div class="line">              <span class="comment">&lt;!-- matches distribution management repository url above --&gt;</span></div><div class="line">              <span class="tag">&lt;<span class="name">outputDirectory</span>&gt;</span>$&#123;project.build.directory&#125;/mvn-repo<span class="tag">&lt;/<span class="name">outputDirectory</span>&gt;</span></div><div class="line">              <span class="comment">&lt;!-- remote branch name --&gt;</span></div><div class="line">              <span class="comment">&lt;!-- &lt;branch&gt;refs/heads/master&lt;/branch&gt; --&gt;</span></div><div class="line">              <span class="comment">&lt;!-- If you remove this then the old artifact will be removed and new </span></div><div class="line">               one will replace. But with the merge tag you can just release by changing </div><div class="line">                                                the version --&gt;</div><div class="line">              <span class="tag">&lt;<span class="name">merge</span>&gt;</span>true<span class="tag">&lt;/<span class="name">merge</span>&gt;</span></div><div class="line">              <span class="tag">&lt;<span class="name">includes</span>&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">include</span>&gt;</span>**/*<span class="tag">&lt;/<span class="name">include</span>&gt;</span></div><div class="line">                <span class="tag">&lt;/<span class="name">includes</span>&gt;</span></div><div class="line">                <span class="comment">&lt;!-- github repo name --&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">repositoryName</span>&gt;</span>项目名<span class="tag">&lt;/<span class="name">repositoryName</span>&gt;</span></div><div class="line">                <span class="comment">&lt;!-- github username --&gt;</span></div><div class="line">                <span class="tag">&lt;<span class="name">repositoryOwner</span>&gt;</span>用户名<span class="tag">&lt;/<span class="name">repositoryOwner</span>&gt;</span></div><div class="line">          <span class="tag">&lt;/<span class="name">configuration</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">executions</span>&gt;</span></div><div class="line">              <span class="tag">&lt;<span class="name">execution</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">goals</span>&gt;</span></div><div class="line">                         <span class="tag">&lt;<span class="name">goal</span>&gt;</span>site<span class="tag">&lt;/<span class="name">goal</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;/<span class="name">goals</span>&gt;</span></div><div class="line">                    <span class="tag">&lt;<span class="name">phase</span>&gt;</span>deploy<span class="tag">&lt;/<span class="name">phase</span>&gt;</span></div><div class="line">              <span class="tag">&lt;/<span class="name">execution</span>&gt;</span></div><div class="line">          <span class="tag">&lt;/<span class="name">executions</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">plugin</span>&gt;</span></div><div class="line"> <span class="tag">&lt;/<span class="name">plugins</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">build</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>以上配置中需要修改的地方只有2个地方，github上的项目名称以及你的用户名（注意不是邮箱）。</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="comment">&lt;!-- github repo name --&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">repositoryName</span>&gt;</span>项目名<span class="tag">&lt;/<span class="name">repositoryName</span>&gt;</span></div><div class="line">         <span class="comment">&lt;!-- github username --&gt;</span></div><div class="line">         <span class="tag">&lt;<span class="name">repositoryOwner</span>&gt;</span>用户名<span class="tag">&lt;/<span class="name">repositoryOwner</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>然后执行<code>mvn clean deploy</code>，在你的<code>target</code>目录下会生成一个名为<code>mvn-repo</code>的文件夹，这就是生成的库，不出意外的话，在你的指定的github项目上的<code>gh-pages</code>分支（默认）会出现一个Maven库。你也可以指定某个分支,比如master:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">&lt;!-- remote branch name --&gt;</div><div class="line">             &lt;branch&gt;refs/heads/master&lt;/branch&gt;</div></pre></td></tr></table></figure>
+<h4 id="引用github远程仓库的依赖"><a href="#引用github远程仓库的依赖" class="headerlink" title="引用github远程仓库的依赖"></a>引用github远程仓库的依赖</h4><p><code>pom.xml</code>按如下方式配置：</p>
+<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">repositories</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">repository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>不重样即可<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>https://raw.github.com/用户名/项目名/<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">snapshots</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">enabled</span>&gt;</span>true<span class="tag">&lt;/<span class="name">enabled</span>&gt;</span></div><div class="line">            <span class="tag">&lt;<span class="name">updatePolicy</span>&gt;</span>always<span class="tag">&lt;/<span class="name">updatePolicy</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">snapshots</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">repository</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>xxx<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>xxx<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">version</span>&gt;</span>xxx<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div></pre></td></tr></table></figure>
+<p>这是我在<code>github</code>上的远程仓库，一个小demo。<a href="https://github.com/vinoZHU/my-maven-repo" target="_blank" rel="external">https://github.com/vinoZHU/my-maven-repo</a></p>
+<h4 id="常用命令整理"><a href="#常用命令整理" class="headerlink" title="常用命令整理"></a>常用命令整理</h4><p>以下常用命令摘自:<a href="http://lychie.github.io/pages/articles/maven/15040920.html" target="_blank" rel="external">http://lychie.github.io/pages/articles/maven/15040920.html</a></p>
+<ul>
+<li>test  [ 运行测试 ]<br><code>mvn test</code></li>
+<li>-e  [ 显示错误详细信息 ]<br><code>mvn -e test</code></li>
+<li>site  [ 生成站点文件 ]<br><code>mvn site</code> ( 见 target/site 目录 )</li>
+<li>package  [ 打包 ]<br><code>mvn package</code></li>
+<li>install  [ 安装到本地仓库 ]<br><code>mvn install</code> ( 见本地仓库 ${groupId}/${artifactId} 目录 )</li>
+<li>compile  [ 编译源代码 ]<br><code>mvn compile</code></li>
+<li>test-compile  [ 编译测试代码 ]<br><code>mvn test-compile</code></li>
+<li>clean  [ 清除目标目录产生的结果 ]<br><code>mvn clean</code></li>
+<li>-Dmaven.test.skip  [ 跳过测试 ]<br><code>mvn -Dmaven.test.skip package</code></li>
+<li>-Dmaven.test.failure.ignore  [ 忽略测试失败 ]<br><code>mvn -Dmaven.test.failure.ignore package</code></li>
+<li>dependency:sources  [ 依赖包源码 ]<br><code>mvn dependency:sources</code></li>
+<li>dependency:tree  [ 项目依赖树 ]<br><code>mvn dependency:tree</code></li>
+<li>project-info-reports:dependencies  [ 项目依赖报告 ]<br><code>mvn project-info-reports:dependencies</code>( 见 target/site/dependencies.html )</li>
+<li>help:effective-pom  [ 查看有效的 pom 配置 ]<br><code>mvn help:effective-pom</code> ( 暴露 super pom )</li>
+<li>help:describe  [ 获取插件帮助 ]<br><code>mvn help:describe -Dplugin=compiler -Dmojo=compile -Dfull</code></li>
+<li>dependency:resolve  [ 已解决的依赖列表 ]<br><code>mvn dependency:resolve</code></li>
+<li>idea:idea  [ 转换成 idea 项目 ]<br><code>mvn idea:idea</code></li>
+<li>eclipse:eclipse  [ 转换成 eclipse 项目 ]<br><code>mvn eclipse:eclipse</code></li>
+<li>archetype:create  [ 创建 java 项目 ]<br><code>mvn archetype:create -DgroupId=org.lychie -DartifactId=myapp</code></li>
+<li>archetype:create  [ 创建 web 项目 ]<br><code>mvn archetype:create -DgroupId=org.lychie -DartifactId=myproject -DarchetypeArtifactId=maven-archetype-webapp</code></li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了Maven的一些常见操作和命令，未整理的部分日后再补充吧。</p>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+
+
+
+
+
+
+
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;Maven-Archetypes&quot;&gt;&lt;a href=&quot;#Maven-Archetypes&quot; class=&quot;headerlink&quot; title=&quot;Maven Archetypes&quot;&gt;&lt;/a&gt;Maven Archetypes&lt;/h4&gt;&lt;p&gt;Maven archetyp
+    
+    </summary>
+    
+      <category term="maven" scheme="http://vinoit.me/categories/maven/"/>
+    
+    
+      <category term="maven" scheme="http://vinoit.me/tags/maven/"/>
+    
+      <category term="tool" scheme="http://vinoit.me/tags/tool/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Maven小教</title>
     <link href="http://vinoit.me/2016/08/18/maven-tutorial/"/>
     <id>http://vinoit.me/2016/08/18/maven-tutorial/</id>
     <published>2016-08-18T08:47:15.000Z</published>
-    <updated>2016-08-18T14:21:55.000Z</updated>
+    <updated>2016-08-18T14:49:16.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
 <ul>
@@ -34,9 +113,9 @@
 <p>这些步骤虽然也可以人工手动完成，但是效率比不上构建工具，况且人工出错的概率更大。</p>
 <h4 id="Maven总览–核心概念"><a href="#Maven总览–核心概念" class="headerlink" title="Maven总览–核心概念"></a>Maven总览–核心概念</h4><h5 id="pom-xml"><a href="#pom-xml" class="headerlink" title="pom.xml"></a>pom.xml</h5><p>Maven最核心的就是一个叫做<code>pom.xml</code>的文件，使用Maven构建项目时所需要的所有信息都包含在该文件中，例如项目的版本号，需要的依赖包等等。当你执行一条<code>mvn *</code>命令时，Maven需要根据<code>pom.xml</code>中的描述来进行操作。</p>
 <h5 id="Build-Life-Cycles-Phases-and-Goals"><a href="#Build-Life-Cycles-Phases-and-Goals" class="headerlink" title="Build Life Cycles, Phases and Goals"></a>Build Life Cycles, Phases and Goals</h5><p>Maven的构建过程被分成几个生命周期，一个生命周期又被分为若干个阶段，同时一个阶段中又会有若干个目标(相当于一个特定任务)。一条Maven命令通常为<code>mvn *</code>,其中<code>*</code>的内容为某个生命周期的名字，或者某个阶段的名字，又或者某个目标的名字。这三者在后文会给出具体解释。</p>
-<h5 id="Dependencies-and-Repositories"><a href="#Dependencies-and-Repositories" class="headerlink" title="Dependencies and Repositories"></a>Dependencies and Repositories</h5><p>所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。通过修改<code>pom.xml</code>中<code>&lt;dependency&gt;</code>的某个标签内容，你可以选择下载某个远程仓库中的某个依赖，在后文会涉及到。</p>
-<h5 id="Build-Plugins"><a href="#Build-Plugins" class="headerlink" title="Build Plugins"></a>Build Plugins</h5><p>插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，<a href="http://maven.apache.org/plugin-developers/index.html。" target="_blank" rel="external">http://maven.apache.org/plugin-developers/index.html。</a></p>
-<h5 id="Build-Profiles"><a href="#Build-Profiles" class="headerlink" title="Build Profiles"></a>Build Profiles</h5><p>在开发过程中项目可能需要处于不同的环境，这时候<code>pom.xml</code>中的一些配置可能需要修改。<code>Profiles</code>的作用就是当你在<code>pom.xml</code>中声明了一个<code>&lt;profile&gt;&lt;/profile&gt;</code>标签对之后，标签对里面的内容可以用来替换原本的配置值，具体在后文给出。</p>
+<h5 id="Dependencies-and-Repositories"><a href="#Dependencies-and-Repositories" class="headerlink" title="Dependencies and Repositories"></a>Dependencies and Repositories</h5><p>所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。具体内容在后文会涉及到。</p>
+<h5 id="Build-Plugins"><a href="#Build-Plugins" class="headerlink" title="Build Plugins"></a>Build Plugins</h5><p>插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，<a href="http://maven.apache.org/plugin-developers/index.html" target="_blank" rel="external">http://maven.apache.org/plugin-developers/index.html</a></p>
+<h5 id="Build-Profiles"><a href="#Build-Profiles" class="headerlink" title="Build Profiles"></a>Build Profiles</h5><p>在开发过程中项目可能需要处于不同的环境，这时候<code>pom.xml</code>中的一些配置可能需要修改。<code>Profiles</code>的作用就是当你在<code>pom.xml</code>中声明了一个<code>&lt;profile&gt;&lt;/profile&gt;</code>标签对之后，标签对里面的内容可以用来替换原本的配置值，具体内容在后文会涉及到。</p>
 <h4 id="Maven和Ant的区别"><a href="#Maven和Ant的区别" class="headerlink" title="Maven和Ant的区别"></a>Maven和Ant的区别</h4><p>Ant也是Apache的一个构建工具，两者之间的最大区别是:Ant必须要求指定具体动作，细化程度达到如拷贝一个文件之类的操作。而Maven只要告诉它要做什么，具体做法在Maven中已经预先在<code>Phases</code>和<code>Goals</code>中定义过了。Ant强调怎么去做，而Maven则强调做什么。</p>
 <h4 id="Maven-pom-xml分析"><a href="#Maven-pom-xml分析" class="headerlink" title="Maven pom.xml分析"></a>Maven pom.xml分析</h4><p>pom是（Project Object Model）的缩写，每个Maven项目都有一个<code>pom.xml</code>与之对应，文件处于项目的根目录。当一个项目含有多个子项目时，主项目和每个子项目都对应一个<code>pom.xml</code>。此时既可以把整个项目一同构建，也可以只根据子项目的<code>pom.xml</code>来单独构建每个子项目。</p>
 <p>文件内容描述了该Maven项目的本身信息，需要的依赖（JAR files），应该构建哪些内容，需要的资源等等。以下是一个最简化的<code>pom.xml</code>文件：</p>
@@ -66,7 +145,7 @@
 </ol>
 <p>3者之间相互独立，分开执行。</p>
 <p><code>clean</code>的功能是就是将已生成的资源文件，编译后文件，JAR包，WAR包等清除，使用方法为:<br><code>mvn clean</code>。</p>
-<p><code>site</code>的功能是将当前项目的信息整理成一个文档，执行<code>mvn site</code>后，在项目的<code>target</code>目录下回生成一个<code>site</code>文件夹，其中的内容便是项目文档的html文件。</p>
+<p><code>site</code>的功能是将当前项目的信息整理成一个文档，执行<code>mvn site</code>后，在项目的<code>target</code>目录下会生成一个<code>site</code>文件夹，其中的内容便是项目文档的html文件。</p>
 <p><code>default</code>生命周期做的事就是Maven主要功能，无法直接执行<code>mvn default</code>，只能执行它的阶段(Phases)或者目标(Goals)。</p>
 <p>它最常用的阶段(Phases)如下：</p>
 <table>
@@ -105,7 +184,7 @@
 </table>
 <p>当我想使用<code>package</code>，只需在<code>pom.xml</code>目录执行<code>mvn package</code>,这时候在项目的<code>target</code>下会出现一个WAR包（如果是webapp）。但是我都没编译，怎么就可以打包了呢？事实上，当执行某个阶段命令时，该命令所属的生命周期之前的所有阶段步骤都会按照顺序被执行一遍。所以在<code>mvn package</code>被执行时，之前的命令（包括 mvn compile）已经执行过了。</p>
 <p>现在构建阶段已经知道了是怎么回事，现在就剩下目标了，目标可以理解为构建阶段中的一个具体任务。比如<code>dependency:copy-dependencies</code>就是一个目标（任务），执行<code>mvn dependency:copy-dependencies</code>时,会在<code>target</code>目录下生成一个<code>dependency</code>文件夹，内容为该项目使用的所有依赖(JAR files)。</p>
-<p>关于这三者的完整的信息可以查看官网，<a href="http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html。" target="_blank" rel="external">http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html。</a></p>
+<p>关于这三者的完整的信息可以查看官网，<a href="http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html" target="_blank" rel="external">http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html</a></p>
 <h4 id="Maven-Build-Profiles"><a href="#Maven-Build-Profiles" class="headerlink" title="Maven Build Profiles"></a>Maven Build Profiles</h4><p>上面提到过，profile可以简单地认为是一个环境。使用方法很简单，如下:</p>
 <figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">   http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">  <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">profiles</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">profile</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>test<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">activation</span>&gt;</span>...<span class="tag">&lt;/<span class="name">activation</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">build</span>&gt;</span>...<span class="tag">&lt;/<span class="name">build</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">modules</span>&gt;</span>...<span class="tag">&lt;/<span class="name">modules</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">repositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">pluginRepositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">pluginRepositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">reporting</span>&gt;</span>...<span class="tag">&lt;/<span class="name">reporting</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencyManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencyManagement</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">distributionManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">distributionManagement</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure>
 <p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
@@ -1910,80 +1989,6 @@ Host: google.com
     
     
       <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Linux内存分配的原理--molloc/brk/mmap</title>
-    <link href="http://vinoit.me/2016/05/20/linux-memory-alloc/"/>
-    <id>http://vinoit.me/2016/05/20/linux-memory-alloc/</id>
-    <published>2016-05-20T14:06:51.000Z</published>
-    <updated>2016-08-18T14:24:11.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>内存分配的原理__进程分配内存有两种方式，分别由两个系统调用完成：brk和mmap（不考虑共享内存）。</p>
-<h4 id="如何查看进程发生缺页中断的次数？"><a href="#如何查看进程发生缺页中断的次数？" class="headerlink" title="如何查看进程发生缺页中断的次数？"></a>如何查看进程发生缺页中断的次数？</h4><p>用<code>ps -o majflt,minflt -C program</code>命令查看。</p>
-<p>majflt代表major fault，中文名叫大错误，minflt代表minor fault，中文名叫小错误。这两个数值表示一个进程自启动以来所发生的缺页中断的次数。</p>
-<p>发生缺页中断后，执行了那些操作？</p>
-<h4 id="当一个进程发生缺页中断的时候，进程会陷入内核态，执行以下操作："><a href="#当一个进程发生缺页中断的时候，进程会陷入内核态，执行以下操作：" class="headerlink" title="当一个进程发生缺页中断的时候，进程会陷入内核态，执行以下操作："></a>当一个进程发生缺页中断的时候，进程会陷入内核态，执行以下操作：</h4><ol>
-<li><p>检查要访问的虚拟地址是否合法</p>
-</li>
-<li><p>查找/分配一个物理页</p>
-</li>
-<li><p>填充物理页内容（读取磁盘，或者直接置0，或者啥也不干）</p>
-</li>
-<li><p>建立映射关系（虚拟地址到物理地址）</p>
-</li>
-</ol>
-<p>重新执行发生缺页中断的那条指令</p>
-<p>如果第3步，需要读取磁盘，那么这次缺页中断就是majflt，否则就是minflt。</p>
-<h4 id="内存分配原理"><a href="#内存分配原理" class="headerlink" title="内存分配原理"></a>内存分配原理</h4><p>从操作系统角度来看，进程分配内存有两种方式，分别由两个系统调用完成：brk和mmap（不考虑共享内存）。</p>
-<ul>
-<li><p>brk是将数据段(.data)的最高地址指针_edata往高地址推；</p>
-</li>
-<li><p>mmap是在进程的虚拟地址空间中（堆和栈中间，称为文件映射区域的地方）找一块空闲的虚拟内存。</p>
-</li>
-</ul>
-<p>这两种方式分配的都是虚拟内存，没有分配物理内存。在第一次访问已分配的虚拟地址空间的时候，发生缺页中断，操作系统负责分配物理内存，然后建立虚拟内存和物理内存之间的映射关系。</p>
-<p>在标准C库中，提供了malloc/free函数分配释放内存，这两个函数底层是由brk，mmap，munmap这些系统调用实现的。</p>
-<h5 id="下面以一个例子来说明内存分配的原理："><a href="#下面以一个例子来说明内存分配的原理：" class="headerlink" title="下面以一个例子来说明内存分配的原理："></a>下面以一个例子来说明内存分配的原理：</h5><p>情况一、malloc小于128k的内存，使用brk分配内存，将_edata往高地址推(只分配虚拟空间，不对应物理内存(因此没有初始化)，第一次读/写数据时，引起内核缺页中断，内核才分配对应的物理内存，然后虚拟地址空间建立映射关系)，如下图：<br><img src="/images/linux/linux-memory-alloc-0.jpg" alt=""><br>1.进程启动的时候，其（虚拟）内存空间的初始布局如图1-(1)所示。</p>
-<p>其中，mmap内存映射文件是在堆和栈的中间（例如libc-2.2.93.so，其它数据文件等），为了简单起见，省略了内存映射文件。</p>
-<p><code>_edata</code>指针（glibc里面定义）指向数据段的最高地址。</p>
-<p>2.进程调用<code>A=malloc(30K)</code>以后，内存空间如图1-(2)：</p>
-<p>malloc函数会调用brk系统调用，将_edata指针往高地址推30K，就完成虚拟内存分配。</p>
-<p>你可能会问：只要把<code>_edata+30K</code>就完成内存分配了？</p>
-<p>事实是这样的，<code>_edata+30K</code>只是完成虚拟地址的分配，A这块内存现在还是没有物理页与之对应的，等到进程第一次读写A这块内存的时候，发生缺页中断，这个时候，内核才分配A这块内存对应的物理页。也就是说，如果用malloc分配了A这块内容，然后从来不访问它，那么，A对应的物理页是不会被分配的。</p>
-<p>3.进程调用<code>B=malloc(40K)</code>以后，内存空间如图1-(3)。</p>
-<p>情况二、malloc大于128k的内存，使用mmap分配内存，在堆和栈之间找一块空闲内存分配(对应独立内存，而且初始化为0)，如下图：<br><img src="/images/linux/linux-memory-alloc-1.jpg" alt=""></p>
-<p>4.进程调用<code>C=malloc(200K)</code>以后，内存空间如图2-(4)：</p>
-<p>默认情况下，malloc函数分配内存，如果请求内存大于128K（可由<code>M_MMAP_THRESHOLD</code>选项调节），那就不是去推_edata指针了，而是利用mmap系统调用，从堆和栈的中间分配一块虚拟内存。</p>
-<p>这样子做主要是因为::<br>brk分配的内存需要等到高地址内存释放以后才能释放（例如，在B释放之前，A是不可能释放的，这就是内存碎片产生的原因，什么时候紧缩看下面），而mmap分配的内存可以单独释放。<br>当然，还有其它的好处，也有坏处，再具体下去，有兴趣的同学可以去看glibc里面malloc的代码了。</p>
-<p>5.进程调用<code>D=malloc(100K)</code>以后，内存空间如图2-(5)；</p>
-<p>6.进程调用<code>free(C</code>)以后，C对应的虚拟内存和物理内存一起释放如图2-(6)。<br><img src="/images/linux/linux-memory-alloc-2.jpg" alt=""></p>
-<p>7.进程调用free(B)以后，如图3-(7)所示：</p>
-<p>B对应的虚拟内存和物理内存都没有释放，因为只有一个_edata指针，如果往回推，那么D这块内存怎么办呢？</p>
-<p>当然，B这块内存，是可以重用的，如果这个时候再来一个40K的请求，那么malloc很可能就把B这块内存返回回去了。</p>
-<p>8.进程调用free(D)以后，如图3-(8)所示：</p>
-<p>B和D连接起来，变成一块140K的空闲内存。</p>
-<p>9.默认情况下：</p>
-<p>当最高地址空间的空闲内存超过128K（可由<code>M_TRIM_THRESHOLD</code>选项调节）时，执行内存紧缩操作（trim）。在上一个步骤free的时候，发现最高地址空闲内存超过128K，于是内存紧缩，变成图3-(9)所示。</p>
-<hr>
-<h4 id="mmap-样例"><a href="#mmap-样例" class="headerlink" title="mmap 样例"></a>mmap 样例</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">1000000</span>, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONYMOUS, <span class="number">-1</span>, <span class="number">0</span>);</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">1000000</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/mman.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;sys/types.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;fcntl.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span><span class="meta-string">&lt;unistd.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">int</span> i,j,k,l;</div><div class="line">	<span class="keyword">int</span> fd;</div><div class="line">	<span class="keyword">char</span> *mp;</div><div class="line"></div><div class="line">	fd = open(<span class="string">"/tmp/mmap"</span>, O_CREAT|O_RDWR, <span class="number">00777</span>);</div><div class="line">	lseek(fd, <span class="number">100</span>, SEEK_SET);</div><div class="line">	write(fd, <span class="string">""</span>, <span class="number">1</span>);</div><div class="line">	mp = <span class="built_in">malloc</span>(<span class="number">1000000</span>);</div><div class="line">	mp = (<span class="keyword">char</span>*)mmap(<span class="literal">NULL</span>, <span class="number">100</span>, PROT_READ|PROT_WRITE, MAP_SHARED, fd, <span class="number">0</span>);</div><div class="line">	i = *mp;</div><div class="line">	*mp = <span class="string">'A'</span>;</div><div class="line">	munmap(mp, <span class="number">100</span>);</div><div class="line">	<span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;内存分配的原理__进程分配内存有两种方式，分别由两个系统调用完成：brk和mmap（不考虑共享内存）。&lt;/p&gt;
-&lt;h4 id=&quot;如何查看进程发生缺页中断的次数？&quot;&gt;&lt;a href=&quot;#如何查看进程发生缺页中断的次数？&quot; class=&quot;headerlink&quot; title=&quot;如
-    
-    </summary>
-    
-      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-      <category term="内存分配" scheme="http://vinoit.me/tags/%E5%86%85%E5%AD%98%E5%88%86%E9%85%8D/"/>
     
   </entry>
   

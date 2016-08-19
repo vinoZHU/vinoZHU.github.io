@@ -24,11 +24,11 @@ Maven最核心的就是一个叫做`pom.xml`的文件，使用Maven构建项目�
 ##### Build Life Cycles, Phases and Goals
 Maven的构建过程被分成几个生命周期，一个生命周期又被分为若干个阶段，同时一个阶段中又会有若干个目标(相当于一个特定任务)。一条Maven命令通常为`mvn *`,其中`*`的内容为某个生命周期的名字，或者某个阶段的名字，又或者某个目标的名字。这三者在后文会给出具体解释。
 ##### Dependencies and Repositories
-所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。通过修改`pom.xml`中`<dependency>`的某个标签内容，你可以选择下载某个远程仓库中的某个依赖，在后文会涉及到。
+所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。具体内容在后文会涉及到。
 ##### Build Plugins
-插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，http://maven.apache.org/plugin-developers/index.html。
+插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，http://maven.apache.org/plugin-developers/index.html
 ##### Build Profiles
-在开发过程中项目可能需要处于不同的环境，这时候`pom.xml`中的一些配置可能需要修改。`Profiles`的作用就是当你在`pom.xml`中声明了一个`<profile></profile>`标签对之后，标签对里面的内容可以用来替换原本的配置值，具体在后文给出。
+在开发过程中项目可能需要处于不同的环境，这时候`pom.xml`中的一些配置可能需要修改。`Profiles`的作用就是当你在`pom.xml`中声明了一个`<profile></profile>`标签对之后，标签对里面的内容可以用来替换原本的配置值，具体内容在后文会涉及到。
 
 #### Maven和Ant的区别
 Ant也是Apache的一个构建工具，两者之间的最大区别是:Ant必须要求指定具体动作，细化程度达到如拷贝一个文件之类的操作。而Maven只要告诉它要做什么，具体做法在Maven中已经预先在`Phases`和`Goals`中定义过了。Ant强调怎么去做，而Maven则强调做什么。
@@ -149,7 +149,7 @@ pom是（Project Object Model）的缩写，每个Maven项目都有一个`pom.xm
 `clean`的功能是就是将已生成的资源文件，编译后文件，JAR包，WAR包等清除，使用方法为:
 `mvn clean`。
 
-`site`的功能是将当前项目的信息整理成一个文档，执行`mvn site`后，在项目的`target`目录下回生成一个`site`文件夹，其中的内容便是项目文档的html文件。
+`site`的功能是将当前项目的信息整理成一个文档，执行`mvn site`后，在项目的`target`目录下会生成一个`site`文件夹，其中的内容便是项目文档的html文件。
 
 `default`生命周期做的事就是Maven主要功能，无法直接执行`mvn default`，只能执行它的阶段(Phases)或者目标(Goals)。
 
@@ -168,7 +168,7 @@ pom是（Project Object Model）的缩写，每个Maven项目都有一个`pom.xm
 
 现在构建阶段已经知道了是怎么回事，现在就剩下目标了，目标可以理解为构建阶段中的一个具体任务。比如`dependency:copy-dependencies`就是一个目标（任务），执行`mvn dependency:copy-dependencies`时,会在`target`目录下生成一个`dependency`文件夹，内容为该项目使用的所有依赖(JAR files)。
 
-关于这三者的完整的信息可以查看官网，http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html。
+关于这三者的完整的信息可以查看官网，http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html
 
 #### Maven Build Profiles
 上面提到过，profile可以简单地认为是一个环境。使用方法很简单，如下:
