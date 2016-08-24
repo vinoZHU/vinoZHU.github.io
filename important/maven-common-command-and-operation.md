@@ -3,7 +3,7 @@ title: Maven常用命令和操作
 date: 2016-08-19 10:15:15
 tags: 
 - maven
-- tool
+- tools
 categories: maven
 ---
 #### Maven Archetypes

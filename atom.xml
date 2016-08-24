@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-08-19T08:28:16.000Z</updated>
+  <updated>2016-08-24T08:30:34.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,208 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Linux中x86的内联汇编</title>
+    <link href="http://vinoit.me/2016/08/24/linux-x86-assembly-inline/"/>
+    <id>http://vinoit.me/2016/08/24/linux-x86-assembly-inline/</id>
+    <published>2016-08-24T07:45:39.000Z</published>
+    <updated>2016-08-24T08:30:34.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>原文地址:<a href="https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/" target="_blank" rel="external">https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/</a></p>
+</blockquote>
+<p>如果您是 Linux 内核的开发人员，您会发现自己经常要对与体系结构高度相关的功能进行编码或优化代码路径。您很可能是通过将汇编语言指令插入到 C 语句的中间（又称为内联汇编的一种方法）来执行这些任务的。让我们看一下 Linux 中内联汇编的特定用法。（我们将讨论限制在 IA32 汇编。）</p>
+<h4 id="GNU-汇编程序简述"><a href="#GNU-汇编程序简述" class="headerlink" title="GNU 汇编程序简述"></a>GNU 汇编程序简述</h4><p>让我们首先看一下 Linux 中使用的基本汇编程序语法。GCC（用于 Linux 的 GNU C 编译器）使用 AT&amp;T 汇编语法。下面列出了这种语法的一些基本规则。（该列表肯定不完整；只包括了与内联汇编相关的那些规则。）</p>
+<p><strong>寄存器命名</strong><br>寄存器名称有 % 前缀。即，如果必须使用 eax，它应该用作 %eax。<br>源操作数和目的操作数的顺序<br>在所有指令中，先是源操作数，然后才是目的操作数。这与将源操作数放在目的操作数之后的 Intel 语法不同。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mov %eax, %ebx, transfers the contents of eax to ebx.</div></pre></td></tr></table></figure>
+<p><strong>操作数大小</strong><br>根据操作数是字节 (byte)、字 (word) 还是长型 (long)，指令的后缀可以是 b、w 或 l。这并不是强制性的；GCC 会尝试通过读取操作数来提供相应的后缀。但手工指定后缀可以改善代码的可读性，并可以消除编译器猜测不正确的可能性。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">movb %al, %bl -- Byte move</div><div class="line">movw %ax, %bx -- Word move</div><div class="line">movl %eax, %ebx -- Longword move</div></pre></td></tr></table></figure>
+<p><strong>立即操作数</strong><br>通过使用 $ 指定直接操作数。<br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">movl $0xffff, %eax -- will move the value of 0xffff into eax register.</div></pre></td></tr></table></figure></p>
+<p><strong>间接内存引用</strong><br>任何对内存的间接引用都是通过使用 ( ) 来完成的。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">movb (%esi), %al -- will transfer the byte in the memory pointed by esi into al register</div></pre></td></tr></table></figure>
+<h4 id="内联汇编"><a href="#内联汇编" class="headerlink" title="内联汇编"></a>内联汇编</h4><p>GCC 为内联汇编提供特殊结构，它具有以下格式：</p>
+<p><strong>GCG 的 “asm” 结构</strong></p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">  asm ( assembler template</div><div class="line">    </div><div class="line">: output operands               (optional)</div><div class="line">    </div><div class="line">: input operands                (optional)</div><div class="line">    </div><div class="line">: list of clobbered registers   </div><div class="line">    (optional)</div><div class="line">    </div><div class="line">);</div></pre></td></tr></table></figure>
+<p>本例中，汇编程序模板由汇编指令组成。输入操作数是充当指令输入操作数使用的 C 表达式。输出操作数是将对其执行汇编指令输出的 C 表达式。<br>内联汇编的重要性体现在它能够灵活操作，而且可以使其输出通过 C 变量显示出来。因为它具有这种能力，所以 “asm” 可以用作汇编指令和包含它的 C 程序之间的接口。<br>一个非常基本但很重要的区别在于 简单内联汇编只包括指令，而 扩展内联汇编包括操作数。要说明这一点，考虑以下示例：</p>
+<p><strong>内联汇编的基本要素</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">&#123;</div><div class="line">    int a=10, b;</div><div class="line">    asm ("movl %1, %%eax;</div><div class="line">    </div><div class="line">movl %%eax, %0;"</div><div class="line">        :"=r"(b)  /* output */    </div><div class="line">        :"r"(a)       /* input */</div><div class="line">        :"%eax"); /* clobbered register */</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在上例中，我们使用汇编指令使 “b” 的值等于 “a”。请注意以下几点：</p>
+<ul>
+<li>“b” 是输出操作数，由 %0 引用，”a” 是输入操作数，由 %1 引用。</li>
+<li>“r” 是操作数的约束，它指定将变量 “a” 和 “b” 存储在寄存器中。请注意，输出操作数约束应该带有一个约束修饰符 “=”，指定它是输出操作数。</li>
+<li>要在 “asm” 内使用寄存器 %eax，%eax 的前面应该再加一个 %，换句话说就是 %%eax，因为 “asm” 使用 %0、%1 等来标识变量。任何带有一个 % 的数都看作是输入／输出操作数，而不认为是寄存器。</li>
+<li>第三个冒号后的修饰寄存器 %eax 告诉将在 “asm” 中修改 GCC %eax 的值，这样 GCC 就不使用该寄存器存储任何其它的值。</li>
+<li>movl %1, %%eax 将 “a” 的值移到 %eax 中， movl %%eax, %0 将 %eax 的内容移到 “b” 中。</li>
+<li>因为 “b” 被指定成输出操作数，因此当 “asm” 的执行完成后，它将反映出更新的值。换句话说，对 “asm” 内 “b” 所做的更改将在 “asm” 外反映出来。</li>
+</ul>
+<p>现在让我们更详细的了解每一项的含义。</p>
+<h4 id="汇编程序模板"><a href="#汇编程序模板" class="headerlink" title="汇编程序模板"></a>汇编程序模板</h4><p>汇编程序模板是一组插入到 C 程序中的汇编指令（可以是单个指令，也可以是一组指令）。每条指令都应该由双引号括起，或者整组指令应该由双引号括起。每条指令还应该用一个定界符结尾。有效的定界符为新行 (\n) 和分号 (;)。 ‘\n’ 后可以跟一个 tab(\t) 作为格式化符号，增加 GCC 在汇编文件中生成的指令的可读性。 指令通过数 %0、%1 等来引用 C 表达式（指定为操作数）。</p>
+<p>如果希望确保编译器不会在 “asm” 内部优化指令，可以在 “asm” 后使用关键字 “volatile”。如果程序必须与 ANSI C 兼容，则应该使用 <code>__asm__</code> 和 <code>__volatile__</code>，而不是 asm 和 volatile。</p>
+<h4 id="操作数"><a href="#操作数" class="headerlink" title="操作数"></a>操作数</h4><p>C 表达式用作 “asm” 内的汇编指令操作数。在汇编指令通过对 C 程序的 C 表达式进行操作来执行有意义的作业的情况下，操作数是内联汇编的主要特性。</p>
+<p>每个操作数都由操作数约束字符串指定，后面跟用括弧括起的 C 表达式，例如：”constraint” (C expression)。操作数约束的主要功能是确定操作数的寻址方式。<br>可以在输入和输出部分中同时使用多个操作数。每个操作数由逗号分隔开。</p>
+<p>在汇编程序模板内部，操作数由数字引用。如果总共有 n 个操作数（包括输入和输出），那么第一个输出操作数的编号为 0，逐项递增，最后那个输入操作数的编号为 n -1。总操作数的数目限制在 10，如果机器描述中任何指令模式中的最大操作数数目大于 10，则使用后者作为限制。</p>
+<h4 id="修饰寄存器列表"><a href="#修饰寄存器列表" class="headerlink" title="修饰寄存器列表"></a>修饰寄存器列表</h4><p>如果 “asm” 中的指令指的是硬件寄存器，可以告诉 GCC 我们将自己使用和修改它们。这样，GCC 就不会假设它装入到这些寄存器中的值是有效值。通常不需要将输入和输出寄存器列为 clobbered，因为 GCC 知道 “asm” 使用它们（因为它们被明确指定为约束）。不过，如果指令使用任何其它的寄存器，无论是明确的还是隐含的（寄存器不在输入约束列表中出现，也不在输出约束列表中出现），寄存器都必须被指定为修饰列表。修饰寄存器列在第三个冒号之后，其名称被指定为字符串。</p>
+<p>至于关键字，如果指令以某些不可预知且不明确的方式修改了内存，则可能将 “memory” 关键字添加到修饰寄存器列表中。这样就告诉 GCC 不要在不同指令之间将内存值高速缓存在寄存器中。</p>
+<h4 id="操作数约束"><a href="#操作数约束" class="headerlink" title="操作数约束"></a>操作数约束</h4><p>前面提到过，”asm” 中的每个操作数都应该由操作数约束字符串描述，后面跟用括弧括起的 C 表达式。操作数约束主要是确定指令中操作数的寻址方式。约束也可以指定：</p>
+<ul>
+<li>是否允许操作数位于寄存器中，以及它可以包括在哪些种类的寄存器中</li>
+<li>操作数是否可以是内存引用，以及在这种情况下使用哪些种类的地址</li>
+<li>操作数是否可以是立即数</li>
+</ul>
+<p>约束还要求两个操作数匹配。</p>
+<h4 id="常用约束"><a href="#常用约束" class="headerlink" title="常用约束"></a>常用约束</h4><p>在可用的操作数约束中，只有一小部分是常用的；下面列出了这些约束以及简要描述。有关操作数约束的完整列表，请参考 GCC 和 GAS 手册。</p>
+<p><strong>寄存器操作数约束 (r)</strong><br>使用这种约束指定操作数时，它们存储在通用寄存器中。请看下例：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">asm (&quot;movl %%cr3, %0\n&quot; :&quot;=r&quot;(cr3val));</div></pre></td></tr></table></figure>
+<p>这里，变量 cr3val 保存在寄存器中，%cr3 的值复制到寄存器上，cr3val 的值从该寄存器更新到内存中。指定 “r” 约束时，GCC 可以将变量 cr3val 保存在任何可用的 GPR 中。要指定寄存器，必须通过使用特定的寄存器约束直接指定寄存器名。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">a        eax</div><div class="line">b        ebx</div><div class="line">c        ecx</div><div class="line">d        edx</div><div class="line">S        esi</div><div class="line">D        edi</div><div class="line">I        constant value (0 to 31)</div><div class="line">q,r      dynamically allocated register (see below)</div><div class="line">g        eax, ebx, ecx, edx or variable in memory</div><div class="line">A        eax and edx combined into a 64-bit integer (use long longs)</div></pre></td></tr></table></figure>
+<p><strong>内存操作数约束 (m)</strong><br>当操作数位于内存中时，任何对它们执行的操作都将在内存位置中直接发生，这与寄存器约束正好相反，后者先将值存储在要修改的寄存器中，然后将它写回内存位置中。但寄存器约束通常只在对于指令来说它们是绝对必需的，或者它们可以大大提高进程速度时使用。当需要在 “asm” 内部更新 C 变量，而您又确实不希望使用寄存器来保存其值时，使用内存约束最为有效。例如，idtr 的值存储在内存位置 loc 中：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">(&quot;sidt %0\n&quot; : :&quot;m&quot;(loc));</div></pre></td></tr></table></figure>
+<p><strong>匹配（数字）约束</strong><br>在某些情况下，一个变量既要充当输入操作数，也要充当输出操作数。可以通过使用匹配约束在 “asm” 中指定这种情况。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">asm (&quot;incl %0&quot; :&quot;=a&quot;(var):&quot;0&quot;(var));</div></pre></td></tr></table></figure>
+<p>在匹配约束的示例中，寄存器 %eax 既用作输入变量，也用作输出变量。将 var 输入读取到 %eax，增加后将更新的 %eax 再次存储在 var 中。这里的 “0” 指定第 0 个输出变量相同的约束。即，它指定 var 的输出实例只应该存储在 %eax 中。该约束可以用于以下情况：</p>
+<ul>
+<li>输入从变量中读取，或者变量被修改后，修改写回到同一变量中</li>
+<li>不需要将输入操作数和输出操作数的实例分开</li>
+</ul>
+<p>使用匹配约束最重要的意义在于它们可以导致有效地使用可用寄存器。</p>
+<h4 id="一般内联汇编用法示例"><a href="#一般内联汇编用法示例" class="headerlink" title="一般内联汇编用法示例"></a>一般内联汇编用法示例</h4><p>以下示例通过各种不同的操作数约束说明了用法。有如此多的约束以至于无法将它们一一列出，这里只列出了最经常使用的那些约束类型。</p>
+<p><code>&quot;asm&quot; 和寄存器约束 &quot;r&quot;</code> 让我们先看一下使用寄存器约束 r 的 “asm”。我们的示例显示了 GCC 如何分配寄存器，以及它如何更新输出变量的值。</p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">int main(void)</div><div class="line">&#123;</div><div class="line">    int x = 10, y;</div><div class="line">    </div><div class="line">    asm ("movl %1, %%eax;</div><div class="line">    </div><div class="line"> "movl %%eax, %0;"</div><div class="line">        :"=r"(y)  /* y is output operand */</div><div class="line">        :"r"(x)       /* x is input operand */</div><div class="line">        :"%eax"); /* %eax is clobbered register */</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在该例中，x 的值复制为 “asm” 中的 y。x 和 y 都通过存储在寄存器中传递给 “asm”。为该例生成的汇编代码如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">main:</div><div class="line">pushl %ebp</div><div class="line">movl %esp,%ebp</div><div class="line">subl $8,%esp</div><div class="line">movl $10,-4(%ebp)    </div><div class="line">movl -4(%ebp),%edx  /* x=10 is stored in %edx */</div><div class="line">#APP    /* asm starts here */   </div><div class="line">movl %edx, %eax     /* x is moved to %eax */</div><div class="line">movl %eax, %edx     /* y is allocated in edx and updated */</div><div class="line">#NO_APP /* asm ends here */</div><div class="line">movl %edx,-8(%ebp)  /* value of y in stack is updated with </div><div class="line">                </div><div class="line"> the value in %edx */</div></pre></td></tr></table></figure>
+<p>当使用 “r” 约束时，GCC 在这里可以自由分配任何寄存器。在我们的示例中，它选择 %edx 来存储 x。在读取了 %edx 中 x 的值后，它为 y 也分配了相同的寄存器。</p>
+<p>因为 y 是在输出操作数部分中指定的，所以 %edx 中更新的值存储在 -8(%ebp)，堆栈上 y 的位置中。如果 y 是在输入部分中指定的，那么即使它在 y 的临时寄存器存储值 (%edx) 中被更新，堆栈上 y 的值也不会更新。</p>
+<p>因为 %eax 是在修饰列表中指定的，GCC 不在任何其它地方使用它来存储数据。</p>
+<p>输入 x 和输出 y 都分配在同一个 %edx 寄存器中，假设输入在输出产生之前被消耗。请注意，如果您有许多指令，就不是这种情况了。要确保输入和输出分配到不同的寄存器中，可以指定 &amp; 约束修饰符。下面是添加了约束修饰符的示例。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">int main(void)</div><div class="line">&#123;</div><div class="line">    int x = 10, y;</div><div class="line">    </div><div class="line">    asm (&quot;movl %1, %%eax;</div><div class="line">    </div><div class="line"> &quot;movl %%eax, %0;&quot;</div><div class="line">        :&quot;=&amp;r&quot;(y) /* y is output operand, note the    </div><div class="line">                </div><div class="line"> &amp; constraint modifier. */</div><div class="line">        :&quot;r&quot;(x)       /* x is input operand */</div><div class="line">        :&quot;%eax&quot;); /* %eax is clobbered register */</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>以下是为该示例生成的汇编代码，从中可以明显地看出 x 和 y 存储在 “asm” 中不同的寄存器中。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line">main:</div><div class="line">pushl %ebp</div><div class="line">movl %esp,%ebp</div><div class="line">subl $8,%esp</div><div class="line">movl $10,-4(%ebp)</div><div class="line">movl -4(%ebp),%ecx  /* x, the input is in %ecx */</div><div class="line">#APP</div><div class="line">    movl %ecx, %eax</div><div class="line">    movl %eax, %edx     /* y, the output is in %edx */</div><div class="line">#NO_APP</div><div class="line">movl %edx,-8(%ebp)</div></pre></td></tr></table></figure>
+<h4 id="特定寄存器约束的使用"><a href="#特定寄存器约束的使用" class="headerlink" title="特定寄存器约束的使用"></a>特定寄存器约束的使用</h4><p>现在让我们看一下如何将个别寄存器作为操作数的约束指定。在下面的示例中，cpuid 指令采用 %eax 寄存器中的输入，然后在四个寄存器中给出输出：%eax、%ebx、%ecx、%edx。对 cpuid 的输入（变量 “op”）传递到 “asm” 的 eax 寄存器中，因为 cpuid 希望它这样做。在输出中使用 a、b、c 和 d 约束，分别收集四个寄存器中的值。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line">asm (&quot;cpuid&quot;</div><div class="line">: &quot;=a&quot; (_eax),</div><div class="line">&quot;=b&quot; (_ebx),</div><div class="line">&quot;=c&quot; (_ecx),</div><div class="line">&quot;=d&quot; (_edx)</div><div class="line">: &quot;a&quot; (op));</div></pre></td></tr></table></figure>
+<p>在下面可以看到为它生成的汇编代码（假设 _eax、_ebx 等… 变量都存储在堆栈上）：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">movl -20(%ebp),%eax /* store &apos;op&apos; in %eax -- input */</div><div class="line">#APP</div><div class="line">cpuid</div><div class="line">#NO_APP</div><div class="line">movl %eax,-4(%ebp)  /* store %eax in _eax -- output */</div><div class="line">movl %ebx,-8(%ebp)  /* store other registers in</div><div class="line">movl %ecx,-12(%ebp) </div><div class="line"> respective output variables */</div><div class="line">movl %edx,-16(%ebp)</div></pre></td></tr></table></figure>
+<p>strcpy 函数可以通过以下方式使用 “S” 和 “D” 约束来实现：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line">asm (&quot;cld\n</div><div class="line">    </div><div class="line">rep\n</div><div class="line">    </div><div class="line">movsb&quot;</div><div class="line">    </div><div class="line">: /* no input */</div><div class="line">    </div><div class="line">:&quot;S&quot;(src), &quot;D&quot;(dst), &quot;c&quot;(count));</div></pre></td></tr></table></figure>
+<p>通过使用 “S” 约束将源指针 src 放入 %esi 中，使用 “D” 约束将目的指针 dst 放入 %edi 中。因为 rep 前缀需要 count 值，所以将它放入 %ecx 中。</p>
+<p>在下面可以看到另一个约束，它使用两个寄存器 %eax 和 %edx 将两个 32 位的值合并在一起，然后生成一个64 位的值：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">#define rdtscll(val) \</div><div class="line"> __asm__ __volatile__ (&quot;rdtsc&quot; : &quot;=A&quot; (val))</div><div class="line">The generated assembly looks like this (if val has a 64 bit memory space).</div><div class="line">#APP</div><div class="line">rdtsc</div><div class="line">#NO_APP</div><div class="line">movl %eax,-8(%ebp)  /* As a result of A constraint </div><div class="line">movl %edx,-4(%ebp)  </div><div class="line"> %eax and %edx serve as outputs */</div><div class="line">Note here that the values in %edx:%eax serve as 64 bit output.</div></pre></td></tr></table></figure>
+<h4 id="使用匹配约束"><a href="#使用匹配约束" class="headerlink" title="使用匹配约束"></a>使用匹配约束</h4><p>在下面将看到系统调用的代码，它有四个参数：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">#define _syscall4(type,name,type1,arg1,type2,arg2,type3,arg3,type4,arg4) \</div><div class="line">type name (type1 arg1, type2 arg2, type3 arg3, type4 arg4) \</div><div class="line">&#123; \</div><div class="line">long __res; \</div><div class="line">__asm__ volatile (&quot;int $0x80&quot; \</div><div class="line">: &quot;=a&quot; (__res) \</div><div class="line">: &quot;0&quot; (__NR_##name),&quot;b&quot; ((long)(arg1)),&quot;c&quot; ((long)(arg2)), \</div><div class="line">&quot;d&quot; ((long)(arg3)),&quot;S&quot; ((long)(arg4))); \</div><div class="line">__syscall_return(type,__res); \</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>在上例中，通过使用 b、c、d 和 S 约束将系统调用的四个自变量放入 %ebx、%ecx、%edx 和 %esi 中。请注意，在输出中使用了 “=a” 约束，这样，位于 %eax 中的系统调用的返回值就被放入变量 <strong>res 中。通过将匹配约束 “0” 用作输入部分中第一个操作数约束，syscall 号 </strong>NR_##name 被放入 %eax 中，并用作对系统调用的输入。这样，这里的 %eax 既可以用作输入寄存器，又可以用作输出寄存器。没有其它寄存器用于这个目的。另请注意，输入（syscall 号）在产生输出（syscall 的返回值）之前被消耗（使用）。</p>
+<h4 id="内存操作数约束的使用"><a href="#内存操作数约束的使用" class="headerlink" title="内存操作数约束的使用"></a>内存操作数约束的使用</h4><p>请考虑下面的原子递减操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">__asm__ __volatile__(</div><div class="line">&quot;lock; decl %0&quot;</div><div class="line">:&quot;=m&quot; (counter)</div><div class="line">:&quot;m&quot; (counter));</div></pre></td></tr></table></figure>
+<p>为它生成的汇编类似于：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">#APP</div><div class="line">    lock</div><div class="line">    decl -24(%ebp) /* counter is modified on its memory location */</div><div class="line">#NO_APP.</div></pre></td></tr></table></figure>
+<p>您可能考虑在这里为 counter 使用寄存器约束。如果这样做，counter 的值必须先复制到寄存器，递减，然后对其内存更新。但这样您会无法理解锁定和原子性的全部意图，这些明确显示了使用内存约束的必要性。</p>
+<h4 id="使用修饰寄存器"><a href="#使用修饰寄存器" class="headerlink" title="使用修饰寄存器"></a>使用修饰寄存器</h4><p>请考虑内存拷贝的基本实现。</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">   asm (&quot;movl $count, %%ecx;</div><div class="line">    </div><div class="line">up: lodsl;  </div><div class="line">    </div><div class="line">stosl;</div><div class="line">    </div><div class="line">loop up;&quot;</div><div class="line">        :           /* no output */</div><div class="line">        :&quot;S&quot;(src), &quot;D&quot;(dst) /* input */</div><div class="line">        :&quot;%ecx&quot;, &quot;%eax&quot; );  /* clobbered list */</div></pre></td></tr></table></figure>
+<p>当 lodsl 修改 %eax 时，lodsl 和 stosl 指令隐含地使用它。%ecx 寄存器明确装入 count。但 GCC 在我们通知它以前是不知道这些的，我们是通过将 %eax 和 %ecx 包括在修饰寄存器集中来通知 GCC 的。在完成这一步之前，GCC 假设 %eax 和 %ecx 是自由的，它可能决定将它们用作存储其它的数据。请注意，%esi 和 %edi 由 “asm” 使用，它们不在修饰列表中。这是因为已经声明 “asm” 将在输入操作数列表中使用它们。这里最低限度是，如果在 “asm” 内部使用寄存器（无论是明确还是隐含地），既不出现在输入操作数列表中，也不出现在输出操作数列表中，必须将它列为修饰寄存器。</p>
+<h4 id="结束语"><a href="#结束语" class="headerlink" title="结束语"></a>结束语</h4><p>总的来说，内联汇编非常巨大，它提供的许多特性我们甚至在这里根本没有涉及到。但如果掌握了本文描述的基本材料，您应该可以开始对自己的内联汇编进行编码了。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;原文地址:&lt;a href=&quot;https://www.ibm.com/developerworks/cn/linux/sdk/assemble/inline/&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;https://www.i
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
+    
+      <category term="汇编" scheme="http://vinoit.me/categories/Linux/%E6%B1%87%E7%BC%96/"/>
+    
+    
+      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
+    
+      <category term="汇编" scheme="http://vinoit.me/tags/%E6%B1%87%E7%BC%96/"/>
+    
+  </entry>
+  
+  <entry>
+    <title>linux内核笔记之进程（三）</title>
+    <link href="http://vinoit.me/2016/08/24/linux-kernel-note-process-three/"/>
+    <id>http://vinoit.me/2016/08/24/linux-kernel-note-process-three/</id>
+    <published>2016-08-24T05:42:48.000Z</published>
+    <updated>2016-08-24T15:23:41.000Z</updated>
+    
+    <content type="html"><![CDATA[<h3 id="进程切换"><a href="#进程切换" class="headerlink" title="进程切换"></a>进程切换</h3><p>为了控制进程的执行，内核必须有能力挂起正在CPU上运行的进程，并恢复以前挂起的某个进程的执行。这种行为被称为进程切换（process switch）、任务切换（task switch）或上下文切换（content switch）。</p>
+<h4 id="硬件上下文"><a href="#硬件上下文" class="headerlink" title="硬件上下文"></a>硬件上下文</h4><p>尽管每个进程都有自己的地址空间，但所有进程必须共享CPU寄存器。因此，在恢复一个进程的执行之前，内核必须确保每个寄存器装载了挂起进程时所需要的值。</p>
+<p>进程恢复执行前必须装入寄存器的一组数据成为硬件上下文（hardware context）。硬件上下文是进程可执行上下文的一个自己，因为可执行上下文包含进程执行时所需要的所有信息。在Linux中，进程硬件上下午的一部分存放在<code>TSS段</code>，而剩余部分存放在<code>内核态堆栈</code>中。</p>
+<p>在下面描述中，假定用prev局部变量表示切换出的进程描述符，next表示切换进的进程描述符,<code>这2个局部变量都存放在进程的内核堆栈中</code>。因此，我们把进程切换定义为这样的行为：保存prev硬件上下文，用next硬件上下文代替prev。因为进程切换经常发生，因此减少保存和装入硬件上下文所花费的时间是非常重要的。</p>
+<p>早期Linux版本利用80x86体系结构所需提供的硬件支持，并通过far jmp1指令跳到next进程TSS描述符的选择符来执行进程切换。当执行这条指令时，CPU通过自动保存原来的硬件上下文，装入新的硬件上下文来执行硬件上下文切换。但Linux2.6使用软件执行进程切换，原因有：</p>
+<p>通过一组mov指令逐步执行切换，这样能较好地控制所装入的数据的合法性，一面被恶意用户伪造。far jmp指令不会有这样的检查。<br>旧方法和新方法所需时间大致相同。<br>进程切换值发生在<code>内核态</code>，在执行进程切换之前，用户态进程使用的所有寄存器内容已保存在内核堆栈上，这也包括ss和esp这对寄存器的内容。</p>
+<h4 id="任务状态段"><a href="#任务状态段" class="headerlink" title="任务状态段"></a>任务状态段</h4><p>80x86体系结构包含了一个特殊的段类型，叫任务状态段（Task State Segment，TSS）来存放硬件上下文，尽管Linux并不使用硬件上下文切换，但是强制它为系统中每个不同的CPU创建一个TSS，这样做主要有两个理由：</p>
+<p>当80x86的一个CPU从用户态切换到内核态时，它就从TSS中获取内核态堆栈的地址。<br>当用户态进程试图通过in或out指令访问一个I/O端口时，CPU需要访问存放在TSS中的I/O许可位图以检查该进程是否有访问端口的权利。<br>更确切的说，当进程在用户态执行in或out指令时，控制单元执行下列操作：</p>
+<p>检查eflags寄存器中的2位IOPL字段，如果字段的值为3，控制单元就执行I/O指令。否则，执行下一个检查。<br>访问tr寄存器以确定当前的TSS和相应的I/O许可权位图。<br>检查I/O指令中指定的I/O端口在I/O许可权位图中对应的位，如果该位清，这条指令就执行，否则控制单元产生一个异常。<br>tss_struct结构描述TSS的格式，<code>init_tss数组</code>为系统上每个不同的CPU存放一个TSS。在每次进程切换时，内核都更新TSS的某些字段以便相应的CPU控制单元可以安全地检索到它需要的信息。因此，<code>TSS反映了CPU上当前进程的特权级，但不必为没有在运行的进程保留TSS</code>。</p>
+<p>每个TSS有它自己8字节的任务状态段描述符（Task State Segment Descriptor，TSSD）。和其他描述符一样，这个描述符包括指向TSS起始地址的32位Base字段，20位Limit字段。TSSD的S标志位被清0，以表示相应的TSS是<code>系统段</code>的事实。</p>
+<p>Type字段被置位11或9以表示这个段实际上是一个TSS。在Intel的原始设计中，<code>系统中的每个进程都应当指向自己的TSS</code>；Type字段的第二个有效位叫Busy位；如果进程正由CPU执行，则该位置1，否则为0。在Linux的设计中，<code>每个CPU只有一个TSS</code>，因此Busy位总是为1.</p>
+<p>由Linux创建的TSSD存放在全局描述符表（GDT）中，GDT的基地址存放在每个CPU的gdtr寄存器中。<br><img src="/images/linux-kernel-note/process-three-0.png" alt=""><br>每个CPU的tr寄存器包含相应TSS的TSSD选择符，也包含了两个<code>隐藏的非编程字段</code>：TSSD的Base字段和Limit字段。这样，处理器就能够直接TSS寻址而不需要从GDT中检索TSS地址。</p>
+<h4 id="thread字段"><a href="#thread字段" class="headerlink" title="thread字段"></a>thread字段</h4><p>在每次进程切换时，被替换的进程的硬件上下文必须保存在别处。不能像Intel原始设计那样保存在TSS中，因为<code>Linux为每个处理器而不是为每个进程使用TSS</code>。</p>
+<p>因此，每个进程描述符包含一个类型为thread_struct的thread字段，只要进程被切换出去，内核就把其硬件上下文保存在这个结构中。随后可以看到，这个数据结构包含的字段涉及大部分CPU寄存器，但不包括eax、ebx等等这些通用寄存器。它们的值保留在内核堆栈中。</p>
+<h4 id="执行进程切换"><a href="#执行进程切换" class="headerlink" title="执行进程切换"></a>执行进程切换</h4><p>进程切换可能只发生在精心定义的点：schedule()函数，这个函数在专门整理进程调度的篇幅里讲解。这里，只关注内核如何执行一个进程切换。</p>
+<p>进程切换由两步组成：</p>
+<ul>
+<li>切换页全局目录以安装一个新的地址空间。</li>
+<li>切换内核态堆栈和硬件上下文，因为硬件上下文提供了内核执行新进程所需要的所有信息，包含CPU寄存器。</li>
+</ul>
+<p>第二步由<code>switch_to</code>宏来完成，源码如下:</p>
+<p><a href="http://lxr.free-electrons.com/source/include/asm-generic/switch_to.h#L25" target="_blank" rel="external">http://lxr.free-electrons.com/source/include/asm-generic/switch_to.h#L25</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"> <span class="comment">/*</span></div><div class="line">  * Context switching is now performed out-of-line in switch_to.S</div><div class="line">  */</div><div class="line"> <span class="keyword">extern</span> <span class="keyword">struct</span> task_struct *<span class="number">__</span>switch_to(<span class="keyword">struct</span> task_struct *,</div><div class="line">                                        <span class="keyword">struct</span> task_struct *);</div><div class="line"> </div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> switch_to(prev, next, last)                                      											                         \</span></div><div class="line">        do &#123;                                                            \</div><div class="line">                ((last) = __switch_to((prev), (next)));                 			                                                   \</div><div class="line">        &#125; while (0)</div><div class="line"></div><div class="line"><span class="meta">#<span class="meta-keyword">endif</span> <span class="comment">/* __ASM_GENERIC_SWITCH_TO_H */</span></span></div></pre></td></tr></table></figure>
+<p>首先，该宏有三个参数，prev、next和last，prev和next的作用仅是<code>内核堆栈中</code>的局部变量prev和next的占位符，即它们是输入参数，分别表示被替换进程和新进程描述符的地址在内存中的位置。</p>
+<p>在任何进程切换中，涉及到的是三个进程而不是两个。假设内核决定暂停进程A而激活进程B，在schedule()函数中，prev指向A的描述符，而next指向B的进程描述符。switch_to宏一旦使A暂停，A的执行流就被冻结。</p>
+<p><strong>此时，A的内核堆栈中的<code>prev</code>指向A的描述符，<code>next</code>指向B的描述符。B的内核堆栈中的<code>prev</code>指向B的描述符，<code>next</code>指向other(下一个要调度的进程描述符，目前未知)。</strong></p>
+<p>随后，当内核想再次激活A，就必须暂停另一个进程C，因为这通常不是B，因为B有可能被其他进程比如C切换。于是就要用prev指向C而next指向A来执行另一个switch_to宏。当A恢复它执行的流时，就会找到它原来的内核栈，于是prev局部变量还是指向A的描述符而next指向B的描述符。</p>
+<p><strong>此时，A的内核堆栈中的<code>prev</code>指向A的描述符，<code>next</code>指向B的描述符。C的内核堆栈中的<code>prev</code>指向C的描述符，<code>next</code>指向A的描述符。</strong></p>
+<p>所以，<code>代表进程A执行的内核就失去了对C的任何引用</code>。但引用对于完成进程切换是有用的，所以需要保留。</p>
+<p>switch_to宏的最后一个参数是输出参数，它表示宏把进程C的描述符地址写在内存的什么位置了，不过，这个是在恢复A执行之后完成的。在进程切换之前，宏把第一个输入参数prev表示的变量存入CPU的eax寄存器。在完成进程切换，A已经恢复执行时，宏把CPU的eax寄存器的内容写入由第三个参数last所指示的A在内存中的位置。因为CPU寄存器不会在切换点发生变化，所以C的描述符地址也存在内存的这个位置。在schedule()执行过程中，last参数指向A的局部变量prev，所以prev被C的地址覆盖。</p>
+<h4 id="switch-to-函数"><a href="#switch-to-函数" class="headerlink" title="__switch_to()函数"></a>__switch_to()函数</h4><p><strong>switch_to()函数执行大多数开始于switch_to()宏的进程切换。这个函数作用于prev_p和next_p参数，这两个参数表示前一个进程和新进程。这个函数的调用不同于一般的函数调用。因为</strong>switch_to()从eax和edx取参数prev_p和next_p，而不像大多数函数一样从栈中取参数。</p>
+<p><a href="http://lxr.free-electrons.com/source/arch/x86/kernel/process_32.c#L242" target="_blank" rel="external">http://lxr.free-electrons.com/source/arch/x86/kernel/process_32.c#L242</a></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div></pre></td><td class="code"><pre><div class="line"><span class="number">__</span>switch_to(<span class="keyword">struct</span> task_struct *prev_p, <span class="keyword">struct</span> task_struct *next_p)</div><div class="line">&#123;</div><div class="line">        <span class="keyword">struct</span> thread_struct *prev = &amp;prev_p-&gt;thread,</div><div class="line">                             *next = &amp;next_p-&gt;thread;</div><div class="line">        <span class="keyword">struct</span> fpu *prev_fpu = &amp;prev-&gt;fpu;</div><div class="line">        <span class="keyword">struct</span> fpu *next_fpu = &amp;next-&gt;fpu;</div><div class="line">        <span class="keyword">int</span> cpu = smp_processor_id();</div><div class="line">        <span class="keyword">struct</span> tss_struct *tss = &amp;per_cpu(cpu_tss, cpu);</div><div class="line">        <span class="keyword">fpu_switch_t</span> fpu_switch;</div><div class="line"></div><div class="line">        <span class="comment">/* never put a printk in __switch_to... printk() calls wake_up*() indirectly */</span></div><div class="line"></div><div class="line">        fpu_switch = switch_fpu_prepare(prev_fpu, next_fpu, cpu);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Save away %gs. No need to save %fs, as it was saved on the</div><div class="line">         * stack on entry.  No need to save %es and %ds, as those are</div><div class="line">         * always kernel segments while inside the kernel.  Doing this</div><div class="line">         * before setting the new TLS descriptors avoids the situation</div><div class="line">         * where we temporarily have non-reloadable segments in %fs</div><div class="line">         * and %gs.  This could be an issue if the NMI handler ever</div><div class="line">         * used %fs or %gs (it does not today), or if the kernel is</div><div class="line">         * running inside of a hypervisor layer.</div><div class="line">         */</div><div class="line">        lazy_save_gs(prev-&gt;gs);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Load the per-thread Thread-Local Storage descriptor.</div><div class="line">         */</div><div class="line">        load_TLS(next, cpu);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Restore IOPL if needed.  In normal use, the flags restore</div><div class="line">         * in the switch assembly will handle this.  But if the kernel</div><div class="line">         * is running virtualized at a non-zero CPL, the popf will</div><div class="line">         * not restore flags, so it must be done in a separate step.</div><div class="line">         */</div><div class="line">        <span class="keyword">if</span> (get_kernel_rpl() &amp;&amp; unlikely(prev-&gt;iopl != next-&gt;iopl))</div><div class="line">                set_iopl_mask(next-&gt;iopl);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Now maybe handle debug registers and/or IO bitmaps</div><div class="line">         */</div><div class="line">        <span class="keyword">if</span> (unlikely(task_thread_info(prev_p)-&gt;flags &amp; <span class="number">_</span>TIF_WORK_CTXSW_PREV ||</div><div class="line">                     task_thread_info(next_p)-&gt;flags &amp; <span class="number">_</span>TIF_WORK_CTXSW_NEXT))</div><div class="line">                <span class="number">__</span>switch_to_xtra(prev_p, next_p, tss);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Leave lazy mode, flushing any hypercalls made here.</div><div class="line">         * This must be done before restoring TLS segments so</div><div class="line">         * the GDT and LDT are properly updated, and must be</div><div class="line">         * done before fpu__restore(), so the TS bit is up</div><div class="line">         * to date.</div><div class="line">         */</div><div class="line">        arch_end_context_switch(next_p);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Reload esp0 and cpu_current_top_of_stack.  This changes</div><div class="line">         * current_thread_info().</div><div class="line">         */</div><div class="line">        load_sp0(tss, next);</div><div class="line">        this_cpu_write(cpu_current_top_of_stack,</div><div class="line">                       (<span class="keyword">unsigned</span> <span class="keyword">long</span>)task_stack_page(next_p) +</div><div class="line">                       THREAD_SIZE);</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Restore %gs if needed (which is common)</div><div class="line">         */</div><div class="line">        <span class="keyword">if</span> (prev-&gt;gs | next-&gt;gs)</div><div class="line">                lazy_load_gs(next-&gt;gs);</div><div class="line"></div><div class="line">        switch_fpu_finish(next_fpu, fpu_switch);</div><div class="line"></div><div class="line">        this_cpu_write(current_task, next_p);</div><div class="line"></div><div class="line">        <span class="keyword">return</span> prev_p;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>这个函数执行步骤如下：</p>
+<ul>
+<li><p>执行由__unlay_fpu()宏代码产生的代码，以有选择地保存prev_p进程的FPU、MMX以及XMM寄存器的内容。</p>
+</li>
+<li><p>执行smp_processor_id()宏获得本地CPU的下标，即执行代码当前的CPU。该宏从当前进程的thread_info结构的cpu字段获得下标并保存到cpu局部变量。</p>
+</li>
+<li><p>把next_p-&gt;thread.esp0装入对应于本地CPU的TSS的esp0字段。其实，任何由sysenter汇编指令产生的从用户态到内核态的特权级转换将把这个地址拷贝到esp寄存器中。</p>
+</li>
+<li><p>把next_p进程使用的线程局部存储（TLS）段装载入本地CPU的全局描述符表。</p>
+</li>
+<li><p>把fs和gs段寄存器的内容分别存放在prev_p-&gt;thread.fs和prev_p-&gt;thread.gs中。esi寄存器指向prev_p-&gt;thread结构。</p>
+</li>
+<li><p>如果fs或gs段寄存器已经被prev_p或next_p进程中的任意一个使用，则将next_p进程的thread_struct描述符中保存的值装入这些寄存器。</p>
+</li>
+<li><p>用next_p-&gt;thread.debugreg数组内容装载dr0…dr7中的6个调试寄存器。只有在next_p被挂起时正在使用调试寄存器，这种操作才能进行。</p>
+</li>
+<li><p>如果必要，则更新TSS中的I/O位图。因为进程很少修改I/O权限位图，所以当且仅当一个进程在当前时间片内实际访问I/O端口时，真实的位图才被拷贝到本地CPU的TSS中。进程的定制I/O权限位图被保存在thread_info结构的io_bitmap_ptr字段指向的缓冲区中。当prev_p或者next_p拥有自己定制的I/O权限位图（io_bitmap_ptr不为null）时,TSS的io_bitmap字段被设为0x9000,否则为0x8000。</p>
+</li>
+<li><p>终止，prev_p参数被拷贝到eax，<code>因为缺省情况下任何C函数的返回值被传给eax寄存器</code>。所以eax的值在调用__switch_to()的过程中被保护起来；这很重要，因为调用该函数时会假定eax总是用来存放将被替换的进程描述符地址。</p>
+</li>
+<li><p>汇编语言指令ret把栈顶保存的返回地址装入eip程序计数器。不过，__swtich_to()函数时通过简单的跳转被调用的。因此，ret汇编指令在栈中找到标号为1的指令地址，其中标号为1的地址是由switch_to()宏推入堆栈的。</p>
+</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h3 id=&quot;进程切换&quot;&gt;&lt;a href=&quot;#进程切换&quot; class=&quot;headerlink&quot; title=&quot;进程切换&quot;&gt;&lt;/a&gt;进程切换&lt;/h3&gt;&lt;p&gt;为了控制进程的执行，内核必须有能力挂起正在CPU上运行的进程，并恢复以前挂起的某个进程的执行。这种行为被称为进程切换（pro
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
+    
+      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Maven常用命令和操作</title>
     <link href="http://vinoit.me/2016/08/19/maven-common-command-and-operation/"/>
     <id>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</id>
     <published>2016-08-19T02:15:15.000Z</published>
-    <updated>2016-08-19T08:28:16.000Z</updated>
+    <updated>2016-08-19T08:34:37.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Maven-Archetypes"><a href="#Maven-Archetypes" class="headerlink" title="Maven Archetypes"></a>Maven Archetypes</h4><p>Maven archetypes是一个项目模板，可以让Maven按照指定的模板构建出一个项目最基本的文件结构，以及创建一些文件。Maven中有许多项目模板供我们使用，使用方式如下:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mvn archetype:generate</div></pre></td></tr></table></figure>
@@ -90,7 +287,7 @@
     
       <category term="maven" scheme="http://vinoit.me/tags/maven/"/>
     
-      <category term="tool" scheme="http://vinoit.me/tags/tool/"/>
+      <category term="tools" scheme="http://vinoit.me/tags/tools/"/>
     
   </entry>
   
@@ -210,8 +407,8 @@
   
   <entry>
     <title>linux内核笔记之进程（二）</title>
-    <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-tow/"/>
-    <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-tow/</id>
+    <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-two/"/>
+    <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</id>
     <published>2016-08-16T12:31:04.000Z</published>
     <updated>2016-08-18T14:19:33.000Z</updated>
     
@@ -1883,112 +2080,6 @@ Host: google.com
       <category term="jvm" scheme="http://vinoit.me/tags/jvm/"/>
     
       <category term="java" scheme="http://vinoit.me/tags/java/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>理解JVM中class文件结构--概念部分</title>
-    <link href="http://vinoit.me/2016/05/22/java-classfile-structure-concept/"/>
-    <id>http://vinoit.me/2016/05/22/java-classfile-structure-concept/</id>
-    <published>2016-05-22T05:38:49.000Z</published>
-    <updated>2016-08-18T14:17:29.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="什么是class文件"><a href="#什么是class文件" class="headerlink" title="什么是class文件"></a>什么是class文件</h4><p>java源代码（后缀名是.java）经过编译器编译之后会生成class文件（后缀名是.class），每一个 Class 文件都对应着唯一一个类或接口的定义信息，但是相对地， 类或接口并不一定都得定义在文件里，我们只是通俗地将任意一个有效的类或接口所应当满足的格式称为“ Class 文件格式”， 即使它不一定以磁盘文件的形式存在。</p>
-<p>每个 Class 文件都是由 8 字节为单位的字节流组成，所有的 16 位、 32 位和 64 位长度的数据将被构造成 2 个、 4 个和 8 个 8 字节单位来表示。多字节数据项总是按照 <a href="https://en.wikipedia.org/wiki/Endianness" target="_blank" rel="external">Big-Endian</a>的顺序进行存储。<br>JVM规范还定义了一组私有数据类型来表示 Class 文件的内容，它们包括 <code>u1， u2 和 u4</code>，分别代表了 <code>1、 2 和 4</code>个字节的无符号。</p>
-<p>为了避免与类的字段、 类的实例等概念产生混淆， 在此把用于描述类结构格式的内容定义为<code>项</code>（ Item）。在 Class 文件中，各项按照<code>严格顺序连续存放</code>的， 它们之间没有任何填充或对齐作为各项间的分隔符号。</p>
-<p><code>表</code>（ Table） 是由任意数量的可变长度的<code>项</code>组成，用于表示Class 文件内容的一系列复合结构。</p>
-<h4 id="class文件结构"><a href="#class文件结构" class="headerlink" title="class文件结构"></a>class文件结构</h4><p>每一个 Class 文件对应于一个如下所示的 ClassFile 结构体：</p>
-<p>ClassFile :<br>    <code>u4 magic;</code><br>    <strong>魔数值固定为 0xCAFEBABE,不会改变，唯一作用是确定这个文件是否为一个能被虚拟机所接受的 Class 文件。</strong><br>    <code>u2 minor_version;</code><strong>副版本号</strong><br>    <code>u2 major_version;</code><strong>主版本号</strong><br>    <strong>主副版本号共同构成了 Class 文件的格式版本号。譬如某个 Class 文件的主版本号为 M，副版本号为 m，那么这个Class 文件的格式版本号就确定为 M.m。一个 Java 虚拟机实例只能支持特定范围内的主版本号。</strong><br>    <code>u2 constant_pool_count;</code><br>    <strong>常量池计数器，constant_pool_count 的值等于 constant_pool 表中的成员数加 1。constant_pool 表的索引值只有在大于 0 且小于 constant_pool_count 时才会被认为是有效的。（0表示不引用常量池的任一项）</strong><br>    <code>cp_info constant_pool[constant_pool_count-1];</code><br>    <strong>常量池，constant_pool 是一种表结构， 它包含 Class 文件结构及其子结构中引用的所有字符串常量、 类或接口名、字段名和其它常量。 常量池中的每一项都具备相同的格式特征——第一个字节作为类型标记用于识别该项是哪种类型的常量，  称为“ tagbyte”。常量池的索引范围是 1 至 constant_pool_count−1。（索引1表示第一个常量项）具体结构信息可查看我的另<br>    一篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>对应tag。</strong><br>    <code>u2 access_flags;</code><br>    <strong>访问标志， access_flags 是一种掩码标志， 用于表示某个类或者接口的访问权限及基础属性。具体结构信息可查看我的另一篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>对应tag。</strong><br>    <code>u2 this_class;</code><br>    <strong>类索引， this_class 的值必须是对 constant_pool 表中项目的一个有效索引值。constant_pool 表在这个索引处的项必须为 CONSTANT_Class_info 类型常量。</strong><br>    <code>u2 super_class;</code><br>    <strong>父类索引，对于类来说， super_class 的值必须为 0 或者是对 constant_pool 表中项目的一个有效索引值。 如果它的值不为 0，那 constant_pool 表在这个索引处的项必须为 CONSTANT_Class_info 类型常量，表示这个 Class 文件所定义的类的直接父类。</strong><br>    <code>u2 interfaces_count;</code><br>    <strong>接口计数器， interfaces_count 的值表示当前类或接口的直接父接口数量。</strong><br>    <code>u2 interfaces[interfaces_count];</code><br>    <strong>接口表， interfaces[]数组中的每个成员的值必须是一个对 constant_pool 表中项目的一个有效索引值， 它的长度为 interfaces_count。每个成员 interfaces[i] 必须为 CONSTANT_Class_info 类型常量,成员所表示的接口顺序和对应的源代码中给定的接口顺序（ 从左至右）<br>    一样。</strong><br>    <code>u2 fields_count;</code><br>    <strong>字段计数器， fields_count 的值表示当前 Class 文件 fields[]数组的成员个数。</strong><br>    <code>field_info fields[fields_count];</code><br>    <strong>字段表， fields[]数组中的每个成员都必须是一个 fields_info 结构的数据项，用于表示当前类或接口中某个字段的完整描述。fields[]数组描述当前类或接口声明的所有字段，但<em>不包括</em>从父类或父接口继承的部分。具体结构信息可查看我的另一篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>对应tag。</strong><br>    <code>u2 methods_count;</code><br>    <strong>方法计数器， methods_count 的值表示当前 Class 文件 methods[]数组的成员个数。</strong><br>    <code>method_info methods[methods_count];</code><br>    <strong>方法表， methods[]数组中的每个成员都必须是一个 method_info 结构的数据项，用于表示当前类或接口中某个方法的完整描述。methods[]数组只描述当前类或接口中声明的方法，<code>不包括</code>从父类或父接口继承的方法。具体结构信息可查看我的另一篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>对应tag。</strong><br>    <code>u2 attributes_count;</code><br>    <strong>属性计数器， attributes_count 的值表示当前 Class 文件 attributes 表的成员个数。attributes 表中每一项都是一个attribute_info 结构的数据项。</strong><br>    <code>attribute_info attributes[attributes_count];</code><br>    <strong>属性表，和字段表、方法表中属性表中的内容<em>有所区别</em>。（某些属性只能用于class,某些属性只能用于字段或者方法，例如ConstantValue 属性用于字段，Code 属性用于方法）具体结构信息可查看我的另一篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>对应tag。</strong></p>
-<p><code>以下是JVM规范SE7中的原文：</code><br>JVM规范里， Class 文件结构中的 attributes 表的项包括下列定义的属性：InnerClasses、EnclosingMethod、Synthetic 、Signature、SourceFile，SourceDebugExtension、 Deprecated、 RuntimeVisibleAnnotations、 RuntimeInvisibleAnnotations以及BootstrapMethods属性。对于支持 Class 文件格式版本号为 49.0 或更高的 Java虚拟机实现，必须正确识别并读取 attributes表中的Signature、 RuntimeVisibleAnnotations和RuntimeInvisibleAnnotations属性。<br>对于支持 Class 文件格式版本号为 51.0 或更高的Java 虚拟机实现，必须正确识别并读取 attributes 表中的BootstrapMethods属性。<br>本规范要求任一 Java 虚拟机实现可以自动忽略Class文件的 attributes 表中的若干（ 甚至全部） 它不可识别的属性项。任何本规范未定义的属性不能影响 Class 文件的语义，只能提供附加的描述信息。<br><code>概括一下：虚拟机可以忽视某些属性，不同版本的虚拟机实例中所需的属性有所区别，你也可以实现自己的属性，但是只能作为附加信息，不能对原语义做出修改。</code></p>
-<p>以上结构便是整个class文件，建议和我的另两篇博文<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>以及<a href="/2016/05/23/java-classfile-structure-example/">《理解JVM中class文件结构–实例讲解》</a>结合的来看。</p>
-<ul>
-<li>参考《JVM规范SE7》</li>
-</ul>
-<blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;什么是class文件&quot;&gt;&lt;a href=&quot;#什么是class文件&quot; class=&quot;headerlink&quot; title=&quot;什么是class文件&quot;&gt;&lt;/a&gt;什么是class文件&lt;/h4&gt;&lt;p&gt;java源代码（后缀名是.java）经过编译器编译之后会生成class文件（
-    
-    </summary>
-    
-      <category term="jvm" scheme="http://vinoit.me/categories/jvm/"/>
-    
-    
-      <category term="jvm" scheme="http://vinoit.me/tags/jvm/"/>
-    
-      <category term="java" scheme="http://vinoit.me/tags/java/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入理解Java内存模型（二）——重排序</title>
-    <link href="http://vinoit.me/2016/05/21/java-memeory-model-reorder/"/>
-    <id>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</id>
-    <published>2016-05-21T08:37:49.000Z</published>
-    <updated>2016-08-10T08:06:52.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="数据依赖性"><a href="#数据依赖性" class="headerlink" title="数据依赖性"></a>数据依赖性</h4><p>如果两个操作访问同一个变量，且这两个操作中有一个为写操作，此时这两个操作之间就存在数据依赖性。数据依赖分下列三种类型</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:left">名称</th>
-<th>代码示例</th>
-<th>说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left">写后读</td>
-<td>a = 1;b = a;</td>
-<td>写一个变量之后，再读这个位置。</td>
-</tr>
-<tr>
-<td style="text-align:left">写后写</td>
-<td>a = 1;a = 2;</td>
-<td>写一个变量之后，再写这个变量。</td>
-</tr>
-<tr>
-<td style="text-align:left">读后写</td>
-<td>a = b;b = 1;</td>
-<td>读一个变量之后，再写这个变量。</td>
-</tr>
-</tbody>
-</table>
-<p>上面三种情况，只要重排序两个操作的执行顺序，程序的执行结果将会被改变。</p>
-<p>前面提到过，编译器和处理器可能会对操作做重排序。编译器和处理器在重排序时，会遵守数据依赖性，编译器和处理器不会改变存在数据依赖关系的两个操作的执行顺序。</p>
-<p>注意，这里所说的数据依赖性仅针对单个处理器中执行的指令序列和单个线程中执行的操作，不同处理器之间和不同线程之间的数据依赖性不被编译器和处理器考虑。</p>
-<h4 id="as-if-serial语义"><a href="#as-if-serial语义" class="headerlink" title="as-if-serial语义"></a>as-if-serial语义</h4><p>as-if-serial语义的意思指：不管怎么重排序（编译器和处理器为了提高并行度），（单线程）程序的执行结果不能被改变。编译器，runtime 和处理器都必须遵守as-if-serial语义。</p>
-<p>为了遵守as-if-serial语义，编译器和处理器不会对存在数据依赖关系的操作做重排序，因为这种重排序会改变执行结果。但是，如果操作之间不存在数据依赖关系，这些操作可能被编译器和处理器重排序。为了具体说明，请看下面计算圆面积的代码示例：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">double</span> pi  = <span class="number">3.14</span>;    <span class="comment">//A</span></div><div class="line"><span class="keyword">double</span> r   = <span class="number">1.0</span>;     <span class="comment">//B</span></div><div class="line"><span class="keyword">double</span> area = pi * r * r; <span class="comment">//C</span></div></pre></td></tr></table></figure></p>
-<p>上面三个操作的数据依赖关系如下图所示：<br><img src="/images/JMM/JMM-reorder-0.png" alt=""><br>如上图所示，A和C之间存在数据依赖关系，同时B和C之间也存在数据依赖关系。因此在最终执行的指令序列中，C不能被重排序到A和B的前面（C排到A和B的前面，程序的结果将会被改变）。但A和B之间没有数据依赖关系，编译器和处理器可以重排序A和B之间的执行顺序。下图是该程序的两种执行顺序：<br><img src="/images/JMM/JMM-reorder-1.png" alt=""><br>as-if-serial语义把单线程程序保护了起来，遵守as-if-serial语义的编译器，runtime 和处理器共同为编写单线程程序的程序员创建了一个幻觉：单线程程序是按程序的顺序来执行的。as-if-serial语义使单线程程序员无需担心重排序会干扰他们，也无需担心内存可见性问题。</p>
-<h4 id="程序顺序规则"><a href="#程序顺序规则" class="headerlink" title="程序顺序规则"></a>程序顺序规则</h4><p>根据happens- before的程序顺序规则，上面计算圆的面积的示例代码存在三个happens- before关系：</p>
-<p>1.A happens- before B；<br>2.B happens- before C；<br>3.A happens- before C；<br>这里的第3个happens- before关系，是根据happens- before的传递性推导出来的。</p>
-<p>这里A happens- before B，但实际执行时B却可以排在A之前执行（看上面的重排序后的执行顺序）。在第一章提到过，如果A happens- before B，JMM并不要求A一定要在B之前执行。JMM仅仅要求前一个操作（执行的结果）对后一个操作可见，且前一个操作按顺序排在第二个操作之前。这里操作A的执行结果不需要对操作B可见；而且重排序操作A和操作B后的执行结果，与操作A和操作B按happens- before顺序执行的结果一致。在这种情况下，JMM会认为这种重排序并不非法（not illegal），JMM允许这种重排序。</p>
-<p>在计算机中，软件技术和硬件技术有一个共同的目标：在不改变程序执行结果的前提下，尽可能的开发并行度。编译器和处理器遵从这一目标，从happens- before的定义我们可以看出，JMM同样遵从这一目标。</p>
-<h4 id="重排序对多线程的影响"><a href="#重排序对多线程的影响" class="headerlink" title="重排序对多线程的影响"></a>重排序对多线程的影响</h4><p>现在让我们来看看，重排序是否会改变多线程程序的执行结果。请看下面的示例代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">ReorderExample</span> </span>&#123;</div><div class="line">      <span class="keyword">int</span> a = <span class="number">0</span>;</div><div class="line">      <span class="keyword">boolean</span> flag = <span class="keyword">false</span>;</div><div class="line">      <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writer</span><span class="params">()</span> </span>&#123;</div><div class="line">            a = <span class="number">1</span>;                   <span class="comment">//1</span></div><div class="line">            flag = <span class="keyword">true</span>;             <span class="comment">//2</span></div><div class="line">      &#125;</div><div class="line">      <span class="function">Public <span class="keyword">void</span> <span class="title">reader</span><span class="params">()</span> </span>&#123;</div><div class="line">          <span class="keyword">if</span> (flag) &#123;                <span class="comment">//3</span></div><div class="line">            <span class="keyword">int</span> i =  a * a;        <span class="comment">//4</span></div><div class="line">            ……</div><div class="line">          &#125;</div><div class="line">      &#125;       </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>flag变量是个标记，用来标识变量a是否已被写入。这里假设有两个线程A和B，A首先执行writer()方法，随后B线程接着执行reader()方法。线程B在执行操作4时，能否看到线程A在操作1对共享变量a的写入？</p>
-<p><code>答案是：不一定能看到。</code></p>
-<p>由于操作1和操作2没有数据依赖关系，编译器和处理器可以对这两个操作重排序；同样，操作3和操作4没有数据依赖关系，编译器和处理器也可以对这两个操作重排序。让我们先来看看，当操作1和操作2重排序时，可能会产生什么效果？请看下面的程序执行时序图：<br><img src="/images/JMM/JMM-reorder-2.png" alt=""><br>如上图所示，操作1和操作2做了重排序。程序执行时，线程A首先写标记变量flag，随后线程B读这个变量。由于条件判断为真，线程B将读取变量a。此时，变量a还根本没有被线程A写入，在这里多线程程序的语义被重排序破坏了！</p>
-<p><code>※注：本文统一用红色的虚箭线表示错误的读操作，用绿色的虚箭线表示正确的读操作。</code></p>
-<p>下面再让我们看看，当操作3和操作4重排序时会产生什么效果（借助这个重排序，可以顺便说明控制依赖性）。下面是操作3和操作4重排序后，程序的执行时序图：<br><img src="/images/JMM/JMM-reorder-2.png" alt=""><br>在程序中，操作3和操作4存在控制依赖关系。当代码中存在控制依赖性时，会影响指令序列执行的并行度。为此，编译器和处理器会采用猜测（Speculation）执行来克服控制相关性对并行度的影响。以处理器的猜测执行为例，执行线程B的处理器可以提前读取并计算a*a，然后把计算结果临时保存到一个名为重排序缓冲（reorder buffer ROB）的硬件缓存中。当接下来操作3的条件判断为真时，就把该计算结果写入变量i中。</p>
-<p>从图中我们可以看出，猜测执行实质上对操作3和4做了重排序。重排序在这里破坏了多线程程序的语义！</p>
-<p>在单线程程序中，对存在控制依赖的操作重排序，不会改变执行结果（这也是as-if-serial语义允许对存在控制依赖的操作做重排序的原因）；但在多线程程序中，对存在控制依赖的操作重排序，可能会改变程序的执行结果。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;数据依赖性&quot;&gt;&lt;a href=&quot;#数据依赖性&quot; class=&quot;headerlink&quot; title=&quot;数据依赖性&quot;&gt;&lt;/a&gt;数据依赖性&lt;/h4&gt;&lt;p&gt;如果两个操作访问同一个变量，且这两个操作中有一个为写操作，此时这两个操作之间就存在数据依赖性。数据依赖分下列三种类型
-    
-    </summary>
-    
-      <category term="JMM" scheme="http://vinoit.me/categories/JMM/"/>
-    
-    
-      <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
     
   </entry>
   
