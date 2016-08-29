@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-08-26T13:51:43.000Z</updated>
+  <updated>2016-08-29T03:06:40.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -14,6 +14,145 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>根据字节码探讨JAVA自增运算符的原理</title>
+    <link href="http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/"/>
+    <id>http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/</id>
+    <published>2016-08-29T02:47:24.000Z</published>
+    <updated>2016-08-29T03:06:40.000Z</updated>
+    
+    <content type="html"><![CDATA[<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x, y;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</div><div class="line">        x++;</div><div class="line">        myMethod();</div><div class="line">        System.out.println(x + y + ++x);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">myMethod</span><span class="params">()</span> </span>&#123;</div><div class="line">        y = x++ + ++x;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><strong>如果以上代码的结果你很自信能做对,那么本文或许对你帮助不大,但仍然可以看下java底层的实现.在最后将给出以上代码的结果以及解析.</strong></p>
+<h4 id="情况举例"><a href="#情况举例" class="headerlink" title="情况举例"></a>情况举例</h4><p>本文中的例子主要针对以下情况:</p>
+<p>①x=y++</p>
+<p>②x=++y</p>
+<p>③x=x++</p>
+<p>④x=++x</p>
+<p>a : x,y为形参</p>
+<p>b : x,y为成员变量</p>
+<p>废话不多说,直接上代码:</p>
+<h4 id="代码1-①-b"><a href="#代码1-①-b" class="headerlink" title="代码1(①+b):"></a>代码1(①+b):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x,y;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        x = y++;</div><div class="line">        System.out.println(x+<span class="string">""</span>+y);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:01</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">0: getstatic     #3                  // Field y:I</div><div class="line">         3: dup</div><div class="line">         4: iconst_1</div><div class="line">         5: iadd</div><div class="line">         6: putstatic     #3                  // Field y:I</div><div class="line">         9: putstatic     #4                  // Field x:I</div><div class="line">        12: getstatic     #5                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">        15: getstatic     #4                  // Field x:I</div><div class="line">        18: invokevirtual #6                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        21: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:y(值)入操作栈</p>
+<p>3:得到y(值)的一个快照y’(值)</p>
+<p>(个人认为相当于是将栈顶元素也就是y(值)复制了一份,然后将复制得到的y’(值)入操作栈,现在操作栈中有y(值)和y’(值))</p>
+<p>4:常量1入操作栈</p>
+<p>5:常量1和y’(值)弹出栈,进行加操作,并将结果s入栈</p>
+<p>6:将结果s弹出栈,赋给y(变量)(此时y==1)</p>
+<p>9:将y(值)弹出栈,赋给x(变量)(此时x==0)</p>
+<p>因为y(值)入操作栈之后没有修改,所以x依旧是0,而y变成了1</p>
+<h4 id="代码2-②-b"><a href="#代码2-②-b" class="headerlink" title="代码2(②+b):"></a>代码2(②+b):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x,y;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        x = ++y;</div><div class="line">        System.out.println(x+<span class="string">""</span>+y);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果11</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">0: getstatic     #3                  // Field y:I</div><div class="line">         3: iconst_1</div><div class="line">         4: iadd</div><div class="line">         5: dup</div><div class="line">         6: putstatic     #3                  // Field y:I</div><div class="line">         9: putstatic     #4                  // Field x:I</div><div class="line">        12: getstatic     #5                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">        15: getstatic     #4                  // Field x:I</div><div class="line">        18: invokevirtual #6                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        21: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:y(值)入操作栈</p>
+<p>3:常量1入操作栈</p>
+<p>4:常量1和y(值)弹出栈,进行加操作,并将结果s入栈</p>
+<p>5:得到栈顶元素也就是s的快照s’,并入操作栈</p>
+<p>6:将s’弹出栈,并赋给y(变量)(此时y==1)</p>
+<p>9:将s弹出栈,并赋给x(变量)(此时x==1)</p>
+<h4 id="代码3-③-b"><a href="#代码3-③-b" class="headerlink" title="代码3(③+b):"></a>代码3(③+b):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        x = x++;</div><div class="line">        System.out.println(x);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:0</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">0: getstatic     #3                  // Field x:I</div><div class="line">         3: dup</div><div class="line">         4: iconst_1</div><div class="line">         5: iadd</div><div class="line">         6: putstatic     #3                  // Field x:I</div><div class="line">         9: putstatic     #3                  // Field x:I</div><div class="line">        12: getstatic     #4                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">        15: getstatic     #3                  // Field x:I</div><div class="line">        18: invokevirtual #5                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        21: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:x(值)入操作栈</p>
+<p>3:得到x(值)的快照x’,入操作栈</p>
+<p>4:常量1入操作栈</p>
+<p>5:常量1和x’弹出操作栈,进行加操作,将结果s入操作栈</p>
+<p>6:将s弹出栈,并赋给x(变量)(此时x==1)</p>
+<p>9:将x(值)弹出栈,并赋给x(变量)(此时x的值被覆盖,x==0)</p>
+<h4 id="代码4-④-b"><a href="#代码4-④-b" class="headerlink" title="代码4(④+b):"></a>代码4(④+b):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test();</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        x = ++x;</div><div class="line">        System.out.println(x);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:1</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line">0: getstatic     #3                  // Field x:I</div><div class="line">         3: iconst_1</div><div class="line">         4: iadd</div><div class="line">         5: dup</div><div class="line">         6: putstatic     #3                  // Field x:I</div><div class="line">         9: putstatic     #3                  // Field x:I</div><div class="line">        12: getstatic     #4                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">        15: getstatic     #3                  // Field x:I</div><div class="line">        18: invokevirtual #5                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        21: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:x(值)入操作栈</p>
+<p>3:常量1如入操作栈</p>
+<p>4:常量1和x(值)弹出操作栈,进行加操作,并将结果s入操作栈</p>
+<p>5:得到栈顶元素s的快照s’,入操作栈</p>
+<p>6.将s’弹出操作栈,并赋给x(变量)(此时x==1)</p>
+<p>9:将s弹出操作栈,并赋给x(变量)(此时x==1)</p>
+<h4 id="代码5-①-a"><a href="#代码5-①-a" class="headerlink" title="代码5(①+a):"></a>代码5(①+a):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test(<span class="number">0</span>,<span class="number">0</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> x,<span class="keyword">int</span> y)</span></span>&#123;</div><div class="line">        x = y++;</div><div class="line">        System.out.println(x+<span class="string">""</span>+y); &#125; &#125;</div></pre></td></tr></table></figure>
+<p><code>结果:01</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">0: iload_1</div><div class="line">         1: iinc          1, 1</div><div class="line">         4: istore_0</div><div class="line">         5: getstatic     #3                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">         8: new           #4                  // class java/lang/StringBuilder</div><div class="line">        11: dup</div><div class="line">        12: invokespecial #5                  // Method java/lang/StringBuilder."&lt;init&gt;":()V</div><div class="line">        15: iload_0</div><div class="line">        16: invokevirtual #6                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;</div><div class="line">        19: ldc           #7                  // String</div><div class="line">        21: invokevirtual #8                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;</div><div class="line">        24: iload_1</div><div class="line">        25: invokevirtual #6                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;</div><div class="line">        28: invokevirtual #9                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;</div><div class="line">        31: invokevirtual #10                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V</div><div class="line">        34: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:将本地变量区的y(值)入操作栈</p>
+<p>1:将本地变量y加1(y==1)</p>
+<p>4:将0中的y(值)弹出栈,并赋给本地变量区的x(x==0)</p>
+<h4 id="代码6-②-a"><a href="#代码6-②-a" class="headerlink" title="代码6(②+a):"></a>代码6(②+a):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test(<span class="number">0</span>,<span class="number">0</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> x,<span class="keyword">int</span> y)</span></span>&#123;</div><div class="line">        x = ++y;</div><div class="line">        System.out.println(x+<span class="string">""</span>+y);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:11</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line">0: iinc          1, 1</div><div class="line">         3: iload_1</div><div class="line">         4: istore_0</div><div class="line">         5: getstatic     #3                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">         8: new           #4                  // class java/lang/StringBuilder</div><div class="line">        11: dup</div><div class="line">        12: invokespecial #5                  // Method java/lang/StringBuilder."&lt;init&gt;":()V</div><div class="line">        15: iload_0</div><div class="line">        16: invokevirtual #6                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;</div><div class="line">        19: ldc           #7                  // String</div><div class="line">        21: invokevirtual #8                  // Method java/lang/StringBuilder.append:(Ljava/lang/String;)Ljava/lang/StringBuilder;</div><div class="line">        24: iload_1</div><div class="line">        25: invokevirtual #6                  // Method java/lang/StringBuilder.append:(I)Ljava/lang/StringBuilder;</div><div class="line">        28: invokevirtual #9                  // Method java/lang/StringBuilder.toString:()Ljava/lang/String;</div><div class="line">        31: invokevirtual #10                 // Method java/io/PrintStream.println:(Ljava/lang/String;)V</div><div class="line">        34: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:将本地变量y加1(此时y==1)</p>
+<p>3:将本地变量y(值)入操作栈</p>
+<p>4:将y(值)弹出操作栈,并赋给x(此时x==1)</p>
+<h4 id="代码7-③-a"><a href="#代码7-③-a" class="headerlink" title="代码7(③+a):"></a>代码7(③+a):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test(<span class="number">0</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</div><div class="line">        x = x++;</div><div class="line">        System.out.println(x);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:0</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: iload_0</div><div class="line">         1: iinc          0, 1</div><div class="line">         4: istore_0</div><div class="line">         5: getstatic     #3                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">         8: iload_0</div><div class="line">         9: invokevirtual #4                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        12: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:本地变量x(值)入操作栈</p>
+<p>1:本地变量x加1(此时x==1)</p>
+<p>4:将x(值)弹出栈,并赋给本地变量x(此时x==0)</p>
+<h4 id="代码8-④-a"><a href="#代码8-④-a" class="headerlink" title="代码8(④+a):"></a>代码8(④+a):</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span>   <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span></span>&#123;</div><div class="line">        test(<span class="number">0</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">(<span class="keyword">int</span> x)</span></span>&#123;</div><div class="line">        x = ++x;</div><div class="line">        System.out.println(x);</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p><code>结果:1</code></p>
+<p><strong>test()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line">0: iinc          0, 1</div><div class="line">         3: iload_0</div><div class="line">         4: istore_0</div><div class="line">         5: getstatic     #3                  // Field java/lang/System.out:Ljava/io/PrintStream;</div><div class="line">         8: iload_0</div><div class="line">         9: invokevirtual #4                  // Method java/io/PrintStream.println:(I)V</div><div class="line">        12: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:本地变量x加1(此时x==1)</p>
+<p>3:本地变量x(值)入操作栈</p>
+<p>4:将x(值)弹出操作栈,并赋给x(此时x==1) </p>
+<hr>
+<h4 id="小结"><a href="#小结" class="headerlink" title="小结"></a>小结</h4><font color="red">事实上i++和++i在底层的实现都是先自增,区别在于返回值.i++返回自增前的值,++i返回自增后的值。</font>
+
+
+
+<p>现在来看看一开始那段代码的结果和解析:</p>
+<p><code>结果:11</code></p>
+<p><strong>myMethod()字节码:</strong></p>
+<figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line">0: getstatic     #2                  // Field x:I</div><div class="line">         3: dup</div><div class="line">         4: iconst_1</div><div class="line">         5: iadd</div><div class="line">         6: putstatic     #2                  // Field x:I</div><div class="line">         9: getstatic     #2                  // Field x:I</div><div class="line">        12: iconst_1</div><div class="line">        13: iadd</div><div class="line">        14: dup</div><div class="line">        15: putstatic     #2                  // Field x:I</div><div class="line">        18: iadd</div><div class="line">        19: putstatic     #5                  // Field y:I</div><div class="line">        22: return</div></pre></td></tr></table></figure>
+<p>解释:</p>
+<p>0:变量x(值)入操作栈(栈状态:x0)</p>
+<p>3:得到栈顶元素x(值)的快照x’(值),并入操作栈(栈状态:x0-&gt;x0’)</p>
+<p>4:常量1入操作栈(栈状态:x0-&gt;x0’-&gt;1)</p>
+<p>5:常量1和x’(值)弹出操作栈,进行加操作,将结果s0入操作栈(栈状态:x0-&gt;s0)</p>
+<p>6:弹出s0,并赋给x(变量)(栈状态:x0,此时x(变量)==2)</p>
+<p>9:将修改后的x(值)入操作栈(栈状态:x0-&gt;x1)</p>
+<p>12:常量1入操作栈(栈状态:x0-&gt;x1-&gt;1)</p>
+<p>13:常量1和X1(值)弹出操作栈,进行加操作,将结果s1入操作栈(栈状态:x0-&gt;s1)</p>
+<p>14:得到栈顶元素s1(值)的快照s1’(值),并入操作栈(栈状态:x0-&gt;s1-&gt;s1’)</p>
+<p>15:弹出s1’并赋给x(变量)(栈状态:x0-&gt;s1)</p>
+<p>18:s1和x0弹出栈,进行加操作,将结果s2入栈(栈状态:s2)</p>
+<p>19:弹出s2,并赋给y(变量) </p>
+<p>所以在myMethod之后x的值为经过两次自增后的值,为x+2==3,而y的值为x0+s1,其中x0为最初传进来的值==1,s1是x经过两次自增后的值==3,所以y==4</p>
+<p>x==3,y==4</p>
+<p>最后输出的结果就是3+4+4==11</p>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;figure class=&quot;highlight java&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td class=&quot;gutter&quot;&gt;&lt;pre&gt;&lt;div class=&quot;line&quot;&gt;1&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;2&lt;/div&gt;&lt;div class=&quot;line&quot;&gt;3&lt;/div
+    
+    </summary>
+    
+      <category term="java" scheme="http://vinoit.me/categories/java/"/>
+    
+    
+      <category term="java" scheme="http://vinoit.me/tags/java/"/>
+    
+      <category term="字节码" scheme="http://vinoit.me/tags/%E5%AD%97%E8%8A%82%E7%A0%81/"/>
+    
+  </entry>
   
   <entry>
     <title>linux内核笔记之进程调度</title>
@@ -1691,80 +1830,6 @@ Host: google.com
     
     
       <category term="理解计算机" scheme="http://vinoit.me/tags/%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>理解JVM中class文件结构--实例讲解</title>
-    <link href="http://vinoit.me/2016/05/23/java-classfile-structure-example/"/>
-    <id>http://vinoit.me/2016/05/23/java-classfile-structure-example/</id>
-    <published>2016-05-23T05:25:43.000Z</published>
-    <updated>2016-08-18T14:17:55.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>本文通过一个简单的例子来讲解class文件结构,<strong>某些具体结构概念和信息需结合我之前的两篇博文<a href="/2016/05/22/java-classfile-structure-concept/">《理解JVM中class文件结构–概念部分》</a>，<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a></strong>，建议可以通过上面的两篇博文先了解这方面的一些知识再看本文。<br>java代码（jdk7）：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> pac1;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by vino on 2016/5/21.</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">TestClass</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> testInt;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">test</span><span class="params">()</span></span>&#123;</div><div class="line">        testInt = <span class="number">1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>对应class文件(十六进制)：<br><img src="/images/jvm/java-classfile-structure-example-0.PNG" alt=""><br>接下来的顺序和class文件结构顺序一致</p>
-<h4 id="u4-magic"><a href="#u4-magic" class="headerlink" title="u4 magic;"></a><code>u4 magic;</code></h4><p>文件位置<code>0x0-0x3</code>为魔数 CA FE BA BE ,固定不变。</p>
-<h4 id="u2-minor-version"><a href="#u2-minor-version" class="headerlink" title="u2 minor_version;"></a><code>u2 minor_version;</code></h4><p>文件位置<code>0x4-0x5</code>为副版本号，值为0x0000。</p>
-<h4 id="u2-major-version"><a href="#u2-major-version" class="headerlink" title="u2 major_version;"></a><code>u2 major_version;</code></h4><p>文件位置<code>0x6-0x7</code>为主版本号，值为0x0033。</p>
-<h4 id="u2-constant-pool-count"><a href="#u2-constant-pool-count" class="headerlink" title="u2 constant_pool_count;"></a><code>u2 constant_pool_count;</code></h4><p>文件位置<code>0x8-0x9</code>为常量池计数器，值为0x0015，十进制为21。</p>
-<h4 id="反编译后的常量池信息"><a href="#反编译后的常量池信息" class="headerlink" title="反编译后的常量池信息"></a>反编译后的常量池信息</h4><p>此时通过<code>javap -v</code> 命令反编译class文件，查看常量池信息：<br><figure class="highlight"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line">Constant pool:</div><div class="line">   #1 = Methodref          #4.#17         //  java/lang/Object."&lt;init&gt;":()V</div><div class="line">   #2 = Fieldref           #3.#18         //  pac1/TestClass.testInt:I</div><div class="line">   #3 = Class              #19            //  pac1/TestClass</div><div class="line">   #4 = Class              #20            //  java/lang/Object</div><div class="line">   #5 = Utf8               testInt</div><div class="line">   #6 = Utf8               I</div><div class="line">   #7 = Utf8               &lt;init&gt;</div><div class="line">   #8 = Utf8               ()V</div><div class="line">   #9 = Utf8               Code</div><div class="line">  #10 = Utf8               LineNumberTable</div><div class="line">  #11 = Utf8               LocalVariableTable</div><div class="line">  #12 = Utf8               this</div><div class="line">  #13 = Utf8               Lpac1/TestClass;</div><div class="line">  #14 = Utf8               test</div><div class="line">  #15 = Utf8               SourceFile</div><div class="line">  #16 = Utf8               TestClass.java</div><div class="line">  #17 = NameAndType        #7:#8          //  "&lt;init&gt;":()V</div><div class="line">  #18 = NameAndType        #5:#6          //  testInt:I</div><div class="line">  #19 = Utf8               pac1/TestClass</div><div class="line">  #20 = Utf8               java/lang/Object</div></pre></td></tr></table></figure></p>
-<p>常量池中一共有20项，这也证明了<code>u2 constant_pool_count</code>的值为常量池项目数+1。<br>在class文件中各项之间<code>没有任何填充</code>或<code>对齐</code>作为各项间的分隔符号，紧接着的便是常量池项。</p>
-<h4 id="cp-info-constant-pool-constant-pool-count-1"><a href="#cp-info-constant-pool-constant-pool-count-1" class="headerlink" title="cp_info constant_pool[constant_pool_count-1];"></a><code>cp_info constant_pool[constant_pool_count-1];</code></h4><h5 id="常量池项1"><a href="#常量池项1" class="headerlink" title="常量池项1"></a>常量池项1</h5><p><strong>通过常量池项1来学习常量池</strong></p>
-<p>通过常量池项的通用格式可知，文件位置<code>0x10</code>为常量池项的tagbyte,值为0x0A,查看常量池的 tag 项说明可知常量池项1类型为CONSTANT_Methodref。</p>
-<p>接着通过查看CONSTANT_Methodref_info 结构具体信息，文件位置<code>0x11-0x12</code>为CONSTANT_Methodref的class_index,为常量池项中某一项的索引，类型必须是CONSTANT_Class。值为0x0004,指向常量池项4，通过查看上面反编译后的常量池信息，可以看到常量池项4是CONSTANT_Class类型的。</p>
-<p>文件位置<code>0x13-0x14</code>为CONSTANT_Methodref的name_and_type_index，同样指向常量池中的一项，类型必须是CONSTANT_NameAndType。值为0x0011,指向常量池项17，通过查看上面反编译后的常量池信息，可以看到常量池项4是CONSTANT_NameAndType类型的。</p>
-<p><strong>在这里把和常量池项1有关的所有常量池项（1-&gt; 4,17 -&gt; 20,7,8）都讲一下</strong></p>
-<h6 id="常量池项4"><a href="#常量池项4" class="headerlink" title="常量池项4"></a>常量池项4</h6><p>常量池项4在文件的开始位置是<code>0x17</code>，属于常量池项4的tagbyte,值为0x07,是CONSTANT_Class类型的，和反编译后的常量池信息一致。</p>
-<p>接着通过查看CONSTANT_Class_info 结构具体信息，文件位置<code>0x18-0x19</code>为CONSTANT_Class的 name_index，指向常量池中的某一项，类型必须是CONSTANT_Utf8，表示字符串常量的值。值为0x0014,指向常量池项20，通过查看上面反编译后的常量池信息，可以看到常量池项20是CONSTANT_Utf8类型的。</p>
-<h6 id="常量池项20"><a href="#常量池项20" class="headerlink" title="常量池项20"></a>常量池项20</h6><p>常量池项20在文件的开始位置是<code>0xbf</code>,属于常量池项20的tagbyte,值为0x01,是CONSTANT_Utf8类型的，和反编译后的常量池信息一致。</p>
-<p>接着通过查看CONSTANT_Utf8_info 结构具体信息，文件位置<code>0xc0-0xc1</code>为CONSTANT_Utf8的length，表示字符串常量的长度，值为0x0010,长度为16个字节。</p>
-<p>文件位置<code>0xc2-0xd1</code>为具体内容，通过ascii码转换之后的值便是<code>java/lang/Object</code>,和反编译后的常量池信息一致。</p>
-<h6 id="常量池项17"><a href="#常量池项17" class="headerlink" title="常量池项17"></a>常量池项17</h6><p>常量池项17在文件的开始位置是<code>0xa4</code>,属于常量池项17的tagbyte,值为0x0c,是CONSTANT_NameAndType类型的，和反编译后的常量池信息一致。</p>
-<p>接着通过查看CONSTANT_NameAndType_info 结构具体信息，文件位置<code>0xa5-0xa6</code>为CONSTANT_NameAndType的name_index，指向常量池项的某一项，类型必须为CONSTANT_Utf8，表示字符串常量的值。值为0x0007,指向常量池项7。通过查看上面反编译后的常量池信息，可以看到常量池项7是CONSTANT_Utf8类型的。</p>
-<p>文件位置<code>0xa7-0xa8</code>为CONSTANT_NameAndType的descriptor_index，指向常量池项的某一项，类型必须为CONSTANT_Utf8，表示字符串常量的值。此字符串为方法描述符，具体可参考《JVM规范》。此处的值为0x0008,指向常量池项8。通过查看上面反编译后的常量池信息，可以看到常量池项8是CONSTANT_Utf8类型的。</p>
-<h6 id="常量池项7和8"><a href="#常量池项7和8" class="headerlink" title="常量池项7和8"></a>常量池项7和8</h6><p>常量池项7和8均为CONSTANT_Utf8类型的,分析方法和常量池项20一样。</p>
-<h6 id="常量池项1总结"><a href="#常量池项1总结" class="headerlink" title="常量池项1总结"></a>常量池项1总结</h6><p>常量池项1是CONSTANT_Methodref类型，表示一个方法的应用。通过查看上面反编译后的常量池信息，可以发现此方法为java/lang/Object.”<init>“:()V，但其中涉及到对其他多个常量池项的引用。一个方法是由类名和方法名决定的，所以分别引用了CONSTANT_Class和CONSTANT_NameAndType，其中CONSTANT_NameAndType表示一个方法名。然后CONSTANT_Class和CONSTANT_NameAndType又分别需要字符串信息来描述，所以又引用了CONSTANT_Utf8类型的项。</init></p>
-<p><strong>其他常量池项可以按照这个方式来分析。</strong></p>
-<h4 id="u2-access-flags"><a href="#u2-access-flags" class="headerlink" title="u2 access_flags"></a><code>u2 access_flags</code></h4><p>文件位置<code>0xd2-0xd3</code>表示的是access_flags，值为0x0021,通过查看access_flags的取值范围和相应含义表，得知该值的含义是ACC_PUBLIC（可以被包的类外访问。）和ACC_SUPER（当用到 invokespecial 指令时，需要特殊处理的父类方法。）和反编译之后的文件中的<code>flags: ACC_PUBLIC, ACC_SUPER</code>一致。其中invokespecial指令调用了<code>java/lang/Object.&quot;&lt;init&gt;&quot;:()V</code>。</p>
-<h4 id="u2-this-class"><a href="#u2-this-class" class="headerlink" title="u2 this_class"></a><code>u2 this_class</code></h4><p>文件位置<code>0xd4-0xd5</code>表示的是u2 this_class，为本类的引用，指向常量池中的某一项，类型必须为CONSTANT_Class。值为0x0003,表示指向常量池项3。通过查看上面反编译后的常量池信息，可以看到常量池项3是CONSTANT_Class类型的,最终值为pac1/TestClass。</p>
-<h4 id="u2-super-class"><a href="#u2-super-class" class="headerlink" title="u2 super_class"></a><code>u2 super_class</code></h4><p>文件位置<code>0xd6-0xd7</code>表示的是u2 super_class，为父类的引用，指向常量池中的某一项，类型必须为CONSTANT_Class。值为0x0004,表示指向常量池项4。通过查看上面反编译后的常量池信息，可以看到常量池项4是CONSTANT_Class类型的,最终值为java/lang/Object,Object是所有类的父类。</p>
-<h4 id="u2-interfaces-count"><a href="#u2-interfaces-count" class="headerlink" title="u2 interfaces_count"></a><code>u2 interfaces_count</code></h4><p>文件位置<code>0xd8-0xd9</code>表示的是u2 interfaces_count，为接口计数器。值为0x0000,表示没有实现任何接口。所以接下来便不会有<code>u2 interfaces[interfaces_count]</code>（接口表）的字节信息。</p>
-<h4 id="u2-fields-count"><a href="#u2-fields-count" class="headerlink" title="u2 fields_count"></a><code>u2 fields_count</code></h4><p>文件位置<code>0xda-0xdb</code>表示的是u2 fields_count，为字段计数器。值为0x0001,表示有一个字段。</p>
-<h4 id="field-info-fields-fields-count"><a href="#field-info-fields-fields-count" class="headerlink" title="field_info fields[fields_count]"></a><code>field_info fields[fields_count]</code></h4><p>接下来便是表示字段信息的字节，文件位置<code>0xdc-0xdd</code>表示的是字段的access_flags，值为0x0000。查看字段 access_flags 标记列表及其含义表后发现没有含义是用0x0000表示的。因为源代码中字段前面没有任何修饰符，表示默认访问权限。access_flags 是一种掩码标志，0x0000表示没有一个是命中的。</p>
-<p>文件位置<code>0xde-0xdf</code>表示的是字段信息的name_index,指向常量池中的某一项，必须是CONSTANT_Utf8类型的，为字段名。值为0x0005,指向常量池项5，通过查看上面反编译后的常量池信息，可以看到常量池项5是CONSTANT_Utf8类型的,最终值为testInt，和源代码的字段名一致。</p>
-<p>文件位置<code>0xe0-0xe1</code>表示的是字段信息的descriptor_index,指向常量池中的某一项，必须是CONSTANT_Utf8类型的，为字段名。值为0x0006,指向常量池项6，通过查看上面反编译后的常量池信息，可以看到常量池项6是CONSTANT_Utf8类型的,最终值为I,表示int类型。更多基本类型字符解释可查看<a href="/2016/05/22/java-classfile-structure-detail/">《理解JVM中class文件结构–具体结构信息》</a>中的字段基本类型字符解释表。</p>
-<p>文件位置<code>0xe2-0xe3</code>表示的是字段信息的attributes_count，此处指为0。如果字段前面用了final或者字段被注解修饰等，则值便不为0，接下来便是各个属性的描述字节。具体属性信息可参看《JVM规范》。</p>
-<h4 id="u2-methods-count"><a href="#u2-methods-count" class="headerlink" title="u2 methods_count"></a><code>u2 methods_count</code></h4><p>文件位置<code>0xe4-0xe5</code>表示的是u2 methods_count，为方法计数器。值为0x0002,表示有2个方法。</p>
-<h4 id="method-info-methods-methods-count"><a href="#method-info-methods-methods-count" class="headerlink" title="method_info methods[methods_count]"></a><code>method_info methods[methods_count]</code></h4><p>文件位置<code>0xe6-0xe7</code>表示的是第一个方法的access_flags,值为0x0001,通过查看方法 access_flags 标记列表及其含义表可知，该方法为ACC_PUBLIC（public，方法可以从包外访问）。</p>
-<p>文件位置<code>0xe8-0xe9</code>表示的是第一个方法的name_index，指向常量池中的某一项，必须是CONSTANT_Utf8类型的，为方法名。值为0x0007,指向常量池项7，通过查看上面反编译后的常量池信息，可以看到常量池项7是CONSTANT_Utf8类型的,最终值为<code>&lt;init&gt;</code>。</p>
-<p>文件位置<code>0xea-0xeb</code>表示的是第一个方法的descriptor_index，指向常量池中的某一项，必须是CONSTANT_Utf8类型的，为方法名。值为0x0008,指向常量池项8，通过查看上面反编译后的常量池信息，可以看到常量池项8是CONSTANT_Utf8类型的,最终值为<code>()V</code>。</p>
-<p>文件位置<code>0xec-0xed</code>表示的是第一个方法的attributes_count,为方法属性计数器。值为0x0001,表明有一个属性。</p>
-<p>接下来的是表示属性信息的字节，<code>查看属性的通用格式后</code>，文件位置<code>0xee-0xef</code>表示的是第一个方法中属性信息的attribute_name_index，为属性名索引，指向常量池中的某一项，必须是CONSTANT_Utf8类型的。值为0x0009,指向常量池项9，通过查看上面反编译后的常量池信息，可以看到常量池项9是CONSTANT_Utf8类型的,最终值为<code>Code</code>。Code属性的属性名固定为“Code”。</p>
-<p>文件位置<code>0xf0-0xf3</code>表示属性信息的attribute_length，值为0x0000002f,说明当前属性的长度为47，不包括开始的6个字节（attribute_name_index 和 attribute_length所占用的长度）。</p>
-<p>文件位置<code>0xf4-0xf5</code>表示属性信息的max_stack，为操作数栈的最大深度值，jvm运行时根据该值分配栈帧。此处值为0x0001,说明此方法调用时分配的最大栈帧为1个字节。</p>
-<p>文件位置<code>0xf6-0xf7</code>表示属性信息的max_locals，为局部变量表最大存储空间，单位是slot。此处值为0x0001,说明此方法局部变量的最大存储空间为1个字节。</p>
-<p>文件位置<code>0xf8-0xfb</code>表示属性信息的code_length，为具体的字节码长度。此处值为0x00000005,说明此方法具体字节码长度为5个字节。接下来的5个字节的内容就是具体的字节码。</p>
-<p><strong>剩下的一些属性信息可以按照这个方法，对照属性表来分析。</strong></p>
-<h4 id="u2-attributes-count-amp-attribute-info-attributes-attributes-count"><a href="#u2-attributes-count-amp-attribute-info-attributes-attributes-count" class="headerlink" title="u2 attributes_count &amp; attribute_info attributes[attributes_count]"></a><code>u2 attributes_count</code> &amp; <code>attribute_info attributes[attributes_count]</code></h4><p>u2 attributes_count 和 attribute_info attributes[attributes_count] 和方法里的属性分析原理一样。</p>
-<ul>
-<li>参考《JVM规范SE7》</li>
-</ul>
-<blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;本文通过一个简单的例子来讲解class文件结构,&lt;strong&gt;某些具体结构概念和信息需结合我之前的两篇博文&lt;a href=&quot;/2016/05/22/java-classfile-structure-concept/&quot;&gt;《理解JVM中class文件结构–概念部分》&lt;/a&gt;，
-    
-    </summary>
-    
-      <category term="jvm" scheme="http://vinoit.me/categories/jvm/"/>
-    
-    
-      <category term="jvm" scheme="http://vinoit.me/tags/jvm/"/>
-    
-      <category term="java" scheme="http://vinoit.me/tags/java/"/>
     
   </entry>
   
