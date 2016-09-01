@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-01T07:02:35.000Z</updated>
+  <updated>2016-09-01T09:27:12.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -14,6 +14,50 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>linux内核中hlist_head和hlist_node结构解析</title>
+    <link href="http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/"/>
+    <id>http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/</id>
+    <published>2016-09-01T07:57:17.000Z</published>
+    <updated>2016-09-01T09:27:12.000Z</updated>
+    
+    <content type="html"><![CDATA[<p><code>hlist_head</code>和<code>hlist_node</code>用于散列表，分表表示列表头（数组中的一项）和列表头所在双向链表中的某项，两者结构如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_head &#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_node &#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *next, **pprev;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p>在内核中的普通双向链表基本上都是通过<code>list_head</code>实现的：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> list_head &#123;</div><div class="line">        <span class="keyword">struct</span> list_head *next, *prev;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure>
+<p><code>list_head</code>很好理解，但是<code>hlist_head</code>和<code>hlist_node</code>为何要这样设计呢？</p>
+<p>先看下<code>hlist_head</code>和<code>hlist_node</code>的示意图:</p>
+<p><img src="/images/linux/list_head-and-hlist_node-0.png" alt=""></p>
+<p><code>hash_table</code>为散列表（数组），其中的元素类型为<code>struct hlist_head</code>。以<code>hlist_head</code>为链表头的链表，其中的节点<code>hash值</code>是相同的（也叫冲突）。<code>first指针</code>指向链表中的节点①，然后节点①的<code>pprev指针</code>指向<code>hlist_head</code>中的<code>first</code>，节点①的<code>next指针</code>指向节点②。以此类推。</p>
+<p><code>hash_table</code>的列表头仅存放一个指针,也就是first指针,指向的是对应链表的头结点,没有tail指针也就是指向链表尾节点的指针,这样的考虑是为了节省空间——尤其在<code>hash bucket</code>(数组size)很大的情况下可以节省一半的指针空间。</p>
+<p>为什么<code>pprev</code>是一个指向指针的指针呢？按照这个设计，我们如果想要得到尾节点，必须遍历整个链表，可如果是一个指向节点的指针，那么头结点现在的<code>pprev</code>便可以直接指向尾节点，也就是<code>list_head</code>的做法。</p>
+<p>对于散列表来说，一般发生冲突的情况并不多（除非hash设计出现了问题），所以一个链表中的元素数量比较有限，遍历的劣势基本可以忽略。</p>
+<p>在删除链表头结点的时候，<code>pprev</code>这个设计无需判断删除的节点是否为头结点。如果是普通双向链表的设计，那么删除头结点之后，<code>hlist_head</code>中的<code>first指针</code>需要指向新的头结点。通过下面2个函数来加深理解:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//添加节点到链表头</span></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">hlist_add_head</span><span class="params">(<span class="keyword">struct</span> hlist_node *n, <span class="keyword">struct</span> hlist_head *h)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first = h-&gt;first;</div><div class="line">    n-&gt;next = first;<span class="comment">//新节点的next指针指向原头结点</span></div><div class="line">    <span class="keyword">if</span> (first)</div><div class="line">        first-&gt;pprev = &amp;n-&gt;next;<span class="comment">//原头结点的pprev指向新节点的next字段</span></div><div class="line">    h-&gt;first = n;<span class="comment">//first指针指向新的节点（更换了头结点）</span></div><div class="line">    n-&gt;pprev = &amp;h-&gt;first; <span class="comment">//此时n是链表的头结点,将它的pprev指向list_head的first字段</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//删除节点</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="number">__</span>hlist_del(<span class="keyword">struct</span> hlist_node *n)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *next = n-&gt;next;</div><div class="line">    <span class="keyword">struct</span> hlist_node **pprev = n-&gt;pprev;</div><div class="line">    *pprev = next; <span class="comment">// pprev指向的是前一个节点的next指针,当该节点是头节点时指向 hlist_head的first,两种情况下不论该节点是一般的节点还是头结点都可以通过这个操作删除掉所需删除的节点。</span></div><div class="line">    <span class="keyword">if</span> (next)</div><div class="line">        next-&gt;pprev = pprev;<span class="comment">//使删除节点的后一个节点的pprev指向删除节点的前一个节点的next字段，节点成功删除。</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;&lt;code&gt;hlist_head&lt;/code&gt;和&lt;code&gt;hlist_node&lt;/code&gt;用于散列表，分表表示列表头（数组中的一项）和列表头所在双向链表中的某项，两者结构如下:&lt;/p&gt;
+&lt;figure class=&quot;highlight c&quot;&gt;&lt;table&gt;&lt;tr&gt;&lt;td
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
+    
+      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
+    
+      <category term="源码" scheme="http://vinoit.me/tags/%E6%BA%90%E7%A0%81/"/>
+    
+  </entry>
   
   <entry>
     <title>linux内核笔记之内存管理</title>
@@ -1602,69 +1646,6 @@ meaning of the rest of the arguments depends on the operation, but except for on
       <category term="理解计算机" scheme="http://vinoit.me/tags/%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA/"/>
     
       <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Linux中的Buddy System</title>
-    <link href="http://vinoit.me/2016/06/28/linux-buddy-system/"/>
-    <id>http://vinoit.me/2016/06/28/linux-buddy-system/</id>
-    <published>2016-06-28T02:49:31.000Z</published>
-    <updated>2016-08-18T14:18:51.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="什么是Buddy-System"><a href="#什么是Buddy-System" class="headerlink" title="什么是Buddy System?"></a>什么是Buddy System?</h4><p>Buddy System是Linux Kernel 进行物理内存页管理的一个子系统。在Buddy System中，管理的一个基本单位是block，每一个block有若干个连续的物理页组成，物理页的个数为2^n，这个n在buddy system中被称为order。<code>相同order的block，挂载一条双向链表上。</code>当某个block空闲时，只要发现对应的伙伴也是空闲的，就和伙伴组成一个页数为2^（n+1）的block，挂载在order为(n+1)的双向链表上，换句话说一个页数为2^n的block，是由两个页数为2^（n-1）的伙伴block组成的。因此，一个block的伙伴肯定是和这个block在 <strong>物理地址上是连续</strong> 的。在Linux中，order的默认的取值范围是[0,10]。</p>
-<p>linux中用<code>struct zone</code>来描述一个内存管理区(<em>ZONE_DMA:0~16MB  ZONE_NORMAL:16MB~896MB  ZONE_HIGHMEM:896MB~end</em>)<br>其中的struct free_area中的<code>每一个元素</code>表示的是由相同order的block构成的<code>双向链表</code>。free_area[i]表示该free_area处的链表的order为i。<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> zone &#123;  </div><div class="line">    ...  </div><div class="line">         ...      </div><div class="line">    <span class="keyword">struct</span> free_area    free_area[MAX_ORDER];  </div><div class="line">    ...  </div><div class="line">    ...  </div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> free_area &#123;  </div><div class="line">  <span class="comment">//每个free_area内有MIGRATE_TYPES个双向链表，根据迁移类型划分()*迁移类型请查看文末*）。</span></div><div class="line">  <span class="comment">//free_list和struct page中的lru相连</span></div><div class="line">    <span class="keyword">struct</span> list_head    free_list[MIGRATE_TYPES];  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">long</span>       nr_free;  <span class="comment">//空闲块数量</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>在buddy system中，存入一个页会进行一次伙伴整合的迭代操作，直到不能再合并为止。那么，如何查找某个block的伙伴呢？在Linux中，一个block的伙伴信息记录在该block的<code>第一个物理页</code>的<code>struct page</code>上。也就是说，假若一个页在伙伴系统中，page-&gt;private的值为n,则后面连续的2^(n-1)个页面就在buddy system中。一个页面在buddy System中，就代表了该页是空闲的，可以被分配。</p>
-<h4 id="查找伙伴"><a href="#查找伙伴" class="headerlink" title="查找伙伴"></a>查找伙伴</h4><p>内核代码如下：<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">mm/page_alloc.c</div><div class="line">		buddy_idx = <span class="number">__f</span>ind_buddy_index(page_idx, order);</div><div class="line">		buddy = page + (buddy_idx - page_idx);</div></pre></td></tr></table></figure></p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">unsigned</span> <span class="keyword">long</span></div><div class="line"><span class="number">__f</span>ind_buddy_index(<span class="keyword">unsigned</span> <span class="keyword">long</span> page_idx, <span class="keyword">unsigned</span> <span class="keyword">int</span> order)</div><div class="line">&#123;</div><div class="line">	<span class="keyword">return</span> page_idx ^ (<span class="number">1</span> &lt;&lt; order);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>查找一个页数为2^n的block的伙伴计算方法是buddy_index=page_index^(1&lt;&lt;n)(此处的^表示异或)，buddy_index 表示伙伴块首页的页索引，page_index是该block首页的页索引，n代表order。</p>
-<p>举例：<br><img src="/images/linux/linux-buddy-system-2.png" alt=""></p>
-<p><img src="/images/linux/linux-buddy-system-3.png" alt=""></p>
-<h4 id="从buddy-System中分配页"><a href="#从buddy-System中分配页" class="headerlink" title="从buddy System中分配页"></a>从buddy System中分配页</h4><p>buddy System用来管理空闲的物理内存，接受进程的内存页申请。Linux提供给用户进程申请内存的接口函数中包含两个参数：一个是<code>GFP_***</code>，另一个是<code>order</code>。前者表示分配标志信息，从标志中可以知道进程要从哪个zone中申请物理内存，并在内存紧缺的情况下指导内存何时回收内存；后者表示需要分配2^order个连续的物理页。<br>buddy system根据参数order，在要求的zone中查找对应的链表。若该order的双向链表非空，则把该双向链表上的第一个block从buddy system中脱链，同时更新该双向链表上的block的数量，完成内存分配。若该order的双向链表为空，则查找order+1的双向链表，如果order+1的双向链表为空，则查找order+2的双向链表，直到查找到。假设查找到了第n个双向链表(n&gt;order)，由于查找到的连续物理内存页的数量大于order，因此将该block一分为二，将后半部分block挂载到2^(n-1)的双向链表上，将前半部分再一分为二，将前半部分的后半部分挂载到2^(n-2)的双向链表上，将前半部分的前半部分再一分为二。。。直到与请求的order相等为止。</p>
-<h4 id="释放页到buddy-System"><a href="#释放页到buddy-System" class="headerlink" title="释放页到buddy System"></a>释放页到buddy System</h4><p>当非空闲的页被进程释放后，需要把页放回到伙伴系统中。由于block是作为一个整体被申请的，因此其释放也是以block为单位。若该block有2^n个连续的物理页，在释放的时候，根据buddy_index = page_index^(1&lt;&lt;n)查找该block的order为n的伙伴。若查找到伙伴，则将两个order为n的block合并为一个order为n+1的block。同时再查找order为n+1 block的伙伴，若找到则两个order为n+1的block继续合并…直到其不能合并为止，插入到最终order的双向链表的最前端。释放的迭代过程是分配页的逆过程.</p>
-<h4 id="linux中的迁移类型"><a href="#linux中的迁移类型" class="headerlink" title="linux中的迁移类型"></a>linux中的迁移类型</h4><p>在2.6.24之前的内核版本中，free_area结构中只有一个free_list数组，而从2.6.24开始，free_area结构中存有MIGRATE_TYPES个free_list,这些数组是根据页框的移动性来划分的，为什么要进行这样的划分呢?实际上也是为了减少碎片而提出的，我们考虑下面的情况：</p>
-<p><img src="/images/linux/linux-buddy-system-0.png" alt=""><br>图中一共有32个页，只分配出了4个页框，但是能够分配的最大连续内存也只有8个页框(因为伙伴系统分配出去的内存必须是2的整数次幂个页框)，内核解决这种问题的办法就是将不同类型的页进行分组。分配出去的页面可分为三种类型：</p>
-<ul>
-<li>不可移动页(Non-movable pages)：这类页在内存当中有固定的位置，不能移动。内核的核心分配的内存大多属于这种类型</li>
-<li>可回收页(Reclaimable pages)：这类页不能直接移动，但可以删除，其内容页可以从其他地方重新生成，例如，映射自文件的数据属于这种类型，针对这种页，内核有专门的页面回收处理</li>
-<li>可移动页:这类页可以随意移动，用户空间应用程序所用到的页属于该类别。它们通过页表来映射，如果他们复制到新的位置，页表项也会相应的更新，应用程序不会注意到任何改变。</li>
-</ul>
-<p>假如上图中大部分页都是可移动页，而分配出去的四个页都是不可移动页，由于不可移动页插在了其他类型页的中间，就导致了无法从原本空闲的连续内存区中分配较大的内存块。考虑下图的情况:<br><img src="/images/linux/linux-buddy-system-1.png" alt=""></p>
-<p>将可回收页和不可移动页分开，这样虽然在不可移动页的区域当中无法分配大块的连续内存，但是可回收页的区域却没有受其影响，可以分配大块的连续内存。</p>
-<p><code>内核对于迁移类型的定义如下:</code></p>
-<mmzone.h>
-
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_UNMOVABLE     0  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_RECLAIMABLE   1  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_MOVABLE       2  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_PCPTYPES      3 <span class="comment">/* the number of types on the pcp lists */</span>  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_RESERVE       3  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_ISOLATE       4 <span class="comment">/* can't allocate from here */</span>  </span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MIGRATE_TYPES         5</span></div></pre></td></tr></table></figure>
-<p>前三种类型已经介绍过</p>
-<p><code>MIGRATE_PCPTYPES</code>是per_cpu_pageset，即用来表示每CPU页框高速缓存的数据结构中的链表的迁移类型数目</p>
-<p><code>MIGRATE_RESERVE</code>是在前三种的列表中都没用可满足分配的内存块时，就可以从MIGRATE_RESERVE分配</p>
-<p><code>MIGRATE_ISOLATE</code>用于跨越NUMA节点移动物理内存页，在大型系统上，它有益于将物理内存页移动到接近于是用该页最频繁地CPU</p>
-<p><code>MIGRATE_TYPES</code>表示迁移类型的数目<br>当一个指定的迁移类型所对应的链表中没有空闲块时，将会按以下定义的顺序到其他迁移类型的链表中寻找</p>
-<p>参考：</p>
-<ul>
-<li><a href="http://blog.tek-life.com/%E8%AE%A4%E8%AF%86linux%E7%89%A9%E7%90%86%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86%E7%B3%BB%E7%BB%9F-buddy-system/" target="_blank" rel="external">认识Linux物理内存管理系统–Buddy System</a></li>
-<li><a href="http://blog.csdn.net/vanbreaker/article/details/7605367" target="_blank" rel="external">Linux伙伴系统(一)–伙伴系统的概述</a></li>
-<li><a href="http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4" target="_blank" rel="external">内存伙伴系统之查找伙伴算法</a></li>
-</ul>
-<blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-
-</blockquote>
-</mmzone.h>]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;什么是Buddy-System&quot;&gt;&lt;a href=&quot;#什么是Buddy-System&quot; class=&quot;headerlink&quot; title=&quot;什么是Buddy System?&quot;&gt;&lt;/a&gt;什么是Buddy System?&lt;/h4&gt;&lt;p&gt;Buddy System是Lin
-    
-    </summary>
-    
-      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-      <category term="内存管理" scheme="http://vinoit.me/tags/%E5%86%85%E5%AD%98%E7%AE%A1%E7%90%86/"/>
     
   </entry>
   
