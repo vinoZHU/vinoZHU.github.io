@@ -64,7 +64,7 @@
     <link href="http://vinoit.me/2016/08/30/linux-kernel-note-memory-manage/"/>
     <id>http://vinoit.me/2016/08/30/linux-kernel-note-memory-manage/</id>
     <published>2016-08-30T12:10:18.000Z</published>
-    <updated>2016-09-01T07:02:35.000Z</updated>
+    <updated>2016-09-05T05:28:58.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="非一致内存访问（NUMA）"><a href="#非一致内存访问（NUMA）" class="headerlink" title="非一致内存访问（NUMA）"></a>非一致内存访问（NUMA）</h4><p>我们习惯上认为计算机内存是一种均匀、共享的资源。在忽略硬件高速缓存的情况下，我们期望不管内存单元处于何处，也不管CPU处于何处，CPU对内存单元的访问都需要相同的时间。但是，在某些体系结构中并不总是成立。</p>
 <p>在NUMA模型中，给定CPU对不同内存单元的访问时间可能不一样。系统的物理内存被划分为几个节点(node)。在一个单独的节点内，任一给定CPU访问页面所需的时间都是相同的。然而，对不同的CPU，这个时间可能就不同。每个节点的物理内存又可以分为几个管理区（zone）。</p>
@@ -110,8 +110,8 @@
 <p>一个高速缓存描述符包含3条slab链表：<br><img src="/images/linux-kernel-note/memory-manage-2.png" alt=""></p>
 <p>高速缓存描述符中的<code>struct array_cache *array[NR_CPUS];/*local cache*/</code>表示本地高速缓存。</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> array_cache &#123;  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> avail;<span class="comment">/*本地高速缓存中可用的空闲对象数*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> limit;<span class="comment">/*空闲对象的上限*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> batchcount;<span class="comment">/*一次转入和转出的对象数量*/</span>  </div><div class="line">    <span class="keyword">unsigned</span> <span class="keyword">int</span> touched;   <span class="comment">/*标识本地CPU最近是否被使用*/</span>  </div><div class="line">    <span class="keyword">spinlock_t</span> lock;  </div><div class="line">    <span class="keyword">void</span> *entry[];  <span class="comment">/*这是一个伪数组，便于对后面用于跟踪空闲对象的指针数组的访问 </span></div><div class="line">             * Must have this definition in here for the proper </div><div class="line">             * alignment of array_cache. Also simplifies accessing </div><div class="line">             * the entries. </div><div class="line">             */  </div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>当我们要求内核给我们分配一个小对象时，是从本地高速缓存中获取的。本地高速缓存中的对象依次放置在该本地高速缓存描述符的地址后面。</p>
-<h4 id="slab分配对象小结"><a href="#slab分配对象小结" class="headerlink" title="slab分配对象小结"></a>slab分配对象小结</h4><p>当我们需要一个小对象时，首先获取当前CPU id,然后到对应的本地高速缓存中获取对象。如果无空闲对象，则从slab链表中分配一些slab对象，数量为本地高速缓存描述符中<code>batchcount</code>值。</p>
+<p>当我们要求内核给我们分配一个小对象时，是从本地高速缓存中获取的。<strong>本地高速缓存中的对象依次放置在该本地高速缓存描述符的地址后面。</strong></p>
+<h4 id="slab分配对象小结"><a href="#slab分配对象小结" class="headerlink" title="slab分配对象小结"></a>slab分配对象小结</h4><p>当我们需要一个小对象时，首先获取当前CPU id,然后到对应的本地高速缓存中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些slab对象，数量为本地高速缓存描述符中<code>batchcount</code>值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文从整体上描述了Linux中的内存管理，并没有涉及到具体源码以及细节问题，更多细节待日后整理。</p>
 ]]></content>
     
