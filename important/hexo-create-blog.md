@@ -83,7 +83,7 @@ hexo d
 参考：[Deployment](https://hexo.io/docs/deployment.html)
 ## fancybox
 
-本篇博客开头的图片是这样实现的，只需要在你的文章*.md文件的头上添加photos项即可，然后一行行添加你要展示的照片:
+在你的文章*.md文件的头上添加photos项即可，然后一行行添加你要展示的照片:
 ```
 ---
 title: hexo搭建个人博客
@@ -95,6 +95,75 @@ photos:
 ---
 ```
 
+## 新建文件
+
+```
+hexo n 'new-file'
+```
+
+运行之后会在`_posts`文件夹内生成`new-file.md`文件。
+
+## 静态文件压缩
+
+新建`gulpfile.js`文件:
+
+```
+var gulp = require('gulp');
+var minifycss = require('gulp-minify-css');
+var uglify = require('gulp-uglify');
+var htmlmin = require('gulp-htmlmin');
+var htmlclean = require('gulp-htmlclean');
+
+// 获取 gulp-imagemin 模块
+var imagemin = require('gulp-imagemin')
+
+// 压缩 public 目录 css
+gulp.task('minify-css', function() {
+    return gulp.src('./public/**/*.css')
+        .pipe(minifycss())
+        .pipe(gulp.dest('./public'));
+});
+// 压缩 public 目录 html
+gulp.task('minify-html', function() {
+  return gulp.src('./public/**/*.html')
+    .pipe(htmlclean())
+    .pipe(htmlmin({
+         removeComments: true,
+         minifyJS: true,
+         minifyCSS: true,
+         minifyURLs: true,
+    }))
+    .pipe(gulp.dest('./public'))
+});
+// 压缩 public/js 目录 js
+gulp.task('minify-js', function() {
+    return gulp.src('./public/**/*.js')
+        .pipe(uglify())
+        .pipe(gulp.dest('./public'));
+});
+
+
+// 压缩图片任务
+// 在命令行输入 gulp images 启动此任务
+gulp.task('images', function () {
+    // 1. 找到图片
+    gulp.src('./photos/*.*')
+    // 2. 压缩图片
+        .pipe(imagemin({
+            progressive: true
+        }))
+    // 3. 另存图片
+        .pipe(gulp.dest('dist/images'))
+});
+
+
+
+// 执行 gulp 命令时执行的任务
+gulp.task('default', [
+    'minify-html','minify-css','minify-js','images'
+]);
+```
+执行 gulp ，即可自动压缩所有静态文件。
 ## 主题设置
 本博客采用了iissnan的Next主题，他的博客有详细的安装教程，这里贴下链接[next](http://theme-next.iissnan.com/)，其中对next主题的设置讲的很详细了，我在这就不多讲了。
 

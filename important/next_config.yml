@@ -6,7 +6,7 @@
 favicon: /favicon.ico
 
 # Set default keywords (Use a comma to separate)
-keywords: "Vino's Blog"
+keywords: "Vino Zhu's Blog"
 
 # Set rss to false to disable feed link.
 # Leave rss as empty to use site's feed link.
@@ -14,7 +14,7 @@ keywords: "Vino's Blog"
 rss:
 
 # Specify the date when the site was setup
-since: 2015
+since: 2016
 
 
 
@@ -122,8 +122,8 @@ font:
 social:
   #LinkLabel: Link
   GitHub: https://github.com/vinoZHU
-  Weibo: http://weibo.com/u/5489075324
-  Zhihu: http://www.zhihu.com/people/vino-21-59
+  Weibo: http://weibo.com/vinozhu
+  #Zhihu: http://www.zhihu.com/people/vinozhu
 
 
 # Social Links Icons
@@ -184,7 +184,7 @@ links_title: Links
 #links_layout: inline
 links:
   #Title: http://example.com/
-  女朋友的日常: http://www.cnblogs.com/vinozly/
+  #女朋友的日常: http://www.cnblogs.com/vinozly/
 
 
 # ---------------------------------------------------------------
