@@ -184,7 +184,7 @@ struct slab {
 高速缓存描述符中的`struct array_cache *array[NR_CPUS];/*local cache*/  `表示本地高速缓存。
 
 ```c
-struct array_cache {  
+struct c {  
     unsigned int avail;/*本地高速缓存中可用的空闲对象数*/  
     unsigned int limit;/*空闲对象的上限*/  
     unsigned int batchcount;/*一次转入和转出的对象数量*/  
@@ -201,7 +201,7 @@ struct array_cache {
 
 #### slab分配对象小结
 
-当我们需要一个小对象时，首先获取当前CPU id,然后到对应的本地高速缓存中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些slab对象，数量为本地高速缓存描述符中`batchcount `值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab。
+当我们需要一个小对象时，首先根据该对象大小，选择合适的**高速缓存**(kmem_cache)。然后获取当前CPU id,到对应的**本地高速缓存**(array_cache)中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些slab对象，数量为本地高速缓存描述符中`batchcount `值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab。
 
 #### 总结
 
