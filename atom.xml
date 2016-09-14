@@ -797,11 +797,11 @@
   </entry>
   
   <entry>
-    <title>Maven小教</title>
+    <title>Maven基础教程</title>
     <link href="http://vinoit.me/2016/08/18/maven-tutorial/"/>
     <id>http://vinoit.me/2016/08/18/maven-tutorial/</id>
     <published>2016-08-18T08:47:15.000Z</published>
-    <updated>2016-08-18T14:49:16.000Z</updated>
+    <updated>2016-09-14T06:12:29.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
 <ul>
