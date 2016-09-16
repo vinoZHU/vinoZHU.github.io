@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-16T13:10:07.000Z</updated>
+  <updated>2016-09-16T13:16:13.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://vinoit.me/2016/09/16/how-linux-start/"/>
     <id>http://vinoit.me/2016/09/16/how-linux-start/</id>
     <published>2016-09-16T11:40:21.000Z</published>
-    <updated>2016-09-16T13:10:07.000Z</updated>
+    <updated>2016-09-16T13:16:13.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
 <p>本文在原文地址:<a href="http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改</a></p>
@@ -35,7 +35,7 @@
 <li>第447-510字节：分区表（Partition table）。</li>
 <li>第511-512字节：主引导记录签名（0x55和0xAA）。</li>
 </ul>
-<p>扩充：</p>
+<p>扩充（源于阮一峰的网络日志）：</p>
 <p>分区表的长度只有64个字节，里面又分成四项，每项16个字节。所以，一个硬盘最多只能分四个一级分区，又叫做”主分区”。<br>每个主分区的16个字节，由6个部分组成：</p>
 <ul>
 <li>第1个字节：如果为0x80，就表示该主分区是激活分区，控制权要转交给这个分区。四个主分区里面只能有一个是激活的。</li>
@@ -45,6 +45,7 @@
 <li>第9-12字节：该主分区第一个扇区的逻辑地址。</li>
 <li>第13-16字节：主分区的扇区总数。</li>
 </ul>
+<p>最后的四个字节（”主分区的扇区总数”），决定了这个主分区的长度。也就是说，一个主分区的扇区总数最多不超过2的32次方。如果每个扇区为512个字节，就意味着单个分区最大不超过2TB。再考虑到扇区的逻辑地址也是32位，所以单个硬盘可利用的空间最大也不超过2TB。</p>
 <p>疑问? 内核文件在哪里？GRUB是怎么找到内核文件？</p>
 <p>内核文件（vmlinuz-2.6.18-308.el5）是位于/boot分区下（在我们给硬盘分区的时候都会把/boot单独分区），这时又有疑问了，这时候/都没有被挂载，又如何从硬盘上找到内核文件？<br><img src="/images/linux/how-linux-start-0.png" alt=""></p>
 <p>这时看GRUB的配置文件/boot/grub/grub.conf 可以看到 root (hd0,0)，这一行实际上就是指定boot目录所在的位置<br>而kernel /vmlinuz-2.6.18-308.el5 ro root=LABEL=/ 这里指定的是内核文件所在的位置，而前面的/并不是真正的根，而是指的是boot目录所在的位置，那么其全路径为(hd0,0)/vmlinuz-2.6.18-308.el5,而这里的(hd0,0)指的是第1个硬盘的第1个分区，GRUB在识别硬盘的时候都是识别为hd开头的。</p>
