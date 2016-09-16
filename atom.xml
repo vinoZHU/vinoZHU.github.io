@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-14T05:47:53.000Z</updated>
+  <updated>2016-09-16T11:54:09.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,87 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Linux系统启动流程</title>
+    <link href="http://vinoit.me/2016/09/16/how-linux-start/"/>
+    <id>http://vinoit.me/2016/09/16/how-linux-start/</id>
+    <published>2016-09-16T11:40:21.000Z</published>
+    <updated>2016-09-16T11:54:09.000Z</updated>
+    
+    <content type="html"><![CDATA[<blockquote>
+<p>原文地址:<a href="http://www.linux178.com/linux/linuxinit.html" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html</a></p>
+</blockquote>
+<h4 id="Linux系统启动流程概览"><a href="#Linux系统启动流程概览" class="headerlink" title="Linux系统启动流程概览"></a>Linux系统启动流程概览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">POST--&gt;BootLoader(MBR)--&gt;Kernel(硬件探测、加载驱动、挂载根文件系统、/sbin/init)</div><div class="line">--&gt;init(/etc/inittab:设定默认级别、系统初始化脚本、启动及关闭对应级别的服务、启动终端)</div></pre></td></tr></table></figure>
+<h4 id="第1步"><a href="#第1步" class="headerlink" title="第1步"></a>第1步</h4><p>POST（Power On Self Test/上电自检）</p>
+<p>打开电源按钮，CPU会把位于CMOS中的BIOS程序加载到内存里面执行，BIOS会探测并识别主板上的所有硬件，然后按照BIOS程序里面设定的启动顺序（1.光驱 2.硬盘 3.软驱 等），它会挨个去这些设备里面找启动设备，一旦找到就停止寻找，如：第一个先从光驱找到，但是没有找到光盘，那么找第二个硬盘，找到硬盘也不一定能启动，要看硬盘是否包含MBR，如果有MBR那就从硬盘启动，如果没有就继续向下寻找，如果一直没有找到可启动的设备，那么本次启动宣告失败。</p>
+<p>开电之后，CPU就到出厂时指定的内存地址空间（是由内存和CMOS组成）去加载BIOS程序（存储在CMOS里面），BIOS是由一系列的汇编指令组成，用于进行硬件检测（把检测到的结果存储到内存的低地址空间里，是由于BIOS 的寻址能力有限），BIOS首先会探测有几块内存以及其他设备是不是都基本正常，有任何问题就会报警，就无法往下启动，接着去扫描ISA总线和PCI总线去查找各关联到的设备，并且能指挥各硬件完成中断注册和IO端口注册。</p>
+<h4 id="第2步"><a href="#第2步" class="headerlink" title="第2步"></a>第2步</h4><p>在上一步中，BIOS找到硬盘的MBR（位于硬盘的0磁道0扇区 大小为512字节，该区域不能被分配给任何分区），然后在MBR中寻找BootLoader（目前比较常用有LILO 和 GRUB，LILO已经不常用，BootLoader在MBR所占446字节，所以必须短小精悍，还有16字节是分区表信息，剩下2字节是用来标明该MBR是否有效），然后把BootLoader加载到内存中开始执行，BootLoader主要功能就是从硬盘找到内核文件，把内核文件加载到内存执行。</p>
+<p><strong>GRUB的功能</strong></p>
+<ol>
+<li>选择启动的内核映像或操作系统；</li>
+<li>传递参数：e: 编辑模式 b: 引导</li>
+<li>基于密码保护 (这个工具 grub-md5-crypt 可以生成 然后放到grub.conf里面 password –md5 密码 )</li>
+<li>启用内核映像 传递参数</li>
+</ol>
+<p>疑问? 内核文件在哪里？GRUB是怎么找到内核文件？</p>
+<p>内核文件（vmlinuz-2.6.18-308.el5）是位于/boot分区下（在我们给硬盘分区的时候都会把/boot单独分区），这时又有疑问了，这时候/都没有被挂载，又如何从硬盘上找到内核文件？<br><img src="/images/linux/how-linux-start-0.png" alt=""></p>
+<p>这时看GRUB的配置文件/boot/grub/grub.conf 可以看到 root (hd0,0)，这一行实际上就是指定boot目录所在的位置<br>而kernel /vmlinuz-2.6.18-308.el5 ro root=LABEL=/ 这里指定的是内核文件所在的位置，而前面的/并不是真正的根，而是指的是boot目录所在的位置，那么其全路径为(hd0,0)/vmlinuz-2.6.18-308.el5,而这里的(hd0,0)指的是第1个硬盘的第1个分区，GRUB在识别硬盘的时候都是识别为hd开头的。</p>
+<p>总结: GRUB 不是通过文件系统来找内核文件的，因为这时候内核还没有启动所以也不存在什么文件系统，而是直接访问硬盘的第1个硬盘第1个分区（MBR里面存在分区表）的来找到内核文件。</p>
+<p>这时候又有个问题 GRUB是怎么识别分区表中这些分区的文件系统的？ 且看/boot/grub目录下的文件:</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div></pre></td><td class="code"><pre><div class="line">[root@server1 grub]# ll</div><div class="line">总计 257</div><div class="line">-rw-r--r-- 1 root root     63 2013-01-05 device.map</div><div class="line">-rw-r--r-- 1 root root   7584 2013-01-05 e2fs_stage1_5</div><div class="line">-rw-r--r-- 1 root root   7456 2013-01-05 fat_stage1_5</div><div class="line">-rw-r--r-- 1 root root   6720 2013-01-05 ffs_stage1_5</div><div class="line">-rw------- 1 root root    562 2013-01-05 grub.conf</div><div class="line">-rw-r--r-- 1 root root   6720 2013-01-05 iso9660_stage1_5</div><div class="line">-rw-r--r-- 1 root root   8192 2013-01-05 jfs_stage1_5</div><div class="line">lrwxrwxrwx 1 root root     11 2013-01-05 menu.lst -&gt; ./grub.conf</div><div class="line">-rw-r--r-- 1 root root   6880 2013-01-05 minix_stage1_5</div><div class="line">-rw-r--r-- 1 root root   9248 2013-01-05 reiserfs_stage1_5</div><div class="line">-rw-r--r-- 1 root root  55808 2009-03-13 splash.xpm.gz</div><div class="line">-rw-r--r-- 1 root root    512 2013-01-05 stage1</div><div class="line">-rw-r--r-- 1 root root 104988 2013-01-05 stage2</div><div class="line">-rw-r--r-- 1 root root   7072 2013-01-05 ufs2_stage1_5</div><div class="line">-rw-r--r-- 1 root root   6272 2013-01-05 vstafs_stage1_5</div><div class="line">-rw-r--r-- 1 root root   8904 2013-01-05 xfs_stage1_5</div></pre></td></tr></table></figure>
+<p>其实GRUB启动是分阶段的：</p>
+<p>第1个阶段  BIOS加载MBR里面的GRUB（属于第1阶段的文件），由于只有GRUB只占用446字节所以不能实现太多的功能，所以就有此阶段里面的文件来加载第1.5阶段的文件（/boot/grub下的文件）。</p>
+<p>第1.5个阶段 这个阶段里面的就是加载识别文件系统的程序，来识别文件系统，不加载就无法识别文件系统，进而就找不到boot目录，由于GRUB是无法识别LVM，所以你不能把/boot分区设置为LVM，所以必须要把/boot单独分区。</p>
+<p>第2个阶段 这里面才是正在的开始寻找内核的过程，然后是启动内核。</p>
+<h4 id="第3步"><a href="#第3步" class="headerlink" title="第3步"></a>第3步</h4><p>在上一步中，GRUB成功找到内核文件，并把内核加载到内存，同时把/boot/initrd-2.6.18-308.el5.img这个文件也加载进来，这个文件是做什么的呢？</p>
+<p>那么首先看看内核在这一步骤里面做的事情：</p>
+<ol>
+<li>探测硬件</li>
+<li>加载驱动</li>
+<li>挂载根文件系统</li>
+<li>执行第一个程序/sbin/init</li>
+</ol>
+<p>BIOS检查硬件，而内核是会初始化硬件设备，那么首先会探测硬件（第1步），知道是什么硬件了就该加载硬件驱动程序（第2步），不然是没办法指挥着硬件工作的，关键是内核去哪里找驱动程序（驱动程序是硬盘上，是内核模块.ko存在的）而此时根文件系统还没有挂载上，怎么办？ 那可以②③对调，先挂载根文件系统，然后再加载驱动，那此时又有问题了，我不加载驱动程序又如何驱动着硬盘工作呢？ 这个陷入了是先有蛋还是有先鸡的问题了，这该如何解决？</p>
+<p>这时候 这个文件/boot/initrd-2.6.18-308.el5.img（该文件是一个.gz的压缩文件） 就派上用场了，这个文件也是被GRUB加载内存当中，构建成一个虚拟的根文件系统，这个文件里面包含有硬件驱动程序（），这个文件是可以展开如下操作：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div></pre></td><td class="code"><pre><div class="line"></div><div class="line">[root@server1 boot]# cp initrd-2.6.18-308.el5.img ~</div><div class="line">[root@server1 boot]# cd</div><div class="line">[root@server1 ~]# ls</div><div class="line">initrd-2.6.18-308.el5.img</div><div class="line">[root@server1 ~]# mv initrd-2.6.18-308.el5.img initrd-2.6.18-308.el5.img.gz</div><div class="line">[root@server1 ~]# gzip -d initrd-2.6.18-308.el5.img.gz</div><div class="line">[root@server1 ~]# ls</div><div class="line">initrd-2.6.18-308.el5.img</div><div class="line">[root@server1 ~]# file initrd-2.6.18-308.el5.img</div><div class="line">initrd-2.6.18-308.el5.img: ASCII cpio archive (SVR4 with no CRC) 可以看到此时是一个cpio的归档文件</div><div class="line">[root@server1 ~]# mkdir test</div><div class="line">[root@server1 ~]# mv initrd-2.6.18-308.el5.img  test</div><div class="line">[root@server1 ~]# cd test</div><div class="line">[root@server1 test]# ls</div><div class="line">initrd-2.6.18-308.el5.img</div><div class="line">[root@server1 test]# cpio -id &lt; initrd-2.6.18-308.el5.img  利用cpio来展开该文件</div><div class="line">12111 blocks</div><div class="line">[root@server1 test]# ls</div><div class="line">bin  dev  etc  init  initrd-2.6.18-308.el5.img  lib  proc  sbin  sys  sysroot</div><div class="line">[root@server1 test]# mv initrd-2.6.18-308.el5.img ../</div><div class="line">[root@server1 test]# ls  可以看到这不就是跟真实的根很像吗</div><div class="line">bin  dev  etc  init  lib  proc  sbin  sys  sysroot</div><div class="line">[root@server1 test]# ls lib/    可以看到这目录下包含了ext3.ko的内核模块，该模块就可以驱动着硬盘进行工作了</div><div class="line">ata_piix.ko            dm-mod.ko              ext3.ko                mptbase.ko             scsi_mod.ko</div><div class="line">dm-log.ko              dm-raid45.ko           firmware/              mptscsih.ko            scsi_transport_spi.ko</div><div class="line">dm-mem-cache.ko        dm-region_hash.ko      jbd.ko                 mptspi.ko              sd_mod.ko</div><div class="line">dm-message.ko          ehci-hcd.ko            libata.ko              ohci-hcd.ko            uhci-hcd.ko</div><div class="line">[root@server1 test]#</div></pre></td></tr></table></figure>
+<p>至此内核利用虚拟的根文件系统的ext3.ko内核模块，驱动了硬盘，然后挂载了真正的根文件系统，那么此时虚拟的根文件系统是否还有作用，它还可以挂载/proc文件系统等操作。</p>
+<p>此阶段中最后一个步骤 由内核来启动第一个程序/sbin/init，启动好之后剩下的工作就有init进程来完成了。</p>
+<h4 id="第4步"><a href="#第4步" class="headerlink" title="第4步"></a>第4步</h4><p>init进程首先会读取/etc/inittab文件，根据inittab文件中的内容依次执行</p>
+<p>设定系统运行的默认级别（id:3:initdefault:）<br>执行系统初始化脚本文件（si::sysinit:/etc/rc.d/rc.sysinit）<br>执行在该运行级别下所启动或关闭对应的服务（l3:3:wait:/etc/rc.d/rc 3）<br>启动6个虚拟终端:</p>
+<ul>
+<li>l0:0:wait:/etc/rc.d/rc 0</li>
+<li>l1:1:wait:/etc/rc.d/rc 1</li>
+<li>l2:2:wait:/etc/rc.d/rc 2</li>
+<li>l3:3:wait:/etc/rc.d/rc 3</li>
+<li>l4:4:wait:/etc/rc.d/rc 4</li>
+<li>l5:5:wait:/etc/rc.d/rc 5</li>
+<li>l6:6:wait:/etc/rc.d/rc 6</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;blockquote&gt;
+&lt;p&gt;原文地址:&lt;a href=&quot;http://www.linux178.com/linux/linuxinit.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.linux178.com/linux/lin
+    
+    </summary>
+    
+      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
+    
+    
+      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
+    
+      <category term="Boot" scheme="http://vinoit.me/tags/Boot/"/>
+    
+      <category term="GRUB" scheme="http://vinoit.me/tags/GRUB/"/>
+    
+  </entry>
+  
+  <entry>
     <title>JNI探秘--FileDescriptor、FileInputStream 解惑</title>
     <link href="http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/"/>
     <id>http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/</id>
     <published>2016-09-14T01:13:07.000Z</published>
-    <updated>2016-09-14T05:47:53.000Z</updated>
+    <updated>2016-09-14T06:45:16.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p>使用JAVA读取文件时需要用到<code>FileInputStream</code>这个类，最简单的使用方式如下:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            FileInputStream fileInputStream = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</div><div class="line">            System.out.println(fileInputStream.read());</div><div class="line">        &#125; <span class="keyword">catch</span> (FileNotFoundException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
@@ -28,7 +104,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">FileInputStream</span><span class="params">(String name)</span> <span class="keyword">throws</span> FileNotFoundException </span>&#123;</div><div class="line">        <span class="keyword">this</span>(name != <span class="keyword">null</span> ? <span class="keyword">new</span> File(name) : <span class="keyword">null</span>);</div><div class="line">    &#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">FileInputStream</span><span class="params">(File file)</span> <span class="keyword">throws</span> FileNotFoundException </span>&#123;</div><div class="line">        String name = (file != <span class="keyword">null</span> ? file.getPath() : <span class="keyword">null</span>);</div><div class="line">        SecurityManager security = System.getSecurityManager();</div><div class="line">        <span class="keyword">if</span> (security != <span class="keyword">null</span>) &#123;</div><div class="line">            security.checkRead(name);</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (name == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (file.isInvalid()) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> FileNotFoundException(<span class="string">"Invalid file path"</span>);</div><div class="line">        &#125;</div><div class="line">        fd = <span class="keyword">new</span> FileDescriptor();</div><div class="line">        fd.attach(<span class="keyword">this</span>);</div><div class="line">        path = name;</div><div class="line">        open(name);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="title">FileInputStream</span><span class="params">(FileDescriptor fdObj)</span> </span>&#123;</div><div class="line">        SecurityManager security = System.getSecurityManager();</div><div class="line">        <span class="keyword">if</span> (fdObj == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">throw</span> <span class="keyword">new</span> NullPointerException();</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">if</span> (security != <span class="keyword">null</span>) &#123;</div><div class="line">            security.checkRead(fdObj);</div><div class="line">        &#125;</div><div class="line">        fd = fdObj;</div><div class="line">        path = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * FileDescriptor is being shared by streams.</div><div class="line">         * Register this stream with FileDescriptor tracker.</div><div class="line">         */</div><div class="line">        fd.attach(<span class="keyword">this</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
 <p><code>fd</code>和<code>path</code>定义如下:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="comment">/* File Descriptor - handle to the open file */</span></div><div class="line"><span class="keyword">private</span> <span class="keyword">final</span> FileDescriptor fd;</div><div class="line"></div><div class="line">  <span class="comment">/**</span></div><div class="line">   * The path of the referenced file</div><div class="line">   * (null if the stream is created with a file descriptor)</div><div class="line">   */</div><div class="line">  <span class="keyword">private</span> <span class="keyword">final</span> String path;</div></pre></td></tr></table></figure>
-<p>参数为<code>String name</code>或者<code>File file</code>的构造方法都新建了一个<code>fileDescriptor</code>,并赋值给<code>fd</code>，而参数为<code>FileDescriptor fdObj</code>的构造方法直接将<code>fdObj</code>参数赋值给<code>fd</code>。其实从这里可以看出，<code>FileDescriptor</code>(文件描述符)JAVA中的文件操作核心。</p>
+<p>参数为<code>String name</code>或者<code>File file</code>的构造方法都新建了一个<code>fileDescriptor</code>,并赋值给<code>fd</code>，而参数为<code>FileDescriptor fdObj</code>的构造方法直接将<code>fdObj</code>参数赋值给<code>fd</code>。其实从这里可以感觉出<code>FileDescriptor</code>(文件描述符)是JAVA中的文件操作核心。</p>
 <h4 id="疑惑一"><a href="#疑惑一" class="headerlink" title="疑惑一"></a>疑惑一</h4><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span> <span class="keyword">throws</span> IOException, NoSuchFieldException </span>&#123;</div><div class="line"></div><div class="line">        FileDescriptor fileDescriptor = <span class="keyword">null</span>;</div><div class="line">        FileDescriptor fileDescriptor1 = <span class="keyword">null</span>;</div><div class="line"></div><div class="line">        FileInputStream fileInputStream = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</div><div class="line">        FileInputStream fileInputStream1 = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</div><div class="line">        </div><div class="line">        System.out.println(fileInputStream.getFD().valid());</div><div class="line">        System.out.println(fileInputStream1.getFD().valid());</div><div class="line">        fileDescriptor = fileInputStream.getFD();</div><div class="line">        fileDescriptor1 = fileInputStream1.getFD();</div><div class="line">        </div><div class="line">    &#125;</div></pre></td></tr></table></figure>
 <p>输出:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">true</div><div class="line">true</div></pre></td></tr></table></figure>
@@ -1621,88 +1697,6 @@
     
     
       <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>调试器基本工作原理</title>
-    <link href="http://vinoit.me/2016/08/12/how-debugger-work/"/>
-    <id>http://vinoit.me/2016/08/12/how-debugger-work/</id>
-    <published>2016-08-12T08:34:29.000Z</published>
-    <updated>2016-08-18T14:17:16.000Z</updated>
-    
-    <content type="html"><![CDATA[<p>在开发的过程中调试是必不可少的步骤，相应的IDE就能帮我们轻松搞定。但是调试背后的原理我觉得有必要了解，本文描述的是一些调试器方面的基本原理，不当之处欢迎指出。</p>
-<h4 id="ptrace-系统调用"><a href="#ptrace-系统调用" class="headerlink" title="ptrace()系统调用"></a>ptrace()系统调用</h4><p>Linux下的调试器实现的主要组成部分就是<code>ptrace()</code>,这是一个功能众多且相当复杂的工具，能允许一个进程控制另一个进程的运行，而且可以监视和渗入到进程内部。其中这2个进程是父子进程的关系，调试的进程是父进程，被调试的则是子进程。</p>
-<p>OS X下<code>ptrace()</code>的原型如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">ptrace</span><span class="params">(<span class="keyword">int</span> request, <span class="keyword">pid_t</span> pid, <span class="keyword">caddr_t</span> addr, <span class="keyword">int</span> data)</span></span>;</div></pre></td></tr></table></figure>
-<p>其中man手册如此描述参数：</p>
-<p><code>The request argument specifies what operation is being performed; the
-meaning of the rest of the arguments depends on the operation, but except for one special case noted below,  all ptrace() calls are made by the tracing process, and the pid argument specifies the process ID of the traced process.</code></p>
-<p>也就是说<code>request</code>参数表示操作的类型，其他3个参数在不同的操作下意义可能不同，<code>pid</code>永远指向<strong>被调试</strong>的进程。<br><code>request</code>可以有以下值：</p>
-<ul>
-<li>PT_TRACE_ME</li>
-<li>PT_DENY_ATTACH</li>
-<li>PT_CONTINUE</li>
-<li>PT_STEP</li>
-<li>PT_KILL</li>
-<li>PT_ATTACH</li>
-<li>PT_ATTACHEXC</li>
-<li>PT_DETACH </li>
-</ul>
-<p>某些值由父进程使用，某些则由子进程使用，比如<code>PT_TRACE_ME</code>由子进程调用，从命名上也可以看出来(追踪我)。其中的具体含义可以查看man手册，此处就不多解释了。</p>
-<h4 id="单步调试"><a href="#单步调试" class="headerlink" title="单步调试"></a>单步调试</h4><p>从高层设计来说，我们要写一个程序，它产生一个子进程用来执行一个用户指定的命令，而父进程跟踪这个子进程。首先，main函数是这样的：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">(<span class="keyword">int</span> argc, <span class="keyword">char</span>** argv)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">pid_t</span> child_pid;</div><div class="line"></div><div class="line">    <span class="keyword">if</span> (argc &lt; <span class="number">2</span>) &#123;</div><div class="line">        <span class="built_in">fprintf</span>(<span class="built_in">stderr</span>, <span class="string">"Expected a program name as argument\n"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    child_pid = fork();</div><div class="line">    <span class="keyword">if</span> (child_pid == <span class="number">0</span>)</div><div class="line">        run_target(argv[<span class="number">1</span>]);<span class="comment">//子进程执行需要被追踪的指令</span></div><div class="line">    <span class="keyword">else</span> <span class="keyword">if</span> (child_pid &gt; <span class="number">0</span>)</div><div class="line">        run_debugger(child_pid);<span class="comment">//父进程追踪子进程</span></div><div class="line">    <span class="keyword">else</span> &#123;</div><div class="line">        perror(<span class="string">"fork"</span>);</div><div class="line">        <span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>其中<code>run_target(char arg)</code>函数的核心内容如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">ptrace(PT_TRACE_ME, <span class="number">0</span>, <span class="number">0</span>, <span class="number">0</span>);</div><div class="line">execl(arg, arg, <span class="number">0</span>);</div></pre></td></tr></table></figure>
-<p>首先执行ptrace系统调用，request值为PT_TRACE_ME，表明进程期待被父进程追踪，这时候一旦调用了<code>execl()</code>,进程被停止运行，然后接收到一个SIGTRAP信号，并等待父进程的操作。</p>
-<p>父进程<code>run_debugger()</code>函数的核心内容如下：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div></pre></td><td class="code"><pre><div class="line">wait(&amp;wait_status);</div><div class="line"></div><div class="line">    <span class="keyword">while</span> (WIFSTOPPED(wait_status)) &#123;</div><div class="line">        <span class="comment">/* Make the child execute another instruction */</span></div><div class="line">        <span class="keyword">if</span> (ptrace(PT_STEP, child_pid, <span class="number">0</span>, <span class="number">0</span>) &lt; <span class="number">0</span>) &#123;</div><div class="line">            perror(<span class="string">"ptrace"</span>);</div><div class="line">            <span class="keyword">return</span>;</div><div class="line">        &#125;</div><div class="line"> </div><div class="line">        <span class="comment">/* Wait for child to stop on its next instruction */</span></div><div class="line">        wait(&amp;wait_status);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
-<p>循环外面的<code>wait()</code>调用阻塞父进程，直到有子进程停止运行。此时执行while循环的内容，如果子进程由于发送的信号而停止运行，WIFSTOPPED就返回true。循环内的代码就做了2件事，首先调用<code>ptrace()</code>,request值为PT_STEP，使得pid为child_pid的进程单步执行下一条指令。然后再次调用<code>wait()</code>,阻塞等待子进程停止。依次循环，直到子进程结束。</p>
-<h4 id="断点"><a href="#断点" class="headerlink" title="断点"></a>断点</h4><p>在调试的时候我们可以在期望的地方打上断点，程序运行到断点处自动停止运行。这在Linux中是通过中断机制来实现的，将断点处的指令用<code>int 3</code>来替代，int指令可以产生一个中断，后面的数字是中断号，每个中断号都对应一个处理例程，3号例程专门用来处理调试时的断点。</p>
-<p>要在被调试进程中的某个目标地址上设定一个断点，调试器需要做下面两件事情：</p>
-<ol>
-<li><p>保存目标地址上的数据</p>
-</li>
-<li><p>将目标地址上的第一个字节替换为int 3指令</p>
-</li>
-</ol>
-<p>然后，当调试器向操作系统请求开始运行进程时，进程最终一定会碰到int 3指令。此时进程停止，操作系统将发送一个信号。这时就是调试器(父进程)再次出马的时候了，接收到一个其子进程（或被跟踪进程）停止的信号，然后调试器要做下面几件事：</p>
-<ol>
-<li><p>在目标地址上用原来的指令替换掉int 3</p>
-</li>
-<li><p>将被跟踪进程中的指令指针向后递减1。这么做是必须的，因为现在指令指针指向的是已经执行过的int 3之后的下一条指令。</p>
-</li>
-<li><p>由于进程此时仍然是停止的，用户可以同被调试进程进行某种形式的交互。这里调试器可以让你查看变量的值，检查调用栈等等。</p>
-</li>
-<li><p>当用户希望进程继续运行时，调试器负责将断点再次加到目标地址上（由于在第一步中断点已经被移除了），除非用户希望取消断点。</p>
-</li>
-</ol>
-<h4 id="调试信息"><a href="#调试信息" class="headerlink" title="调试信息"></a>调试信息</h4><p>当你在某些函数的入口处设置断点时，调试器如何知道该在哪里停止目标进程的运行呢？当你希望查看一个变量的值时，调试器又是如何找到它并展示给你呢？答案就是——调试信息。</p>
-<p><strong>调试信息是在编译器生成机器码的时候一起产生的。它代表着可执行程序和源代码之间的关系。这个信息以预定义的格式进行编码，并同机器码<code>一起存储</code>。</strong>许多年以来，针对不同的平台和可执行文件，人们发明了许多这样的编码格式。其中一种最重要的格式就是DWARF，作为Linux以及其他类Unix平台上的ELF可执行文件的调试信息格式，如今的DWARF可以说是无处不在。</p>
-<p>通过下面的C代码构建一个名为traceprog2的可执行文件来做下实验:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">do_stuff</span><span class="params">(<span class="keyword">int</span> my_arg)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">int</span> my_local = my_arg + <span class="number">2</span>;</div><div class="line">    <span class="keyword">int</span> i;</div><div class="line"></div><div class="line">    <span class="keyword">for</span> (i = <span class="number">0</span>; i &lt; my_local; ++i)</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"i = %d\n"</span>, i);</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">main</span><span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">    do_stuff(<span class="number">2</span>);</div><div class="line">    <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>通过objdump –h导出ELF可执行文件中的段头信息，我们注意到其中有几个段的名字是以.debug_打头的，这些就是DWARF格式的调试段：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="number">26</span> .debug_aranges <span class="number">00000020</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001037</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">27</span> .debug_pubnames <span class="number">00000028</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001057</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">28</span> .debug_info   <span class="number">000000</span>cc  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000107f</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">29</span> .debug_abbrev <span class="number">0000008</span>a  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000114b</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">30</span> .debug_line   <span class="number">0000006b</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">000011</span>d5</div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">31</span> .debug_frame  <span class="number">00000044</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001240</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">32</span> .debug_str    <span class="number">000000</span>ae  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001284</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">33</span> .debug_loc    <span class="number">00000058</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001332</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div></pre></td></tr></table></figure>
-<p>每行的第一个数字表示每个段的大小，而最后一个数字表示距离ELF文件开始处的偏移量。调试器就是利用这个信息来从可执行文件中读取相关的段信息，从而找到可执行程序和源代码之间的关系。</p>
-<blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;p&gt;在开发的过程中调试是必不可少的步骤，相应的IDE就能帮我们轻松搞定。但是调试背后的原理我觉得有必要了解，本文描述的是一些调试器方面的基本原理，不当之处欢迎指出。&lt;/p&gt;
-&lt;h4 id=&quot;ptrace-系统调用&quot;&gt;&lt;a href=&quot;#ptrace-系统调用&quot; class=&quot;h
-    
-    </summary>
-    
-      <category term="理解计算机" scheme="http://vinoit.me/categories/%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA/"/>
-    
-    
-      <category term="理解计算机" scheme="http://vinoit.me/tags/%E7%90%86%E8%A7%A3%E8%AE%A1%E7%AE%97%E6%9C%BA/"/>
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
     
   </entry>
   

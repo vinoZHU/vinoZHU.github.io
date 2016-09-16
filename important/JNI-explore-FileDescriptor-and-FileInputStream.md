@@ -83,7 +83,7 @@ public FileInputStream(FileDescriptor fdObj) {
    private final String path;
 ```
 
-参数为`String name`或者`File file`的构造方法都新建了一个`fileDescriptor`,并赋值给`fd`，而参数为`FileDescriptor fdObj`的构造方法直接将`fdObj`参数赋值给`fd`。其实从这里可以看出，`FileDescriptor`(文件描述符)JAVA中的文件操作核心。
+参数为`String name`或者`File file`的构造方法都新建了一个`fileDescriptor`,并赋值给`fd`，而参数为`FileDescriptor fdObj`的构造方法直接将`fdObj`参数赋值给`fd`。其实从这里可以感觉出`FileDescriptor`(文件描述符)是JAVA中的文件操作核心。
 
 #### 疑惑一
 
