@@ -4,7 +4,7 @@
   <url>
     <loc>http://vinoit.me/2016/09/16/how-linux-start/</loc>
     
-    <lastmod>2016-09-16T11:54:09.000Z</lastmod>
+    <lastmod>2016-09-16T13:10:07.000Z</lastmod>
     
   </url>
   
@@ -261,7 +261,21 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    <loc>http://vinoit.me/2016/05/16/git-branch-remote/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -275,7 +289,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -296,21 +310,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://vinoit.me/2016/05/19/java-memory-model-basis/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -324,7 +324,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/16/git-branch-remote/</loc>
+    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     

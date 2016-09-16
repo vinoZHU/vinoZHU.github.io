@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-16T11:54:09.000Z</updated>
+  <updated>2016-09-16T13:10:07.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,23 +20,31 @@
     <link href="http://vinoit.me/2016/09/16/how-linux-start/"/>
     <id>http://vinoit.me/2016/09/16/how-linux-start/</id>
     <published>2016-09-16T11:40:21.000Z</published>
-    <updated>2016-09-16T11:54:09.000Z</updated>
+    <updated>2016-09-16T13:10:07.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
-<p>原文地址:<a href="http://www.linux178.com/linux/linuxinit.html" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html</a></p>
+<p>本文在原文地址:<a href="http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改</a></p>
 </blockquote>
-<h4 id="Linux系统启动流程概览"><a href="#Linux系统启动流程概览" class="headerlink" title="Linux系统启动流程概览"></a>Linux系统启动流程概览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">POST--&gt;BootLoader(MBR)--&gt;Kernel(硬件探测、加载驱动、挂载根文件系统、/sbin/init)</div><div class="line">--&gt;init(/etc/inittab:设定默认级别、系统初始化脚本、启动及关闭对应级别的服务、启动终端)</div></pre></td></tr></table></figure>
-<h4 id="第1步"><a href="#第1步" class="headerlink" title="第1步"></a>第1步</h4><p>POST（Power On Self Test/上电自检）</p>
-<p>打开电源按钮，CPU会把位于CMOS中的BIOS程序加载到内存里面执行，BIOS会探测并识别主板上的所有硬件，然后按照BIOS程序里面设定的启动顺序（1.光驱 2.硬盘 3.软驱 等），它会挨个去这些设备里面找启动设备，一旦找到就停止寻找，如：第一个先从光驱找到，但是没有找到光盘，那么找第二个硬盘，找到硬盘也不一定能启动，要看硬盘是否包含MBR，如果有MBR那就从硬盘启动，如果没有就继续向下寻找，如果一直没有找到可启动的设备，那么本次启动宣告失败。</p>
-<p>开电之后，CPU就到出厂时指定的内存地址空间（是由内存和CMOS组成）去加载BIOS程序（存储在CMOS里面），BIOS是由一系列的汇编指令组成，用于进行硬件检测（把检测到的结果存储到内存的低地址空间里，是由于BIOS 的寻址能力有限），BIOS首先会探测有几块内存以及其他设备是不是都基本正常，有任何问题就会报警，就无法往下启动，接着去扫描ISA总线和PCI总线去查找各关联到的设备，并且能指挥各硬件完成中断注册和IO端口注册。</p>
-<h4 id="第2步"><a href="#第2步" class="headerlink" title="第2步"></a>第2步</h4><p>在上一步中，BIOS找到硬盘的MBR（位于硬盘的0磁道0扇区 大小为512字节，该区域不能被分配给任何分区），然后在MBR中寻找BootLoader（目前比较常用有LILO 和 GRUB，LILO已经不常用，BootLoader在MBR所占446字节，所以必须短小精悍，还有16字节是分区表信息，剩下2字节是用来标明该MBR是否有效），然后把BootLoader加载到内存中开始执行，BootLoader主要功能就是从硬盘找到内核文件，把内核文件加载到内存执行。</p>
-<p><strong>GRUB的功能</strong></p>
-<ol>
-<li>选择启动的内核映像或操作系统；</li>
-<li>传递参数：e: 编辑模式 b: 引导</li>
-<li>基于密码保护 (这个工具 grub-md5-crypt 可以生成 然后放到grub.conf里面 password –md5 密码 )</li>
-<li>启用内核映像 传递参数</li>
-</ol>
+<h4 id="Linux系统启动流程概览"><a href="#Linux系统启动流程概览" class="headerlink" title="Linux系统启动流程概览"></a>Linux系统启动流程概览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">POST（Power On Self Test/上电自检）--&gt;BootLoader(MBR)--&gt;Kernel(硬件探测、加载驱动、挂载根文件系统、/sbin/init)</div><div class="line">--&gt;init(/etc/inittab:设定默认级别、系统初始化脚本、启动及关闭对应级别的服务、启动终端)</div></pre></td></tr></table></figure>
+<h4 id="第1步"><a href="#第1步" class="headerlink" title="第1步"></a>第1步</h4><p>计算机电源接通后，CPU默认执行<code>0ffffh:0000h</code>处的指令（8086是这样，386应该类似），而此内存地址应该存放的就是<code>BIOS ROM</code>。系统将有一个对内部各个设备进行检查的过程，这是由一个通常称之为POST（Power On Self Test/上电自检）的程序来完成，这也是BIOS程序的一个功能。完整的自检包括了对CPU、640K基本内存、1M以上的扩展内存、ROM、主板、CMOS存贮器、串并口、显示卡、软硬盘子系统及键盘的测试。在自检过程中若发现问题，系统将给出提示信息或鸣笛警告。</p>
+<p>如果没有任何问题，完成自检后BIOS将按照系统CMOS设置中的启动顺序搜寻软、硬盘驱动器及CDROM、网络服务器等有效的启动驱动器 ，读入操作系统引导记录（BootLoader），然后将系统控制权交给引导记录，由引导记录完成系统的启动。如果一直没有找到可启动的设备，那么本次启动宣告失败。</p>
+<h4 id="第2步"><a href="#第2步" class="headerlink" title="第2步"></a>第2步</h4><p>在上一步中，BIOS找到硬盘的MBR（位于硬盘的0磁道0扇区 大小为512字节，该区域不能被分配给任何分区），然后在MBR中寻找BootLoader（目前比较常用有LILO 和 GRUB，LILO已经不常用，BootLoader在MBR所占446字节，所以必须短小精悍，接下来64字节是分区表信息，最后2字节是用来标明该MBR是否有效），然后把BootLoader加载到内存中开始执行，BootLoader主要功能就是从硬盘找到内核文件，把内核文件加载到内存执行。</p>
+<p>MBR的三部分如下:</p>
+<ul>
+<li>第1-446字节：BootLoader。</li>
+<li>第447-510字节：分区表（Partition table）。</li>
+<li>第511-512字节：主引导记录签名（0x55和0xAA）。</li>
+</ul>
+<p>扩充：</p>
+<p>分区表的长度只有64个字节，里面又分成四项，每项16个字节。所以，一个硬盘最多只能分四个一级分区，又叫做”主分区”。<br>每个主分区的16个字节，由6个部分组成：</p>
+<ul>
+<li>第1个字节：如果为0x80，就表示该主分区是激活分区，控制权要转交给这个分区。四个主分区里面只能有一个是激活的。</li>
+<li>第2-4个字节：主分区第一个扇区的物理位置（柱面、磁头、扇区号等等）。</li>
+<li>第5个字节：主分区类型。</li>
+<li>第6-8个字节：主分区最后一个扇区的物理位置。</li>
+<li>第9-12字节：该主分区第一个扇区的逻辑地址。</li>
+<li>第13-16字节：主分区的扇区总数。</li>
+</ul>
 <p>疑问? 内核文件在哪里？GRUB是怎么找到内核文件？</p>
 <p>内核文件（vmlinuz-2.6.18-308.el5）是位于/boot分区下（在我们给硬盘分区的时候都会把/boot单独分区），这时又有疑问了，这时候/都没有被挂载，又如何从硬盘上找到内核文件？<br><img src="/images/linux/how-linux-start-0.png" alt=""></p>
 <p>这时看GRUB的配置文件/boot/grub/grub.conf 可以看到 root (hd0,0)，这一行实际上就是指定boot目录所在的位置<br>而kernel /vmlinuz-2.6.18-308.el5 ro root=LABEL=/ 这里指定的是内核文件所在的位置，而前面的/并不是真正的根，而是指的是boot目录所在的位置，那么其全路径为(hd0,0)/vmlinuz-2.6.18-308.el5,而这里的(hd0,0)指的是第1个硬盘的第1个分区，GRUB在识别硬盘的时候都是识别为hd开头的。</p>
@@ -76,7 +84,7 @@
     <summary type="html">
     
       &lt;blockquote&gt;
-&lt;p&gt;原文地址:&lt;a href=&quot;http://www.linux178.com/linux/linuxinit.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.linux178.com/linux/lin
+&lt;p&gt;本文在原文地址:&lt;a href=&quot;http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.linux178
     
     </summary>
     
