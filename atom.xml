@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-16T13:16:13.000Z</updated>
+  <updated>2016-09-24T08:03:37.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,17 +16,120 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Ext2文件系统简述</title>
+    <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
+    <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
+    <published>2016-09-23T09:57:48.000Z</published>
+    <updated>2016-09-24T08:03:37.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
+<p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
+<p>在Ext2中定义了如下几种数据类型:</p>
+<ul>
+<li><code>__u8</code> 、<code>__u16</code> 、<code>__u32</code>分表表示长度为8、16、32的无符号数。</li>
+<li><code>__s8</code> 、<code>__s16</code> 、<code>__s32</code>分别表示长度为8、16、32的有符号数。</li>
+<li><code>__le16</code> 、<code>__le32</code>分别表示字、双字的little-endian排序方式。 </li>
+<li><code>__be16</code> 、<code>__be32</code>分别表示字、双字的big-endian排序方式。</li>
+</ul>
+<h4 id="超级块"><a href="#超级块" class="headerlink" title="超级块"></a>超级块</h4><p>超级块描述符如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_super_block &#123;</div><div class="line">        <span class="number">__u</span>32 s_inodes_count;      		<span class="comment">/* 索引节点总数 */</span></div><div class="line">        <span class="number">__u</span>32 s_blocks_count;      		<span class="comment">/* 块的数量*/</span></div><div class="line">        <span class="number">__u</span>32 s_r_blocks_count;    		<span class="comment">/* 保留的块数 */</span></div><div class="line">        <span class="number">__u</span>32 s_free_blocks_count; 		<span class="comment">/* 空闲的块数 */</span></div><div class="line">        <span class="number">__u</span>32 s_free_inodes_count;      <span class="comment">/* 空闲的索引节点数 */</span></div><div class="line">        <span class="number">__u</span>32 s_first_data_block;       <span class="comment">/* 第一个使用的块号 */</span></div><div class="line">        <span class="number">__u</span>32 s_log_block_size;         <span class="comment">/* 块的大小 */</span></div><div class="line">        <span class="number">__l</span>e32  s_log_frag_size;        <span class="comment">/* Fragment size */</span></div><div class="line">        <span class="number">__l</span>e32  s_blocks_per_group;     <span class="comment">/* 每个块组的块数量 */</span></div><div class="line">        <span class="number">__l</span>e32  s_frags_per_group;      <span class="comment">/* Fragments per group */</span></div><div class="line">        <span class="number">__l</span>e32  s_inodes_per_group;     <span class="comment">/* 每个块组的索引节点数量 */</span></div><div class="line">        <span class="number">__l</span>e32  s_mtime;                <span class="comment">/* Mount time */</span></div><div class="line">        <span class="number">__l</span>e32  s_wtime;                <span class="comment">/* Write time */</span></div><div class="line">        <span class="number">__l</span>e16  s_mnt_count;            <span class="comment">/* Mount count */</span></div><div class="line">        <span class="number">__l</span>e16  s_max_mnt_count;        <span class="comment">/* Maximal mount count */</span></div><div class="line">        <span class="number">__l</span>e16  s_magic;                <span class="comment">/* Magic signature */</span></div><div class="line">        <span class="number">__l</span>e16  s_state;                <span class="comment">/* File system state */</span></div><div class="line">        <span class="number">__l</span>e16  s_errors;               <span class="comment">/* Behaviour when detecting errors */</span></div><div class="line">        <span class="number">__l</span>e16  s_minor_rev_level;      <span class="comment">/* minor revision level */</span></div><div class="line">        <span class="number">__l</span>e32  s_lastcheck;            <span class="comment">/* time of last check */</span></div><div class="line">        <span class="number">__l</span>e32  s_checkinterval;        <span class="comment">/* max. time between checks */</span></div><div class="line">        <span class="number">__l</span>e32  s_creator_os;           <span class="comment">/* OS */</span></div><div class="line">        <span class="number">__l</span>e32  s_rev_level;            <span class="comment">/* Revision level */</span></div><div class="line">        <span class="number">__l</span>e16  s_def_resuid;           <span class="comment">/* Default uid for reserved blocks */</span></div><div class="line">        <span class="number">__l</span>e16  s_def_resgid;           <span class="comment">/* Default gid for reserved blocks */</span></div><div class="line">        <span class="number">__l</span>e32  s_first_ino;            <span class="comment">/* First non-reserved inode */</span></div><div class="line">        <span class="number">__l</span>e16   s_inode_size;          <span class="comment">/* size of inode structure */</span></div><div class="line">        <span class="number">__l</span>e16  s_block_group_nr;       <span class="comment">/* block group # of this superblock */</span></div><div class="line">        <span class="number">__l</span>e32  s_feature_compat;       <span class="comment">/* compatible feature set */</span></div><div class="line">        <span class="number">__l</span>e32  s_feature_incompat;     <span class="comment">/* incompatible feature set */</span></div><div class="line">        <span class="number">__l</span>e32  s_feature_ro_compat;    <span class="comment">/* readonly-compatible feature set */</span></div><div class="line">        <span class="number">__u</span>8    s_uuid[<span class="number">16</span>];             <span class="comment">/* 128-bit uuid for volume */</span></div><div class="line">        <span class="keyword">char</span>    s_volume_name[<span class="number">16</span>];      <span class="comment">/* volume name */</span></div><div class="line">        <span class="keyword">char</span>    s_last_mounted[<span class="number">64</span>];     <span class="comment">/* directory where last mounted */</span></div><div class="line">        <span class="number">__l</span>e32  s_algorithm_usage_bitmap; <span class="comment">/* For compression */</span></div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Performance hints.  Directory preallocation should only</div><div class="line">         * happen if the EXT2_COMPAT_PREALLOC flag is on.</div><div class="line">         */</div><div class="line">        <span class="number">__u</span>8    s_prealloc_blocks;      <span class="comment">/* Nr of blocks to try to preallocate*/</span></div><div class="line">        <span class="number">__u</span>8    s_prealloc_dir_blocks;  <span class="comment">/* Nr to preallocate for dirs */</span></div><div class="line">        <span class="number">__u</span>16   s_padding1;</div><div class="line">        <span class="comment">/*</span></div><div class="line">         * Journaling support valid if EXT3_FEATURE_COMPAT_HAS_JOURNAL set.</div><div class="line">         */</div><div class="line">        <span class="number">__u</span>8    s_journal_uuid[<span class="number">16</span>];     <span class="comment">/* uuid of journal superblock */</span></div><div class="line">        <span class="number">__u</span>32   s_journal_inum;         <span class="comment">/* inode number of journal file */</span></div><div class="line">        <span class="number">__u</span>32   s_journal_dev;          <span class="comment">/* device number of journal file */</span></div><div class="line">        <span class="number">__u</span>32   s_last_orphan;          <span class="comment">/* start of list of inodes to delete */</span></div><div class="line">        <span class="number">__u</span>32   s_hash_seed[<span class="number">4</span>];         <span class="comment">/* HTREE hash seed */</span></div><div class="line">        <span class="number">__u</span>8    s_def_hash_version;     <span class="comment">/* Default hash version to use */</span></div><div class="line">        <span class="number">__u</span>8    s_reserved_char_pad;</div><div class="line">        <span class="number">__u</span>16   s_reserved_word_pad;</div><div class="line">        <span class="number">__l</span>e32  s_default_mount_opts;</div><div class="line">        <span class="number">__l</span>e32  s_first_meta_bg;        <span class="comment">/* First metablock block group */</span></div><div class="line">        <span class="number">__u</span>32   s_reserved[<span class="number">190</span>];        <span class="comment">/* Padding to the end of the block */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><code>s_magic</code>字段是 magic 签名，对于 ext2 和 ext3 文件系统来说，这个字段的值应该正好等于 0xEF53。从这里可以看出ext2 和 ext3 的兼容性一定是很强的，不然不会使用同一个magic签名。</p>
+<p><code>s_log_block_size</code>这个字段以2的幂次方表示的 block 的大小。我们把 block 的大小记作 B，B = 1 &lt;&lt; (s_log_block_size + 10)，单位是 bytes。举例来说，如果这个字段是 0，那么 block 的大小就是 1024 bytes，这正好就是最小的 block 大小；如果这个字段是 1，那么 block 大小就是 2048 bytes。</p>
+<p><code>s_mnt_count</code>、<code>s_max_mnt_count</code>、<code>s_lastcheck</code>、<code>s_checkinterval</code>字段用于系统启动时自动检查Ext2文件系统。</p>
+<p><code>s_state</code>字段表示Ext2文件系统的安装和卸载情况，如果Ext2文件系统被安装或未被全部卸载，则字段的值为0；如果被正常卸载，则字段的值为1；如果包含错误，则字段的值为2。</p>
+<p>其他常用字段的含义通过注释基本上可以理解，或者可以查阅<code>UTLK</code>。</p>
+<h4 id="组描述符"><a href="#组描述符" class="headerlink" title="组描述符"></a>组描述符</h4><p>Ext2分区中存在多少个块组，从超级块所在块的下个块开始，就跟着由相应数量组成的块组描述符组。<br>每一个块组描述符如下：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_group_desc</div><div class="line">&#123;</div><div class="line">		<span class="number">__u</span>32 bg_block_bitmap;      <span class="comment">/* 块位图的块号 */</span></div><div class="line">		<span class="number">__u</span>32 bg_inode_bitmap;      <span class="comment">/* 索引节点位图的块号 */</span></div><div class="line">		<span class="number">__u</span>32 bg_inode_table;       <span class="comment">/* 索引节点表的第一个块的块号 */</span></div><div class="line"> 		<span class="number">__u</span>16 bg_free_blocks_count; <span class="comment">/* 空闲块的数量 */</span></div><div class="line"> 		<span class="number">__u</span>16 bg_free_inodes_count; <span class="comment">/* 空闲索引节点的数量 */</span></div><div class="line">		<span class="number">__u</span>16   bg_used_dirs_count; <span class="comment">/* 组中目录的数量 */</span></div><div class="line">		<span class="number">__u</span>16   bg_pad;</div><div class="line">		<span class="number">__u</span>32   bg_reserved[<span class="number">3</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<h4 id="位图"><a href="#位图" class="headerlink" title="位图"></a>位图</h4><p>数据块位图和索引节点位图的作用主要就是记录数据块和索引节点的使用情况。0表示空闲，1表示使用中。每个位图都存放在一个单独的块中，块的大小通常为1024 bytes或者4096 bytes,所以一个单独的位图描述8192或者32768个数据块或索引节点的使用情况。当分配或释放数据块、索引节点时都要修改对应的位图。</p>
+<h4 id="索引节点表"><a href="#索引节点表" class="headerlink" title="索引节点表"></a>索引节点表</h4><p>索引节点表由连续的块组成，所有索引节点的大小相同，都为128 bytes。索引节点的结构为<code>ext2_innode</code>:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_inode &#123;</div><div class="line">        <span class="number">__l</span>e16  i_mode;         <span class="comment">/* File mode */</span></div><div class="line">        <span class="number">__l</span>e16  i_uid;          <span class="comment">/* Low 16 bits of Owner Uid */</span></div><div class="line">        <span class="number">__l</span>e32  i_size;         <span class="comment">/* Size in bytes */</span></div><div class="line">        <span class="number">__l</span>e32  i_atime;        <span class="comment">/* Access time */</span></div><div class="line">        <span class="number">__l</span>e32  i_ctime;        <span class="comment">/* Creation time */</span></div><div class="line">        <span class="number">__l</span>e32  i_mtime;        <span class="comment">/* Modification time */</span></div><div class="line">        <span class="number">__l</span>e32  i_dtime;        <span class="comment">/* Deletion Time */</span></div><div class="line">        <span class="number">__l</span>e16  i_gid;          <span class="comment">/* Low 16 bits of Group Id */</span></div><div class="line">        <span class="number">__l</span>e16  i_links_count;  <span class="comment">/* Links count */</span></div><div class="line">        <span class="number">__l</span>e32  i_blocks;       <span class="comment">/* Blocks count */</span></div><div class="line">        <span class="number">__l</span>e32  i_flags;        <span class="comment">/* File flags */</span></div><div class="line">        <span class="keyword">union</span> &#123;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__l</span>e32  l_i_reserved1;</div><div class="line">                &#125; linux1;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__l</span>e32  h_i_translator;</div><div class="line">                &#125; hurd1;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__l</span>e32  m_i_reserved1;</div><div class="line">                &#125; masix1;</div><div class="line">        &#125; osd1;                         <span class="comment">/* OS dependent 1 */</span></div><div class="line">        <span class="number">__l</span>e32  i_block[EXT2_N_BLOCKS];<span class="comment">/* Pointers to blocks */</span></div><div class="line">        <span class="number">__l</span>e32  i_generation;   <span class="comment">/* File version (for NFS) */</span></div><div class="line">        <span class="number">__l</span>e32  i_file_acl;     <span class="comment">/* File ACL */</span></div><div class="line">        <span class="number">__l</span>e32  i_dir_acl;      <span class="comment">/* Directory ACL */</span></div><div class="line">        <span class="number">__l</span>e32  i_faddr;        <span class="comment">/* Fragment address */</span></div><div class="line">        <span class="keyword">union</span> &#123;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__u</span>8    l_i_frag;       <span class="comment">/* Fragment number */</span></div><div class="line">                        <span class="number">__u</span>8    l_i_fsize;      <span class="comment">/* Fragment size */</span></div><div class="line">                        <span class="number">__u</span>16   i_pad1;</div><div class="line">                        <span class="number">__l</span>e16  l_i_uid_high;   <span class="comment">/* these 2 fields    */</span></div><div class="line">                        <span class="number">__l</span>e16  l_i_gid_high;   <span class="comment">/* were reserved2[0] */</span></div><div class="line">                        <span class="number">__u</span>32   l_i_reserved2;</div><div class="line">                &#125; linux2;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__u</span>8    h_i_frag;       <span class="comment">/* Fragment number */</span></div><div class="line">                        <span class="number">__l</span>e16  h_i_mode_high;</div><div class="line">                        <span class="number">__l</span>e32  h_i_author;</div><div class="line">                &#125; hurd2;</div><div class="line">                <span class="keyword">struct</span> &#123;</div><div class="line">                        <span class="number">__u</span>8    m_i_frag;       <span class="comment">/* Fragment number */</span></div><div class="line">                        <span class="number">__u</span>8    m_i_fsize;      <span class="comment">/* Fragment size */</span></div><div class="line">                        <span class="number">__u</span>16   m_pad1;</div><div class="line">                        <span class="number">__u</span>32   m_i_reserved2[<span class="number">2</span>];</div><div class="line">                &#125; masix2;</div><div class="line">        &#125; osd2;                         <span class="comment">/* OS dependent 2 */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><code>i_size</code>字段表示文件的长度（字节），<code>i_blocks</code>字段存放文件占用的数据块数量（文件的数据块以512字节为一个单位）。<code>i_block</code>是一个长度为<code>EXT2_N_BLOCKS</code>的数组，每个元素都是一个指针，指向实际的文件块号，<code>EXT2_N_BLOCKS</code>通常为15，具体在后文分析。</p>
+<p>VFS模型要求每个文件都有不同的索引节点号，但是在结构中并没有看到索引节点号。这是因为每个块组的索引节点数量相同，完全可以根据块组号、每块组索引节点数量、索引节点表来进行索引节点和块号的转换。假设每个块组包含4096个索引节点，则索引节点13021属于第三个块组，并且存放在对应索引节点表的第733项。</p>
+<h4 id="目录"><a href="#目录" class="headerlink" title="目录"></a>目录</h4><p>目录和普通文件一样都有着一个对应的索引节点，但是普通文件的数据块内容就是文件内容，而目录的数据块里面存放着一种数据结构<code>ext2_dir_entry_2</code>,该结构表示目录中的某一项内容，类型如下:</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> ext2_dir_entry &#123;</div><div class="line">        <span class="number">__l</span>e32  inode;                  <span class="comment">/* Inode number */</span></div><div class="line">        <span class="number">__l</span>e16  rec_len;                <span class="comment">/* Directory entry length */</span></div><div class="line">        <span class="number">__l</span>e16  name_len;               <span class="comment">/* Name length */</span></div><div class="line">        <span class="number">__u</span>8    file_type;		<span class="comment">/* 文件类型 */</span></div><div class="line">        <span class="keyword">char</span>    name[];                 <span class="comment">/* File name, up to EXT2_NAME_LEN */</span></div><div class="line">&#125;;</div></pre></td></tr></table></figure>
+<p><code>rec_len</code>表示目录项的长度，也可以理解为下一个目录项距当前目录项起始地址的偏移量。因为效率的原因，目录项的长度总是为4的倍数，在必要时用null字符（\0）填充文件名的末尾部分。当我们想删除一个目录项时，只需把那一项的<code>inode</code>设置为0，并且把删除项的上一项的<code>rec_len</code>加上删除项的<code>rec_len</code>(相当于把删除项给跳过)。</p>
+<p><code>name_len</code>表示目录项名字的实际长度。</p>
+<p><code>file_type</code>表示该项的文件类型，Ext2中的文件类型有如下几种:</p>
+<table>
+<thead>
+<tr>
+<th>文件类型</th>
+<th style="text-align:center">说明</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>0</td>
+<td style="text-align:center">未知</td>
+</tr>
+<tr>
+<td>1</td>
+<td style="text-align:center">普通文件</td>
+</tr>
+<tr>
+<td>2</td>
+<td style="text-align:center">目录</td>
+</tr>
+<tr>
+<td>3</td>
+<td style="text-align:center">字符设备</td>
+</tr>
+<tr>
+<td>4</td>
+<td style="text-align:center">块设备</td>
+</tr>
+<tr>
+<td>5</td>
+<td style="text-align:center">命名管道</td>
+</tr>
+<tr>
+<td>6</td>
+<td style="text-align:center">套接字</td>
+</tr>
+<tr>
+<td>7</td>
+<td style="text-align:center">符号链接</td>
+</tr>
+</tbody>
+</table>
+<p><code>name</code>是一个char数组，数组长度上限为<code>EXT2_NAME_LEN</code>(通常为255)。</p>
+<p>下图是一个Ext2目录的例子:<br><img src="/images/ext2/ext2-file-system-1.png" alt="Ext2目录"><br>其中文件名为<code>oldfile</code>那一项的<code>inode</code>值为0，所以该目录项已经被删除，也可以看到该项的上一项(文件名<code>user</code>)的<code>rec_len</code>为28（user项的长度加上oldfile项长度）。</p>
+<h4 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h4><p>每个非空的普通文件都含有一组数据块，这些数据块可以由所在文件的文件块号或者磁盘分区的逻辑块号来标识。在索引节点中有一个<code>i_block</code>字段，这是一个数组，元素内容就是一个指向数据块的指针，<code>i_block</code>的示意图如下:<br><img src="/images/ext2/ext2-file-system-2.png" alt="数据块寻址"><br><code>i_block</code>数组就相当于是一个目录，用于进行文件块号和逻辑块号的转换。其中0~11号元素直接进行一对一映射，将一个文件块号对应到块组数据块中的某一个逻辑快号，而下标12、13、14的元素分别指向一个一级数组、二级数组、三级数组。</p>
+<p>从文件内的偏移量ƒ到处相应数据块的逻辑块号需要两个步骤：</p>
+<ol>
+<li>将偏移量ƒ转换为文件块号。</li>
+<li>将文件块号转换为数据块的逻辑块号。</li>
+</ol>
+<p>假设数据块的大小为1024 bytes，如果ƒ小于1024,则ƒ对应的字符存在于第0个文件块号，也就是<code>i_block</code>数组的第0项，<code>i_block[0]</code>的内容就是该文件块号所对应的数据块块号。如果转换出来的文件块号n满足  <code>12 &lt;= n &lt;= b/4 + 11</code>(b表示块大小，在这里就是1024)，则表示该文件块号存在于<code>i_block[11]</code>指向的数组中。通过<code>i_block[11]</code>的值，找到一个间接块，然后找到下标为<code>n-12</code>的项，其中的值便是对应的逻辑块号。<code>i_block[12]</code>、<code>i_block[13]</code>情况类似，只不过中间多了些转换过程。</p>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;Ext2磁盘数据结构&quot;&gt;&lt;a href=&quot;#Ext2磁盘数据结构&quot; class=&quot;headerlink&quot; title=&quot;Ext2磁盘数据结构&quot;&gt;&lt;/a&gt;Ext2磁盘数据结构&lt;/h4&gt;&lt;p&gt;任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区
+    
+    </summary>
+    
+      <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+    
+      <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
+    
+      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Linux系统启动流程</title>
     <link href="http://vinoit.me/2016/09/16/how-linux-start/"/>
     <id>http://vinoit.me/2016/09/16/how-linux-start/</id>
     <published>2016-09-16T11:40:21.000Z</published>
-    <updated>2016-09-16T13:16:13.000Z</updated>
+    <updated>2016-09-23T07:55:41.000Z</updated>
     
     <content type="html"><![CDATA[<blockquote>
-<p>本文在原文地址:<a href="http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改</a></p>
+<p>本文在原文:<a href="http://www.linux178.com/linux/linuxinit.html" target="_blank" rel="external">http://www.linux178.com/linux/linuxinit.html</a> 的基础上进行了些许修改</p>
 </blockquote>
 <h4 id="Linux系统启动流程概览"><a href="#Linux系统启动流程概览" class="headerlink" title="Linux系统启动流程概览"></a>Linux系统启动流程概览</h4><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">POST（Power On Self Test/上电自检）--&gt;BootLoader(MBR)--&gt;Kernel(硬件探测、加载驱动、挂载根文件系统、/sbin/init)</div><div class="line">--&gt;init(/etc/inittab:设定默认级别、系统初始化脚本、启动及关闭对应级别的服务、启动终端)</div></pre></td></tr></table></figure>
-<h4 id="第1步"><a href="#第1步" class="headerlink" title="第1步"></a>第1步</h4><p>计算机电源接通后，CPU默认执行<code>0ffffh:0000h</code>处的指令（8086是这样，386应该类似），而此内存地址应该存放的就是<code>BIOS ROM</code>。系统将有一个对内部各个设备进行检查的过程，这是由一个通常称之为POST（Power On Self Test/上电自检）的程序来完成，这也是BIOS程序的一个功能。完整的自检包括了对CPU、640K基本内存、1M以上的扩展内存、ROM、主板、CMOS存贮器、串并口、显示卡、软硬盘子系统及键盘的测试。在自检过程中若发现问题，系统将给出提示信息或鸣笛警告。</p>
+<h4 id="第1步"><a href="#第1步" class="headerlink" title="第1步"></a>第1步</h4><p>计算机电源接通后，CPU默认执行<code>0xFFFF0000</code>处的指令，而此内存地址应该存放的就是<code>BIOS ROM</code>（硬件把这个地址映射成ROM芯片）。系统将有一个对内部各个设备进行检查的过程，这是由一个通常称之为POST（Power On Self Test/上电自检）的程序来完成，这也是BIOS程序的一个功能。完整的自检包括了对CPU、640K基本内存、1M以上的扩展内存、ROM、主板、CMOS存贮器、串并口、显示卡、软硬盘子系统及键盘的测试。在自检过程中若发现问题，系统将给出提示信息或鸣笛警告。</p>
 <p>如果没有任何问题，完成自检后BIOS将按照系统CMOS设置中的启动顺序搜寻软、硬盘驱动器及CDROM、网络服务器等有效的启动驱动器 ，读入操作系统引导记录（BootLoader），然后将系统控制权交给引导记录，由引导记录完成系统的启动。如果一直没有找到可启动的设备，那么本次启动宣告失败。</p>
 <h4 id="第2步"><a href="#第2步" class="headerlink" title="第2步"></a>第2步</h4><p>在上一步中，BIOS找到硬盘的MBR（位于硬盘的0磁道0扇区 大小为512字节，该区域不能被分配给任何分区），然后在MBR中寻找BootLoader（目前比较常用有LILO 和 GRUB，LILO已经不常用，BootLoader在MBR所占446字节，所以必须短小精悍，接下来64字节是分区表信息，最后2字节是用来标明该MBR是否有效），然后把BootLoader加载到内存中开始执行，BootLoader主要功能就是从硬盘找到内核文件，把内核文件加载到内存执行。</p>
 <p>MBR的三部分如下:</p>
@@ -85,7 +188,7 @@
     <summary type="html">
     
       &lt;blockquote&gt;
-&lt;p&gt;本文在原文地址:&lt;a href=&quot;http://www.linux178.com/linux/linuxinit.html的基础上进行了些许修改&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.linux178
+&lt;p&gt;本文在原文:&lt;a href=&quot;http://www.linux178.com/linux/linuxinit.html&quot; target=&quot;_blank&quot; rel=&quot;external&quot;&gt;http://www.linux178.com/linux/li
     
     </summary>
     
@@ -1638,67 +1741,6 @@
     <summary type="html">
     
       &lt;h4 id=&quot;volatile的特性&quot;&gt;&lt;a href=&quot;#volatile的特性&quot; class=&quot;headerlink&quot; title=&quot;volatile的特性&quot;&gt;&lt;/a&gt;volatile的特性&lt;/h4&gt;&lt;p&gt;当我们声明共享变量为volatile后，对这个变量的读/写将会很特别
-    
-    </summary>
-    
-      <category term="JMM" scheme="http://vinoit.me/categories/JMM/"/>
-    
-    
-      <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入理解Java内存模型（三）——顺序一致性</title>
-    <link href="http://vinoit.me/2016/08/13/java-memeory-model-sequential-consistency/"/>
-    <id>http://vinoit.me/2016/08/13/java-memeory-model-sequential-consistency/</id>
-    <published>2016-08-13T05:59:55.000Z</published>
-    <updated>2016-08-13T06:16:06.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="数据竞争与顺序一致性保证"><a href="#数据竞争与顺序一致性保证" class="headerlink" title="数据竞争与顺序一致性保证"></a>数据竞争与顺序一致性保证</h4><p>当程序未正确同步时，就会存在数据竞争。java内存模型规范对数据竞争的定义如下：</p>
-<ul>
-<li>在一个线程中写一个变量</li>
-<li>在另一个线程读同一个变量</li>
-<li>而且写和读没有通过同步来排序</li>
-</ul>
-<p>当代码中包含数据竞争时，程序的执行往往产生违反直觉的结果（前一章的示例正是如此）。如果一个多线程程序能正确同步，这个程序将是一个没有数据竞争的程序。</p>
-<p>JMM对正确同步的多线程程序的内存一致性做了如下保证：</p>
-<p><code>如果程序是正确同步的，程序的执行将具有顺序一致性（sequentially consistent）--即程序的执行结果与该程序在顺序一致性内存模型中的执行结果相同（马上我们将会看到，这对于程序员来说是一个极强的保证）。这里的同步是指广义上的同步，包括对常用同步原语（lock，volatile和final）的正确使用。</code></p>
-<h4 id="顺序一致性内存模型"><a href="#顺序一致性内存模型" class="headerlink" title="顺序一致性内存模型"></a>顺序一致性内存模型</h4><p>顺序一致性内存模型是一个被计算机科学家理想化了的理论参考模型，它为程序员提供了极强的内存可见性保证。顺序一致性内存模型有两大特性：</p>
-<ul>
-<li>一个线程中的所有操作必须按照程序的顺序来执行。</li>
-<li>不管程序是否同步,所有线程都只能看到一个单一的操作执行顺序。在顺序一致性内存模型中，每个操作都必须原子执行且立刻对所有线程可见。</li>
-</ul>
-<p>顺序一致性内存模型为程序员提供的视图如下：<br><img src="/images/JMM/JMM-sequential-consistency-0.png" alt=""></p>
-<p>在概念上，顺序一致性模型有一个单一的全局内存，这个内存通过一个左右摆动的开关可以连接到任意一个线程。同时，每一个线程必须按程序的顺序来执行内存读/写操作。从上图我们可以看出，在任意时间点最多只能有一个线程可以连接到内存。当多个线程并发执行时，图中的开关装置能把所有线程的所有内存读/写操作串行化。</p>
-<p>为了更好的理解，下面我们通过两个示意图来对顺序一致性模型的特性做进一步的说明。</p>
-<p>假设有两个线程A和B并发执行。其中A线程有三个操作，它们在程序中的顺序是：A1-&gt;A2-&gt;A3。B线程也有三个操作，它们在程序中的顺序是：B1-&gt;B2-&gt;B3。</p>
-<p>假设这两个线程使用监视器来正确同步：A线程的三个操作执行后释放监视器，随后B线程获取同一个监视器。那么程序在顺序一致性模型中的执行效果将如下图所示：<br><img src="/images/JMM/JMM-sequential-consistency-1.png" alt=""><br>现在我们再假设这两个线程没有做同步，下面是这个未同步程序在顺序一致性模型中的执行示意图：<br><img src="/images/JMM/JMM-sequential-consistency-2.png" alt=""><br>未同步程序在顺序一致性模型中虽然整体执行顺序是无序的，但所有线程都只能看到一个一致的整体执行顺序。以上图为例，线程A和B看到的执行顺序都是：B1-&gt;A1-&gt;A2-&gt;B2-&gt;A3-&gt;B3。之所以能得到这个保证是因为顺序一致性内存模型中的每个操作必须立即对任意线程可见。</p>
-<p>但是，在JMM中就没有这个保证。未同步程序在JMM中不但整体的执行顺序是无序的，而且所有线程看到的操作执行顺序也可能不一致。比如，在当前线程把写过的数据缓存在本地内存中，且还没有刷新到主内存之前，这个写操作仅对当前线程可见；从其他线程的角度来观察，会认为这个写操作根本还没有被当前线程执行。只有当前线程把本地内存中写过的数据刷新到主内存之后，这个写操作才能对其他线程可见。在这种情况下，当前线程和其它线程看到的操作执行顺序将不一致。</p>
-<h4 id="同步程序的顺序一致性效果"><a href="#同步程序的顺序一致性效果" class="headerlink" title="同步程序的顺序一致性效果"></a>同步程序的顺序一致性效果</h4><p>下面我们对前面的示例程序ReorderExample用监视器来同步，看看正确同步的程序如何具有顺序一致性。</p>
-<p>请看下面的示例代码：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">SynchronizedExample</span> </span>&#123;</div><div class="line"><span class="keyword">int</span> a = <span class="number">0</span>;</div><div class="line"><span class="keyword">boolean</span> flag = <span class="keyword">false</span>;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">writer</span><span class="params">()</span> </span>&#123;</div><div class="line">    a = <span class="number">1</span>;</div><div class="line">    flag = <span class="keyword">true</span>;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">reader</span><span class="params">()</span> </span>&#123;</div><div class="line">    <span class="keyword">if</span> (flag) &#123;</div><div class="line">        <span class="keyword">int</span> i = a;</div><div class="line">        ……</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure></p>
-<p>上面示例代码中，假设A线程执行writer()方法后，B线程执行reader()方法。这是一个正确同步的多线程程序。根据JMM规范，该程序的执行结果将与该程序在顺序一致性模型中的执行结果相同。下面是该程序在两个内存模型中的执行时序对比图：<br><img src="/images/JMM/JMM-sequential-consistency-3.png" alt=""></p>
-<p>在顺序一致性模型中，所有操作完全按程序的顺序串行执行。而在JMM中，临界区内的代码可以重排序（但JMM不允许临界区内的代码“逸出”到临界区之外，那样会破坏监视器的语义）。JMM会在退出监视器和进入监视器这两个关键时间点做一些特别处理，使得线程在这两个时间点具有与顺序一致性模型相同的内存视图（具体细节后文会说明）。虽然线程A在临界区内做了重排序，但由于监视器的互斥执行的特性，这里的线程B根本无法“观察”到线程A在临界区内的重排序。这种重排序既提高了执行效率，又没有改变程序的执行结果。</p>
-<p>从这里我们可以看到JMM在具体实现上的基本方针：在不改变（正确同步的）程序执行结果的前提下，尽可能的为编译器和处理器的优化打开方便之门。</p>
-<h4 id="未同步程序的执行特性"><a href="#未同步程序的执行特性" class="headerlink" title="未同步程序的执行特性"></a>未同步程序的执行特性</h4><p>对于未同步或未正确同步的多线程程序，JMM只提供最小安全性：线程执行时读取到的值，要么是之前某个线程写入的值，要么是默认值（0，null，false），JMM保证线程读操作读取到的值不会无中生有（out of thin air）的冒出来。为了实现最小安全性，JVM在堆上分配对象时，首先会清零内存空间，然后才会在上面分配对象（JVM内部会同步这两个操作）。因此，在以清零的内存空间（pre-zeroed memory）分配对象时，域的默认初始化已经完成了。</p>
-<p>JMM不保证未同步程序的执行结果与该程序在顺序一致性模型中的执行结果一致。因为未同步程序在顺序一致性模型中执行时，整体上是无序的，其执行结果无法预知。保证未同步程序在两个模型中的执行结果一致毫无意义。</p>
-<p>和顺序一致性模型一样，未同步程序在JMM中的执行时，整体上也是无序的，其执行结果也无法预知。同时，未同步程序在这两个模型中的执行特性有下面几个差异：</p>
-<ol>
-<li>顺序一致性模型保证单线程内的操作会按程序的顺序执行，而JMM不保证单线程内的操作会按程序的顺序执行（比如上面正确同步的多线程程序在临界区内的重排序）。这一点前面已经讲过了，这里就不再赘述。</li>
-<li>顺序一致性模型保证所有线程只能看到一致的操作执行顺序，而JMM不保证所有线程能看到一致的操作执行顺序。这一点前面也已经讲过，这里就不再赘述。</li>
-<li>JMM不保证对64位的long型和double型变量的读/写操作具有原子性，而顺序一致性模型保证对所有的内存读/写操作都具有原子性。</li>
-</ol>
-<p>第3个差异与处理器总线的工作机制密切相关。在计算机中，数据通过总线在处理器和内存之间传递。每次处理器和内存之间的数据传递都是通过一系列步骤来完成的，这一系列步骤称之为总线事务（bus transaction）。总线事务包括读事务（read transaction）和写事务（write transaction）。读事务从内存传送数据到处理器，写事务从处理器传送数据到内存，每个事务会读/写内存中一个或多个物理上连续的字。这里的关键是，总线会同步试图并发使用总线的事务。在一个处理器执行总线事务期间，总线会禁止其它所有的处理器和I/O设备执行内存的读/写。下面让我们通过一个示意图来说明总线的工作机制：<br><img src="/images/JMM/JMM-sequential-consistency-4.png" alt=""></p>
-<p>如上图所示，假设处理器A，B和C同时向总线发起总线事务，这时总线仲裁（bus arbitration）会对竞争作出裁决，这里我们假设总线在仲裁后判定处理器A在竞争中获胜（总线仲裁会确保所有处理器都能公平的访问内存）。此时处理器A继续它的总线事务，而其它两个处理器则要等待处理器A的总线事务完成后才能开始再次执行内存访问。假设在处理器A执行总线事务期间（不管这个总线事务是读事务还是写事务），处理器D向总线发起了总线事务，此时处理器D的这个请求会被总线禁止。</p>
-<p>总线的这些工作机制可以把所有处理器对内存的访问以串行化的方式来执行；在任意时间点，最多只能有一个处理器能访问内存。这个特性确保了单个总线事务之中的内存读/写操作具有原子性。</p>
-<p>在一些32位的处理器上，如果要求对64位数据的读/写操作具有原子性，会有比较大的开销。为了照顾这种处理器，java语言规范鼓励但不强求JVM对64位的long型变量和double型变量的读/写具有原子性。当JVM在这种处理器上运行时，会把一个64位long/ double型变量的读/写操作拆分为两个32位的读/写操作来执行。这两个32位的读/写操作可能会被分配到不同的总线事务中执行，此时对这个64位变量的读/写将不具有原子性。</p>
-<p>当单个内存操作不具有原子性，将可能会产生意想不到后果。请看下面示意图：<br><img src="/images/JMM/JMM-sequential-consistency-5.png" alt=""></p>
-<p>如上图所示，假设处理器A写一个long型变量，同时处理器B要读这个long型变量。处理器A中64位的写操作被拆分为两个32位的写操作，且这两个32位的写操作被分配到不同的写事务中执行。同时处理器B中64位的读操作被拆分为两个32位的读操作，且这两个32位的读操作被分配到同一个的读事务中执行。当处理器A和B按上图的时序来执行时，处理器B将看到仅仅被处理器A“写了一半“的无效值。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;数据竞争与顺序一致性保证&quot;&gt;&lt;a href=&quot;#数据竞争与顺序一致性保证&quot; class=&quot;headerlink&quot; title=&quot;数据竞争与顺序一致性保证&quot;&gt;&lt;/a&gt;数据竞争与顺序一致性保证&lt;/h4&gt;&lt;p&gt;当程序未正确同步时，就会存在数据竞争。java内存模型规范对
     
     </summary>
     

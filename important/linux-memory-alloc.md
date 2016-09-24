@@ -1,5 +1,5 @@
 ---
-title: Linux内存分配的原理--molloc/brk/mmap
+title: Linux内存分配的原理--malloc/brk/mmap
 date: 2016-05-20 22:06:51
 tags:
 - Linux
