@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-24T08:03:37.000Z</updated>
+  <updated>2016-09-25T07:34:43.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,92 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>Ext3日志文件系统简述</title>
+    <link href="http://vinoit.me/2016/09/25/ext3-journal-file-system/"/>
+    <id>http://vinoit.me/2016/09/25/ext3-journal-file-system/</id>
+    <published>2016-09-25T03:32:57.000Z</published>
+    <updated>2016-09-25T07:34:43.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="什么是日志文件系统"><a href="#什么是日志文件系统" class="headerlink" title="什么是日志文件系统"></a>什么是日志文件系统</h4><p>当我们修改某个文件时，必然要对相应文件系统上的块进行更新。但是对文件系统块的更新可能因为页高速缓存的影响在内存保留相当长的时间后才刷新到磁盘，此时若发生断电故障或系统崩溃这样的不可预测的时间，可能会导致文件系统处于不一致的状态。文件系统的不一致状态，是指元数据中存储的信息与磁盘实际情况不一致。这个相当长的时间是相对于计算机运行速度来说，事实上也是极短的（通常为1/500 秒?）。为了克服这个问题，传统的Unix文件系统在安装之前都要进行检查；如果它没有被正常卸载（例如：超级块的<code>s_mount_state</code> ！= <code>EXT2_VALID_FS</code>），那么一个特定的程序（e2fsck）将执行彻底、耗时的检查，并修正磁盘文件系统的所有数据结构。</p>
+<p>然而当文件系统的文件数、目录数增大到一定程度时，一次一致性检查接可能花费数个小时，这显然是无法接受的。日志文件系统的目标就是避免对整个文件系统进行耗时的一致性检查。简单来说，当文件系统没有被正常卸载时，只需要直接去查看日志的内容，日志存放在一个特定的磁盘区，然后对日志中的内容进行检查和修正就可以了。</p>
+<h4 id="Ext3日志文件系统"><a href="#Ext3日志文件系统" class="headerlink" title="Ext3日志文件系统"></a>Ext3日志文件系统</h4><p>Ext3的核心思想是对文件系统进行的任何高级修改都分成以下步骤：</p>
+<ol>
+<li>将待写块的一个副本存放在日志中。</li>
+<li>将此次操作记录在日志中。</li>
+<li>将已在内存中修改好的块写入文件系统。</li>
+<li>将日志中的待写块的副本删除。</li>
+</ol>
+<p>但是如果文件的内容非常多，岂不是要花费大量的时间在副本的拷贝上？</p>
+<p>事实上，每个文件系统都由所谓的元数据块和普通数据块组成。在Ext2和Ext3的文件系统中，有六种元数据：超级块、块组描述符、索引节点表、用于间接寻址的块、数据位图块和索引节点位图块。很多日志文件系统（如SGI的XFS以及IBM的JFS）都限定自己把影响元数据的操作计入日志。元数据的日志记录足以恢复磁盘文件系统数据结构的一致性，但因为文件的数据块不记入日志，就无法防止系统故障造成的文件内容损坏。</p>
+<p>Ext3文件系统可以通过配置把影响文件系统元数据的操作和影响文件数据块的操作都计入日志，但每种写操作都计入日志会导致极大的性能损失，因此，Ext3让系统管理员决定应当把什么计入日志。Ext3提供三种不同的日志模式:</p>
+<ul>
+<li>日志（Journal）<br>  文件系统所有数据和元数据的改变都被记入日志。这提高了安全性，但损失性能，因为所有数据要写入两次。</li>
+<li>预定（Ordered）<br>  只将文件元数据的改变记入日志。但在日志被写入前，数据必须被先写入文件系统。这是Ext3的缺省模式。</li>
+<li>写回（Writeback）<br> 只将文件元数据的改变记入日志。不要求日志必须在数据被写入之后才被写，可以同时进行。</li>
+</ul>
+<p>三种模式下的所有文件元数据都是通过下文的JDB来写入磁盘的。日志模式下的文件数据由JDB写入磁盘，预定模式下的文件数据由JDB写入磁盘（PS：UTLK中写到该模式下的缓冲区同时被加入到了索引节点的脏缓冲区链表，这我不是很理解，望明白的同学可以指教一下。），写回模式下的数据则由磁盘高速缓存的刷新机制写入磁盘（脏页写回）。</p>
+<h4 id="JBD"><a href="#JBD" class="headerlink" title="JBD"></a>JBD</h4><p>Ext3文件系统本身不处理日志，而是利用所谓的日志块设备（Journaling Block Device,JDB）的通用内核层。</p>
+<p>EXT3文件系统和JBD之间相互独立，它们交互的基本单元有3个:</p>
+<ol>
+<li>日志记录:记录日志文件系统中一个磁盘块的一次更新;</li>
+<li>原子操作处理(handle_s):文件系统的一次系统调用所对应的日志记录，包含了多个日志记录，具有原子性，要么包含的日志记录全部完成，要么全不完成;</li>
+<li>事务(journal_s):包含多个原子操作处理，是JBD对磁盘写操作的单位。</li>
+</ol>
+<p>一般情况下，JBD如下工作，每次系统调用都会把若干对文件系统的修改以原子操作处理的方式打包，然后写入当前的事务中，当前的事务收集原子操作处理。每隔固定的时间间隔(5 s)，或是事务剩余空间不足，JBD会将事务写到磁盘的日志中，如下图所示：<br><img src="/images/ext3/ext3-journal-file-system-0.png" alt="JDB处理原始流程"></p>
+<p>若出现断电或是系统崩溃，重启后自动进行的 e2fsck 检查可分为以下2种情况:</p>
+<ul>
+<li>若事务是完整的，则将日志中的事务内容重新写到磁盘上;</li>
+<li>若事务是不完整的，不论该事务是否完成，但没有顺利地完整写到日志中，事务中的内容均是无效的，e2fsck 无视它。这样就缩短了EXT3用于恢复系统一致性状态所需的时间。</li>
+</ul>
+<h4 id="日志如何工作"><a href="#日志如何工作" class="headerlink" title="日志如何工作"></a>日志如何工作</h4><p>以下是一个比较通用的模式，可能在默写特定情况下不是很符合，但还是具有参考意义的。</p>
+<ol>
+<li>用户使用<code>write()</code>系统调用写入文件。</li>
+<li>（1）操作对应于一个原子操作，被加入到JDB的一个事务中。</li>
+<li>JDB在条件满足时将该事务写入到日志的磁盘区。（文件数据并没有开始写）</li>
+<li>JDB激活事务中的所有I/O数据传送。</li>
+<li>传送成功完成后，磁盘上相应的事务记录由内核的一个周期性程序删除。</li>
+</ol>
+<h4 id="存在的缺陷"><a href="#存在的缺陷" class="headerlink" title="存在的缺陷"></a>存在的缺陷</h4><p>理论上，上述机制足以应付断电或是系统崩溃等状况，但在实际操作中存在着不足之处。在频繁地断电或是系统故障条件下，表现尤为明显。</p>
+<p>EXT3日志型文件系统存在以下缺陷:</p>
+<ol>
+<li><p>日志与文件系统存储在同一个磁盘上，这是最常见的情况。日志也是存储于磁盘上的文件，并不能免受磁盘故障 的损害。在出现故障时，磁盘上的日志文件写入状态是不可保证的。若是作为恢复依据的日志内容出错，则在进行检查 恢复时，也必定会出现错误，并且循环下去，出现错误的概 率会越来越大，直到整个文件系统崩溃不可再用为止;</p>
+</li>
+<li><p>事务是先缓存在内存中，等待一定时间间隔后(默认为 5 s)或是剩余空间不够了，才写到磁盘中的日志中。这样的话 若是在写入磁盘之前出现断电，这些事务就会丢失。这样的话，会发生同上述情况一样的结果，作为恢复根据的日志内容不完整，或是有错。</p>
+</li>
+</ol>
+<p>EXT3 及 JBD 原有机制只是为了缩短用于磁盘检查修复 所需的时间，但作为该机制核心基础的日志内容在一些频繁 出现故障的情况下，仍然会出现错误，该机制就无法保证其 可靠性，这在些极端情况下无法保证文件系统应有的可用性。</p>
+<p>参考：</p>
+<ul>
+<li>UTLK</li>
+<li>[PDF]基于 JBD 的日志型文件系统性能优化（作者：陈 颖，奚宏生）</li>
+</ul>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;什么是日志文件系统&quot;&gt;&lt;a href=&quot;#什么是日志文件系统&quot; class=&quot;headerlink&quot; title=&quot;什么是日志文件系统&quot;&gt;&lt;/a&gt;什么是日志文件系统&lt;/h4&gt;&lt;p&gt;当我们修改某个文件时，必然要对相应文件系统上的块进行更新。但是对文件系统块的更新可能
+    
+    </summary>
+    
+      <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+    
+      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+      <category term="Ext3" scheme="http://vinoit.me/tags/Ext3/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Ext2文件系统简述</title>
     <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
     <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
     <published>2016-09-23T09:57:48.000Z</published>
-    <updated>2016-09-24T08:03:37.000Z</updated>
+    <updated>2016-09-24T08:20:40.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
 <p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
@@ -101,6 +182,13 @@
 <li>将文件块号转换为数据块的逻辑块号。</li>
 </ol>
 <p>假设数据块的大小为1024 bytes，如果ƒ小于1024,则ƒ对应的字符存在于第0个文件块号，也就是<code>i_block</code>数组的第0项，<code>i_block[0]</code>的内容就是该文件块号所对应的数据块块号。如果转换出来的文件块号n满足  <code>12 &lt;= n &lt;= b/4 + 11</code>(b表示块大小，在这里就是1024)，则表示该文件块号存在于<code>i_block[11]</code>指向的数组中。通过<code>i_block[11]</code>的值，找到一个间接块，然后找到下标为<code>n-12</code>的项，其中的值便是对应的逻辑块号。<code>i_block[12]</code>、<code>i_block[13]</code>情况类似，只不过中间多了些转换过程。</p>
+<p>参考：</p>
+<ul>
+<li>UTLK</li>
+</ul>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+</blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1652,102 +1740,6 @@
       <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
     
       <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>深入理解Java内存模型（四）——volatile</title>
-    <link href="http://vinoit.me/2016/08/13/java-memeory-model-volatile/"/>
-    <id>http://vinoit.me/2016/08/13/java-memeory-model-volatile/</id>
-    <published>2016-08-13T06:18:13.000Z</published>
-    <updated>2016-08-13T06:47:10.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="volatile的特性"><a href="#volatile的特性" class="headerlink" title="volatile的特性"></a>volatile的特性</h4><p>当我们声明共享变量为volatile后，对这个变量的读/写将会很特别。理解volatile特性的一个好方法是：把对volatile变量的单个读/写，看成是使用同一个监视器锁对这些单个读/写操作做了同步。下面我们通过具体的示例来说明，请看下面的示例代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileFeaturesExample</span> </span>&#123;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">long</span> vl = <span class="number">0L</span>;  <span class="comment">//使用volatile声明64位的long型变量</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">long</span> l)</span> </span>&#123;</div><div class="line">        vl = l;   <span class="comment">//单个volatile变量的写</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getAndIncrement</span> <span class="params">()</span> </span>&#123;</div><div class="line">        vl++;    <span class="comment">//复合（多个）volatile变量的读/写</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">long</span> <span class="title">get</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> vl;   <span class="comment">//单个volatile变量的读</span></div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>假设有多个线程分别调用上面程序的三个方法，这个程序在语意上和下面程序等价：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileFeaturesExample</span> </span>&#123;</div><div class="line">    <span class="keyword">long</span> vl = <span class="number">0L</span>;               <span class="comment">// 64位的long型普通变量</span></div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">long</span> l)</span> </span>&#123;     <span class="comment">//对单个的普通 变量的写用同一个监视器同步</span></div><div class="line">        vl = l;</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">getAndIncrement</span> <span class="params">()</span> </span>&#123; <span class="comment">//普通方法调用</span></div><div class="line">        <span class="keyword">long</span> temp = get();           <span class="comment">//调用已同步的读方法</span></div><div class="line">        temp += <span class="number">1L</span>;                  <span class="comment">//普通写操作</span></div><div class="line">        set(temp);                   <span class="comment">//调用已同步的写方法</span></div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">synchronized</span> <span class="keyword">long</span> <span class="title">get</span><span class="params">()</span> </span>&#123; </div><div class="line">    <span class="comment">//对单个的普通变量的读用同一个监视器同步</span></div><div class="line">        <span class="keyword">return</span> vl;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>如上面示例程序所示，对一个volatile变量的单个读/写操作，与对一个普通变量的读/写操作使用同一个监视器锁来同步，它们之间的执行效果相同。</p>
-<p>监视器锁的happens-before规则保证释放监视器和获取监视器的两个线程之间的内存可见性，这意味着对一个volatile变量的读，总是能看到（任意线程）对这个volatile变量最后的写入。</p>
-<p>监视器锁的语义决定了临界区代码的执行具有原子性。这意味着即使是64位的long型和double型变量，只要它是volatile变量，对该变量的读写就将具有原子性。如果是多个volatile操作或类似于volatile++这种复合操作，这些操作整体上不具有原子性。</p>
-<p>简而言之，volatile变量自身具有下列特性：</p>
-<ul>
-<li>可见性: 对一个volatile变量的读，总是能看到（任意线程）对这个volatile变量最后的写入。</li>
-<li>原子性：对任意单个volatile变量的读/写具有原子性，但类似于volatile++这种复合操作不具有原子性。</li>
-</ul>
-<h4 id="volatile写-读建立的happens-before关系"><a href="#volatile写-读建立的happens-before关系" class="headerlink" title="volatile写-读建立的happens before关系"></a>volatile写-读建立的happens before关系</h4><p>上面讲的是volatile变量自身的特性，对程序员来说，volatile对线程的内存可见性的影响比volatile自身的特性更为重要，也更需要我们去关注。</p>
-<p>从JSR-133开始，volatile变量的写-读可以实现线程之间的通信。</p>
-<p>从内存语义的角度来说，volatile与监视器锁有相同的效果：volatile写和监视器的释放有相同的内存语义；volatile读与监视器的获取有相同的内存语义。</p>
-<p>请看下面使用volatile变量的示例代码：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileExample</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> a = <span class="number">0</span>;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">boolean</span> flag = <span class="keyword">false</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">writer</span><span class="params">()</span> </span>&#123;</div><div class="line">        a = <span class="number">1</span>;                   <span class="comment">//1</span></div><div class="line">        flag = <span class="keyword">true</span>;               <span class="comment">//2</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">void</span> <span class="title">reader</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (flag) &#123;                <span class="comment">//3</span></div><div class="line">            <span class="keyword">int</span> i =  a;           <span class="comment">//4</span></div><div class="line">            ……</div><div class="line">        &#125;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>假设线程A执行writer()方法之后，线程B执行reader()方法。根据happens before规则，这个过程建立的happens before 关系可以分为两类：</p>
-<ol>
-<li>根据程序次序规则，1 happens before 2; 3 happens before 4。</li>
-<li>根据volatile规则，2 happens before 3。</li>
-<li>根据happens before 的传递性规则，1 happens before 4。</li>
-</ol>
-<p>上述happens before 关系的图形化表现形式如下：<br><img src="/images/JMM/JMM-volatile-0.png" alt=""><br>在上图中，每一个箭头链接的两个节点，代表了一个happens before 关系。黑色箭头表示程序顺序规则；橙色箭头表示volatile规则；蓝色箭头表示组合这些规则后提供的happens before保证。</p>
-<p>这里A线程写一个volatile变量后，B线程读同一个volatile变量。A线程在写volatile变量之前所有可见的共享变量，在B线程读同一个volatile变量后，将立即变得对B线程可见。</p>
-<h4 id="volatile写-读的内存语义"><a href="#volatile写-读的内存语义" class="headerlink" title="volatile写-读的内存语义"></a>volatile写-读的内存语义</h4><p>volatile写的内存语义如下：</p>
-<p><code>当写一个volatile变量时，JMM会把该线程对应的本地内存中的共享变量刷新到主内存。</code></p>
-<p>以上面示例程序VolatileExample为例，假设线程A首先执行writer()方法，随后线程B执行reader()方法，初始时两个线程的本地内存中的flag和a都是初始状态。下图是线程A执行volatile写后，共享变量的状态示意图：<br><img src="/images/JMM/JMM-volatile-1.png" alt=""></p>
-<p>如上图所示，线程A在写flag变量后，本地内存A中被线程A更新过的两个共享变量的值被刷新到主内存中。此时，本地内存A和主内存中的共享变量的值是一致的。</p>
-<p>volatile读的内存语义如下：</p>
-<p><code>当读一个volatile变量时，JMM会把该线程对应的本地内存置为无效。线程接下来将从主内存中读取共享变量。</code></p>
-<p>下面是线程B读同一个volatile变量后，共享变量的状态示意图：<br><img src="/images/JMM/JMM-volatile-2.png" alt=""></p>
-<p>如上图所示，在读flag变量后，本地内存B已经被置为无效。此时，线程B必须从主内存中读取共享变量。线程B的读取操作将导致本地内存B与主内存中的共享变量的值也变成一致的了。</p>
-<p>如果我们把volatile写和volatile读这两个步骤综合起来看的话，在读线程B读一个volatile变量后，写线程A在写这个volatile变量之前所有可见的共享变量的值都将立即变得对读线程B可见。</p>
-<p>下面对volatile写和volatile读的内存语义做个总结：</p>
-<ul>
-<li>线程A写一个volatile变量，实质上是线程A向接下来将要读这个volatile变量的某个线程发出了（其对共享变量所在修改的）消息。</li>
-<li>线程B读一个volatile变量，实质上是线程B接收了之前某个线程发出的（在写这个volatile变量之前对共享变量所做修改的）消息。</li>
-<li>线程A写一个volatile变量，随后线程B读这个volatile变量，这个过程实质上是线程A通过主内存向线程B发送消息。</li>
-</ul>
-<p>volatile内存语义的实现</p>
-<p>下面，让我们来看看JMM如何实现volatile写/读的内存语义。</p>
-<p>前文我们提到过重排序分为编译器重排序和处理器重排序。为了实现volatile内存语义，JMM会分别限制这两种类型的重排序类型。下面是JMM针对编译器制定的volatile重排序规则表：</p>
-<table border="1px"><tr><td>是否能重排序</td><td colspan="3">第二个操作</td></tr><tr><td>第一个操作</td><td>普通读/写</td><td>volatile读</td><td>volatile写</td></tr><tr><td>普通读/写</td><td>&nbsp;</td><td>&nbsp;</td><td>NO</td></tr><tr><td>volatile读</td><td>NO</td><td>NO</td><td>NO</td></tr><tr><td>volatile写</td><td>&nbsp;</td><td>NO</td><td>NO</td></tr></table>
-
-<p>举例来说，第三行最后一个单元格的意思是：在程序顺序中，当第一个操作为普通变量的读或写时，如果第二个操作为volatile写，则编译器不能重排序这两个操作。</p>
-<p>从上表我们可以看出：</p>
-<ul>
-<li>当第二个操作是volatile写时，不管第一个操作是什么，都不能重排序。这个规则确保volatile写之前的操作不会被编译器重排序到volatile写之后。</li>
-<li>当第一个操作是volatile读时，不管第二个操作是什么，都不能重排序。这个规则确保volatile读之后的操作不会被编译器重排序到volatile读之前。</li>
-<li>当第一个操作是volatile写，第二个操作是volatile读时，不能重排序。</li>
-</ul>
-<p>为了实现volatile的内存语义，编译器在生成字节码时，会在指令序列中插入内存屏障来禁止特定类型的处理器重排序。对于编译器来说，发现一个最优布置来最小化插入屏障的总数几乎不可能，为此，JMM采取保守策略。下面是基于保守策略的JMM内存屏障插入策略：</p>
-<ul>
-<li>在每个volatile写操作的前面插入一个StoreStore屏障。</li>
-<li>在每个volatile写操作的后面插入一个StoreLoad屏障。</li>
-<li>在每个volatile读操作的后面插入一个LoadLoad屏障。</li>
-<li>在每个volatile读操作的后面插入一个LoadStore屏障。</li>
-</ul>
-<p>上述内存屏障插入策略非常保守，但它可以保证在任意处理器平台，任意的程序中都能得到正确的volatile内存语义。</p>
-<p>下面是保守策略下，volatile写插入内存屏障后生成的指令序列示意图：<br><img src="/images/JMM/JMM-volatile-3.png" alt=""></p>
-<p>上图中的StoreStore屏障可以保证在volatile写之前，其前面的所有普通写操作已经对任意处理器可见了。这是因为StoreStore屏障将保障上面所有的普通写在volatile写之前刷新到主内存。</p>
-<p>这里比较有意思的是volatile写后面的StoreLoad屏障。这个屏障的作用是避免volatile写与后面可能有的volatile读/写操作重排序。因为编译器常常无法准确判断在一个volatile写的后面，是否需要插入一个StoreLoad屏障（比如，一个volatile写之后方法立即return）。为了保证能正确实现volatile的内存语义，JMM在这里采取了保守策略：在每个volatile写的后面或在每个volatile读的前面插入一个StoreLoad屏障。从整体执行效率的角度考虑，JMM选择了在每个volatile写的后面插入一个StoreLoad屏障。因为volatile写-读内存语义的常见使用模式是：一个写线程写volatile变量，多个读线程读同一个volatile变量。当读线程的数量大大超过写线程时，选择在volatile写之后插入StoreLoad屏障将带来可观的执行效率的提升。从这里我们可以看到JMM在实现上的一个特点：首先确保正确性，然后再去追求执行效率。</p>
-<p>下面是在保守策略下，volatile读插入内存屏障后生成的指令序列示意图：<br><img src="/images/JMM/JMM-volatile-4.png" alt=""></p>
-<p>上图中的LoadLoad屏障用来禁止处理器把上面的volatile读与下面的普通读重排序。LoadStore屏障用来禁止处理器把上面的volatile读与下面的普通写重排序。</p>
-<p>上述volatile写和volatile读的内存屏障插入策略非常保守。在实际执行时，只要不改变volatile写-读的内存语义，编译器可以根据具体情况省略不必要的屏障。下面我们通过具体的示例代码来说明：</p>
-<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div></pre></td><td class="code"><pre><div class="line"><span class="class"><span class="keyword">class</span> <span class="title">VolatileBarrierExample</span> </span>&#123;</div><div class="line">    <span class="keyword">int</span> a;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> v1 = <span class="number">1</span>;</div><div class="line">    <span class="keyword">volatile</span> <span class="keyword">int</span> v2 = <span class="number">2</span>;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">void</span> <span class="title">readAndWrite</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> i = v1;           <span class="comment">//第一个volatile读</span></div><div class="line">        <span class="keyword">int</span> j = v2;           <span class="comment">// 第二个volatile读</span></div><div class="line">        a = i + j;            <span class="comment">//普通写</span></div><div class="line">        v1 = i + <span class="number">1</span>;          <span class="comment">// 第一个volatile写</span></div><div class="line">        v2 = j * <span class="number">2</span>;          <span class="comment">//第二个 volatile写</span></div><div class="line">    &#125;</div><div class="line"></div><div class="line">    …                    <span class="comment">//其他方法</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p>针对readAndWrite()方法，编译器在生成字节码时可以做如下的优化：<br><img src="/images/JMM/JMM-volatile-5.png" alt=""></p>
-<p>注意，最后的StoreLoad屏障不能省略。因为第二个volatile写之后，方法立即return。此时编译器可能无法准确断定后面是否会有volatile读或写，为了安全起见，编译器常常会在这里插入一个StoreLoad屏障。</p>
-<p>上面的优化是针对任意处理器平台，由于不同的处理器有不同“松紧度”的处理器内存模型，内存屏障的插入还可以根据具体的处理器内存模型继续优化。以x86处理器为例，上图中除最后的StoreLoad屏障外，其它的屏障都会被省略。</p>
-<p>前面保守策略下的volatile读和写，在 x86处理器平台可以优化成：<br><img src="/images/JMM/JMM-volatile-6.png" alt=""><br>前文提到过，x86处理器仅会对写-读操作做重排序。X86不会对读-读，读-写和写-写操作做重排序，因此在x86处理器中会省略掉这三种操作类型对应的内存屏障。在x86中，JMM仅需在volatile写后面插入一个StoreLoad屏障即可正确实现volatile写-读的内存语义。这意味着在x86处理器中，volatile写的开销比volatile读的开销会大很多（因为执行StoreLoad屏障开销会比较大）。</p>
-<h4 id="JSR-133为什么要增强volatile的内存语义"><a href="#JSR-133为什么要增强volatile的内存语义" class="headerlink" title="JSR-133为什么要增强volatile的内存语义"></a>JSR-133为什么要增强volatile的内存语义</h4><p>在JSR-133之前的旧Java内存模型中，虽然不允许volatile变量之间重排序，但旧的Java内存模型允许volatile变量与普通变量之间重排序。在旧的内存模型中，VolatileExample示例程序可能被重排序成下列时序来执行：<br><img src="/images/JMM/JMM-volatile-7.png" alt=""><br>在旧的内存模型中，当1和2之间没有数据依赖关系时，1和2之间就可能被重排序（3和4类似）。其结果就是：读线程B执行4时，不一定能看到写线程A在执行1时对共享变量的修改。</p>
-<p>因此在旧的内存模型中 ，volatile的写-读没有监视器的释放-获所具有的内存语义。为了提供一种比监视器锁更轻量级的线程之间通信的机制，JSR-133专家组决定增强volatile的内存语义：严格限制编译器和处理器对volatile变量与普通变量的重排序，确保volatile的写-读和监视器的释放-获取一样，具有相同的内存语义。从编译器重排序规则和处理器内存屏障插入策略来看，只要volatile变量与普通变量之间的重排序可能会破坏volatile的内存语意，这种重排序就会被编译器重排序规则和处理器内存屏障插入策略禁止。</p>
-<p>由于volatile仅仅保证对单个volatile变量的读/写具有原子性，而监视器锁的互斥执行的特性可以确保对整个临界区代码的执行具有原子性。在功能上，监视器锁比volatile更强大；在可伸缩性和执行性能上，volatile更有优势。如果读者想在程序中用volatile代替监视器锁，请一定谨慎。</p>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;volatile的特性&quot;&gt;&lt;a href=&quot;#volatile的特性&quot; class=&quot;headerlink&quot; title=&quot;volatile的特性&quot;&gt;&lt;/a&gt;volatile的特性&lt;/h4&gt;&lt;p&gt;当我们声明共享变量为volatile后，对这个变量的读/写将会很特别
-    
-    </summary>
-    
-      <category term="JMM" scheme="http://vinoit.me/categories/JMM/"/>
-    
-    
-      <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
     
   </entry>
   
