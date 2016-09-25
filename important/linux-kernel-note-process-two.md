@@ -206,7 +206,7 @@ struct upid {
 #### 总结
 本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。
 
-><font color= Darkorange>如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+><font color= Darkorange>如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 
 
 
 

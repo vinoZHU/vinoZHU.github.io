@@ -60,7 +60,7 @@
 <li>[PDF]基于 JBD 的日志型文件系统性能优化（作者：陈 颖，奚宏生）</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -153,7 +153,7 @@
 <li>UTLK</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -280,7 +280,7 @@
 </ol>
 <p>注：本文JDK版本为1.8</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -375,8 +375,7 @@
 <p>在删除链表头结点的时候，<code>pprev</code>这个设计无需判断删除的节点是否为头结点。如果是普通双向链表的设计，那么删除头结点之后，<code>hlist_head</code>中的<code>first指针</code>需要指向新的头结点。通过下面2个函数来加深理解:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//添加节点到链表头</span></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">hlist_add_head</span><span class="params">(<span class="keyword">struct</span> hlist_node *n, <span class="keyword">struct</span> hlist_head *h)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first = h-&gt;first;</div><div class="line">    n-&gt;next = first;<span class="comment">//新节点的next指针指向原头结点</span></div><div class="line">    <span class="keyword">if</span> (first)</div><div class="line">        first-&gt;pprev = &amp;n-&gt;next;<span class="comment">//原头结点的pprev指向新节点的next字段</span></div><div class="line">    h-&gt;first = n;<span class="comment">//first指针指向新的节点（更换了头结点）</span></div><div class="line">    n-&gt;pprev = &amp;h-&gt;first; <span class="comment">//此时n是链表的头结点,将它的pprev指向list_head的first字段</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//删除节点</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="number">__</span>hlist_del(<span class="keyword">struct</span> hlist_node *n)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *next = n-&gt;next;</div><div class="line">    <span class="keyword">struct</span> hlist_node **pprev = n-&gt;pprev;</div><div class="line">    *pprev = next; <span class="comment">// pprev指向的是前一个节点的next指针,当该节点是头节点时指向 hlist_head的first,两种情况下不论该节点是一般的节点还是头结点都可以通过这个操作删除掉所需删除的节点。</span></div><div class="line">    <span class="keyword">if</span> (next)</div><div class="line">        next-&gt;pprev = pprev;<span class="comment">//使删除节点的后一个节点的pprev指向删除节点的前一个节点的next字段，节点成功删除。</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-</blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -550,7 +549,7 @@
 <p>x==3,y==4</p>
 <p>最后输出的结果就是3+4+4==11</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -802,8 +801,7 @@
 </ul>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了Maven的一些常见操作和命令，未整理的部分日后再补充吧。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -906,7 +904,7 @@
 <p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>以上是我整理的一些Maven相关的信息，主要是一些基础的原理性的内容。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -1014,7 +1012,7 @@
 </ol>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1038,7 +1036,7 @@
 <p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -1096,7 +1094,7 @@
 <p>从软件的角度，由于多引入了两部份，也就是说，共有五部份。要让二层架构的硬件认识五部分，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。</p>
 <p>这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，软硬件又和谐了。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1354,7 +1352,7 @@
 <p>这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，<strong>在Linux下，逻辑地址与线性地址总是一致的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。</strong></p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -1541,7 +1539,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="number">26</span> .debug_aranges <span class="number">00000020</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001037</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">27</span> .debug_pubnames <span class="number">00000028</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001057</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">28</span> .debug_info   <span class="number">000000</span>cc  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000107f</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">29</span> .debug_abbrev <span class="number">0000008</span>a  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">0000114b</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">30</span> .debug_line   <span class="number">0000006b</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">000011</span>d5</div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">31</span> .debug_frame  <span class="number">00000044</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001240</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">32</span> .debug_str    <span class="number">000000</span>ae  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001284</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div><div class="line"><span class="number">33</span> .debug_loc    <span class="number">00000058</span>  <span class="number">00000000</span>  <span class="number">00000000</span>  <span class="number">00001332</span></div><div class="line">                 CONTENTS, READONLY, DEBUGGING</div></pre></td></tr></table></figure>
 <p>每行的第一个数字表示每个段的大小，而最后一个数字表示距离ELF文件开始处的偏移量。调试器就是利用这个信息来从可执行文件中读取相关的段信息，从而找到可执行程序和源代码之间的关系。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -1553,7 +1551,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
       <content type="html"><![CDATA[<p>分享一个自己在项目里写的订单号生成工具类，不当之处望各位指出。</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div><div class="line">61</div><div class="line">62</div><div class="line">63</div><div class="line">64</div><div class="line">65</div><div class="line">66</div><div class="line">67</div><div class="line">68</div><div class="line">69</div><div class="line">70</div><div class="line">71</div><div class="line">72</div><div class="line">73</div><div class="line">74</div><div class="line">75</div><div class="line">76</div><div class="line">77</div><div class="line">78</div><div class="line">79</div><div class="line">80</div><div class="line">81</div><div class="line">82</div><div class="line">83</div><div class="line">84</div><div class="line">85</div><div class="line">86</div><div class="line">87</div><div class="line">88</div><div class="line">89</div><div class="line">90</div><div class="line">91</div><div class="line">92</div><div class="line">93</div><div class="line">94</div><div class="line">95</div><div class="line">96</div><div class="line">97</div><div class="line">98</div><div class="line">99</div><div class="line">100</div><div class="line">101</div><div class="line">102</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">package</span> com.project.utils;</div><div class="line"></div><div class="line"></div><div class="line"><span class="keyword">import</span> java.text.SimpleDateFormat;</div><div class="line"><span class="keyword">import</span> java.util.Date;</div><div class="line"><span class="keyword">import</span> java.util.concurrent.atomic.AtomicInteger;</div><div class="line"></div><div class="line"><span class="comment">/**</span></div><div class="line"> * Created by Vino on 16/5/7.</div><div class="line"> * 订单生成规则:</div><div class="line"> * 正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+循环自增值(3位)+随机码(2位)共16位</div><div class="line"> * 非正常情况下:年(2位)+月(2位)+日(2位)+秒(5位)+随机码(5位)共16位</div><div class="line"> * 注:非正常情况在同时开启1W个线程的情况下并未发生</div><div class="line"> * 业务编码(1位)：自营、通用件、全车件待定</div><div class="line"> */</div><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">OrderNumGen</span> </span>&#123;</div><div class="line">    <span class="comment">//循环自增上限,超出则从初始值开始</span></div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> maxLoop = <span class="number">999</span>;</div><div class="line">    <span class="keyword">private</span> <span class="keyword">static</span> <span class="keyword">int</span> initNum  = <span class="number">100</span>;</div><div class="line"></div><div class="line">    <span class="keyword">private</span> <span class="keyword">volatile</span> <span class="keyword">static</span> AtomicInteger atomicInteger;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: DCL获取单例atomicInteger</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">private</span> <span class="keyword">static</span> AtomicInteger <span class="title">getAtomicInteger</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>) &#123;</div><div class="line">            <span class="keyword">synchronized</span> (OrderNumGen.class) &#123;</div><div class="line">                <span class="keyword">if</span> (atomicInteger == <span class="keyword">null</span>)</div><div class="line">                    atomicInteger = <span class="keyword">new</span> AtomicInteger(initNum);<span class="comment">//初始值为100</span></div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> atomicInteger;</div><div class="line">    &#125;</div><div class="line"></div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 订单号生成</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">next</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="comment">//获取单例</span></div><div class="line">        AtomicInteger atomicInteger = getAtomicInteger();</div><div class="line">        <span class="comment">//原子性自增并返回自增前的值</span></div><div class="line">        <span class="keyword">int</span> nextValue = atomicInteger.getAndIncrement();</div><div class="line">        <span class="comment">//若循环次数已超过上限</span></div><div class="line">        <span class="keyword">if</span> (nextValue &gt; maxLoop) &#123;</div><div class="line">            <span class="comment">//CAS更新值成功</span></div><div class="line">            <span class="keyword">if</span> (atomicInteger.compareAndSet(nextValue + <span class="number">1</span>, initNum)) &#123;</div><div class="line">                atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">return</span> getNextNormally(initNum);</div><div class="line">            &#125;</div><div class="line">            <span class="keyword">else</span> &#123;<span class="comment">//CAS更新值失败</span></div><div class="line">                <span class="comment">//重新获取</span></div><div class="line">                nextValue = atomicInteger.getAndIncrement();</div><div class="line">                <span class="keyword">if</span> (nextValue &lt;= maxLoop)</div><div class="line">                    <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">                <span class="keyword">else</span>&#123;<span class="comment">//非正常情况下</span></div><div class="line">                    <span class="keyword">return</span> getNextUnNormally();</div><div class="line">                &#125;</div><div class="line">            &#125;</div><div class="line"></div><div class="line"></div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> getNextNormally(nextValue);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextNormally</span><span class="params">(<span class="keyword">int</span> nextValue)</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum=(<span class="keyword">int</span>)(Math.random()*<span class="number">90</span>)+<span class="number">10</span>;<span class="comment">//2位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+nextValue+randomNum);</div><div class="line">    &#125;</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> Long <span class="title">getNextUnNormally</span><span class="params">()</span> </span>&#123;</div><div class="line">        <span class="keyword">int</span> randomNum = (<span class="keyword">int</span>)(Math.random()*<span class="number">90000</span>)+<span class="number">10000</span>;<span class="comment">//5位随机码</span></div><div class="line">        <span class="keyword">return</span> Long.valueOf(getDateNum()+randomNum);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="comment">/**</span></div><div class="line">     * author: Vino</div><div class="line">     * date: 2016/5/8</div><div class="line">     * function: 获取订单号中的时间部分</div><div class="line">     * <span class="doctag">@return</span></div><div class="line">     */</div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> String <span class="title">getDateNum</span><span class="params">()</span></span>&#123;</div><div class="line">        Date date = <span class="keyword">new</span> Date();</div><div class="line">        SimpleDateFormat simpleDateFormat = <span class="keyword">new</span> SimpleDateFormat(<span class="string">"yyMMddHHmmss"</span>);</div><div class="line">        String sTime = simpleDateFormat.format(date);</div><div class="line">        Integer nSecond = Integer.valueOf(sTime.substring(<span class="number">6</span>,<span class="number">8</span>)) * <span class="number">60</span> * <span class="number">60</span> +Integer.valueOf(sTime.substring(<span class="number">8</span>,<span class="number">10</span>)) * <span class="number">60</span></div><div class="line">                + Integer.valueOf(sTime.substring(<span class="number">10</span>,<span class="number">12</span>));</div><div class="line">        String sSecond = String.valueOf(nSecond);</div><div class="line">        <span class="keyword">if</span>(sSecond.length() &lt; <span class="number">5</span>)&#123;</div><div class="line">            <span class="keyword">for</span>(<span class="keyword">int</span> i = <span class="number">5</span>,j = sSecond.length(); i &gt; j; i--)&#123;</div><div class="line">                sSecond = <span class="string">"0"</span> + sSecond;</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> sTime.substring(<span class="number">0</span>,<span class="number">6</span>)+sSecond;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -1593,7 +1591,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <p>所以进行错位能降低CACHE的交互次数，从而提高CPU处理速度能力。  </p>
 <p>这个错位(也就是上面的16个字节)就是colouroff.</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -1621,7 +1619,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li>Linux源码</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -1666,7 +1664,7 @@ meaning of the rest of the arguments depends on the operation, but except for on
 <li><a href="http://rick_stone.leanote.com/post/%E5%86%85%E5%AD%98%E4%BC%99%E4%BC%B4%E7%B3%BB%E7%BB%9F%E4%B9%8B%E6%9F%A5%E6%89%BE%E4%BC%99%E4%BC%B4" target="_blank" rel="external">内存伙伴系统之查找伙伴算法</a></li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 </mmzone.h>]]></content>
@@ -1943,7 +1941,7 @@ Host: google.com
 <li>参考《JVM规范SE7》</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     </entry>
     
@@ -2296,7 +2294,7 @@ Host: google.com
 <li>参考《JVM规范SE7》</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -2317,7 +2315,7 @@ Host: google.com
 <li>参考《JVM规范SE7》</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -2453,7 +2451,7 @@ Host: google.com
 <p>输出结果：<br><figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line">SuperClass init!</div><div class="line">SubClass init!</div></pre></td></tr></table></figure></p>
 <p>如果此时的父类是一个接口，则只输出<code>SubClass init!</code>。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -2549,7 +2547,7 @@ Host: google.com
 <li><a href="http://developer.51cto.com/art/201002/184385_all.htm" target="_blank" rel="external">http://developer.51cto.com/art/201002/184385_all.htm</a></li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -2887,7 +2885,7 @@ Host: google.com
 <h5 id="非连续内存区的分配"><a href="#非连续内存区的分配" class="headerlink" title="非连续内存区的分配"></a>非连续内存区的分配</h5><p>内核通过<code>vmalloc()</code>来申请非连续的物理内存，若申请成功，该函数返回连续内存区的起始地址，否则，返回<code>NULL</code>。<code>vmalloc()</code>和<code>kmalloc()</code>申请的内存有所不同，<code>kmalloc()</code>所申请内存的线性地址与物理地址都是连续的，而<code>vmalloc()</code>所申请的内存线性地址连续而物理地址则是离散的，两个地址之间通过内核页表进行映射。 <code>vmalloc()</code>的工作方式理解起来很简单：<br>1). 寻找一个新的连续线性地址空间；<br>2). 依次分配一组非连续的页框；<br>3). 为线性地址空间和非连续页框建立映射关系，即修改内核页表；</p>
 <p><code>vmalloc()</code>的内存分配原理与用户态的内存分配相似，都是通过连续的虚拟内存来访问离散的物理内存，并且虚拟地址和物理地址之间是通过页表进行连接的，通过这种方式可以有效的使用物理内存。但是应该注意的是，<code>vmalloc()</code>申请物理内存时是立即分配的，因为内核认为这种内存分配请求是正当而且紧急的；相反，用户态有内存请求时，内核总是尽可能的延后，毕竟用户态跟内核态不在一个特权级。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -2904,7 +2902,7 @@ Host: google.com
 <h4 id="翻译虚拟地址"><a href="#翻译虚拟地址" class="headerlink" title="翻译虚拟地址"></a>翻译虚拟地址</h4><p>获取到虚拟地址之后，需要将虚拟地址转换为物理地址。这时候用到了页表和TLB，先检查TLB中是否缓存着对应地址，如果没有，则查看页表。这个时候如果页表命中，则将物理地址返回。如果不命中，将产生缺页异常，需要从磁盘中获取数据，并将数据加载到主存，然后将对应地址记录到页表中。接着翻译机制再从页表中获取物理地址。具体细节以后再整理。</p>
 <h4 id="根据物理地址获取数据"><a href="#根据物理地址获取数据" class="headerlink" title="根据物理地址获取数据"></a>根据物理地址获取数据</h4><p>cache中存放着主存中的数据，如果缓存命中，则直接将缓存中的数据返回。如果不命中，则cache从主存中获取值，存放到本地（cache）。cpu再向cache发送一次请求，cache将数据发给cpu。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>
@@ -3197,7 +3195,7 @@ Host: google.com
 <p>整段代码可以用三个反引号</p>
 <h3 id="结语"><a href="#结语" class="headerlink" title="结语"></a>结语</h3><p>以上几种格式是比较常用的格式，Markdown 还有其他语法，如想了解和学习更多，可以参考<a href="http://wowubuntu.com/markdown/#link" target="_blank" rel="external">《Markdown 语法说明 (简体中文版)》</a></p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     </entry>

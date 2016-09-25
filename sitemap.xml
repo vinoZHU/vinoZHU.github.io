@@ -2,16 +2,170 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
-    <loc>http://vinoit.me/2016/09/25/ext3-journal-file-system/</loc>
+    <loc>http://vinoit.me/2016/05/17/linux-vm-rm/</loc>
     
-    <lastmod>2016-09-25T07:34:43.000Z</lastmod>
+    <lastmod>2016-09-25T13:32:46.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/19/when-jvm-load-class/</loc>
+    
+    <lastmod>2016-09-25T13:32:28.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/06/29/linux-slab-colour/</loc>
+    
+    <lastmod>2016-09-25T13:32:13.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/</loc>
+    
+    <lastmod>2016-09-25T13:32:00.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</loc>
+    
+    <lastmod>2016-09-25T13:31:43.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</loc>
+    
+    <lastmod>2016-09-25T13:31:34.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/</loc>
+    
+    <lastmod>2016-09-25T13:31:23.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/06/28/linux-cold-hot-page/</loc>
+    
+    <lastmod>2016-09-25T13:31:04.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/06/28/linux-buddy-system/</loc>
+    
+    <lastmod>2016-09-25T13:30:56.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/16/learn-markdown-basic/</loc>
+    
+    <lastmod>2016-09-25T13:30:47.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/19/jvm-gc-tactics/</loc>
+    
+    <lastmod>2016-09-25T13:30:38.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/07/05/java-ordernum-generate/</loc>
+    
+    <lastmod>2016-09-25T13:30:23.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/23/java-classfile-structure-example/</loc>
+    
+    <lastmod>2016-09-25T13:30:03.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/22/java-classfile-structure-detail/</loc>
+    
+    <lastmod>2016-09-25T13:29:54.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/22/java-classfile-structure-concept/</loc>
+    
+    <lastmod>2016-09-25T13:29:46.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/12/how-debugger-work/</loc>
+    
+    <lastmod>2016-09-25T13:29:36.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/17/computer-system-roaming/</loc>
+    
+    <lastmod>2016-09-25T13:29:18.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</loc>
+    
+    <lastmod>2016-09-25T13:29:00.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/18/maven-tutorial/</loc>
+    
+    <lastmod>2016-09-25T13:28:51.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/</loc>
+    
+    <lastmod>2016-09-25T13:28:43.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/</loc>
+    
+    <lastmod>2016-09-25T13:28:26.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/</loc>
+    
+    <lastmod>2016-09-25T13:28:05.000Z</lastmod>
     
   </url>
   
   <url>
     <loc>http://vinoit.me/2016/09/23/ext2-file-system/</loc>
     
-    <lastmod>2016-09-24T08:20:40.000Z</lastmod>
+    <lastmod>2016-09-25T13:27:37.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/09/25/ext3-journal-file-system/</loc>
+    
+    <lastmod>2016-09-25T13:25:17.000Z</lastmod>
     
   </url>
   
@@ -26,27 +180,6 @@
     <loc>http://vinoit.me/2016/09/16/how-linux-start/</loc>
     
     <lastmod>2016-09-23T07:55:41.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/</loc>
-    
-    <lastmod>2016-09-14T06:45:16.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/17/computer-system-roaming/</loc>
-    
-    <lastmod>2016-09-14T06:26:19.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/18/maven-tutorial/</loc>
-    
-    <lastmod>2016-09-14T06:12:29.000Z</lastmod>
     
   </url>
   
@@ -86,27 +219,6 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/</loc>
-    
-    <lastmod>2016-09-01T09:27:12.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/19/jvm-gc-tactics/</loc>
-    
-    <lastmod>2016-09-01T07:23:35.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/</loc>
-    
-    <lastmod>2016-08-29T03:06:40.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://vinoit.me/about/index.html</loc>
     
     <lastmod>2016-08-26T13:58:13.000Z</lastmod>
@@ -131,118 +243,6 @@
     <loc>http://vinoit.me/2016/08/24/linux-x86-assembly-inline/</loc>
     
     <lastmod>2016-08-24T08:30:34.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</loc>
-    
-    <lastmod>2016-08-19T08:34:37.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/19/when-jvm-load-class/</loc>
-    
-    <lastmod>2016-08-18T14:20:24.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/17/linux-vm-rm/</loc>
-    
-    <lastmod>2016-08-18T14:20:08.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/06/29/linux-slab-colour/</loc>
-    
-    <lastmod>2016-08-18T14:20:00.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/</loc>
-    
-    <lastmod>2016-08-18T14:19:41.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</loc>
-    
-    <lastmod>2016-08-18T14:19:33.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</loc>
-    
-    <lastmod>2016-08-18T14:19:23.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/</loc>
-    
-    <lastmod>2016-08-18T14:19:16.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/06/28/linux-cold-hot-page/</loc>
-    
-    <lastmod>2016-08-18T14:18:58.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/06/28/linux-buddy-system/</loc>
-    
-    <lastmod>2016-08-18T14:18:51.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/16/learn-markdown-basic/</loc>
-    
-    <lastmod>2016-08-18T14:18:42.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/07/05/java-ordernum-generate/</loc>
-    
-    <lastmod>2016-08-18T14:18:15.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/23/java-classfile-structure-example/</loc>
-    
-    <lastmod>2016-08-18T14:17:55.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/22/java-classfile-structure-detail/</loc>
-    
-    <lastmod>2016-08-18T14:17:43.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/22/java-classfile-structure-concept/</loc>
-    
-    <lastmod>2016-08-18T14:17:29.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/08/12/how-debugger-work/</loc>
-    
-    <lastmod>2016-08-18T14:17:16.000Z</lastmod>
     
   </url>
   
@@ -275,14 +275,14 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/17/linux-fd-file/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -303,7 +303,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -311,13 +311,6 @@
   
   <url>
     <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -338,7 +331,14 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/17/linux-fd-file/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     

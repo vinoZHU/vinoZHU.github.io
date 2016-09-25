@@ -30,4 +30,4 @@ movl (%ebp) %edx
 cache中存放着主存中的数据，如果缓存命中，则直接将缓存中的数据返回。如果不命中，则cache从主存中获取值，存放到本地（cache）。cpu再向cache发送一次请求，cache将数据发给cpu。
 
 
-><font color= Darkorange>如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+><font color= Darkorange>如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 

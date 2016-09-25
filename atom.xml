@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-25T07:34:43.000Z</updated>
+  <updated>2016-09-25T13:25:17.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://vinoit.me/2016/09/25/ext3-journal-file-system/"/>
     <id>http://vinoit.me/2016/09/25/ext3-journal-file-system/</id>
     <published>2016-09-25T03:32:57.000Z</published>
-    <updated>2016-09-25T07:34:43.000Z</updated>
+    <updated>2016-09-25T13:25:17.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是日志文件系统"><a href="#什么是日志文件系统" class="headerlink" title="什么是日志文件系统"></a>什么是日志文件系统</h4><p>当我们修改某个文件时，必然要对相应文件系统上的块进行更新。但是对文件系统块的更新可能因为页高速缓存的影响在内存保留相当长的时间后才刷新到磁盘，此时若发生断电故障或系统崩溃这样的不可预测的时间，可能会导致文件系统处于不一致的状态。文件系统的不一致状态，是指元数据中存储的信息与磁盘实际情况不一致。这个相当长的时间是相对于计算机运行速度来说，事实上也是极短的（通常为1/500 秒?）。为了克服这个问题，传统的Unix文件系统在安装之前都要进行检查；如果它没有被正常卸载（例如：超级块的<code>s_mount_state</code> ！= <code>EXT2_VALID_FS</code>），那么一个特定的程序（e2fsck）将执行彻底、耗时的检查，并修正磁盘文件系统的所有数据结构。</p>
 <p>然而当文件系统的文件数、目录数增大到一定程度时，一次一致性检查接可能花费数个小时，这显然是无法接受的。日志文件系统的目标就是避免对整个文件系统进行耗时的一致性检查。简单来说，当文件系统没有被正常卸载时，只需要直接去查看日志的内容，日志存放在一个特定的磁盘区，然后对日志中的内容进行检查和修正就可以了。</p>
@@ -76,7 +76,7 @@
 <li>[PDF]基于 JBD 的日志型文件系统性能优化（作者：陈 颖，奚宏生）</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -101,7 +101,7 @@
     <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
     <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
     <published>2016-09-23T09:57:48.000Z</published>
-    <updated>2016-09-24T08:20:40.000Z</updated>
+    <updated>2016-09-25T13:27:37.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
 <p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
@@ -187,7 +187,7 @@
 <li>UTLK</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font> 
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     
@@ -296,7 +296,7 @@
     <link href="http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/"/>
     <id>http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/</id>
     <published>2016-09-14T01:13:07.000Z</published>
-    <updated>2016-09-14T06:45:16.000Z</updated>
+    <updated>2016-09-25T13:28:05.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p>使用JAVA读取文件时需要用到<code>FileInputStream</code>这个类，最简单的使用方式如下:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            FileInputStream fileInputStream = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</div><div class="line">            System.out.println(fileInputStream.read());</div><div class="line">        &#125; <span class="keyword">catch</span> (FileNotFoundException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
@@ -353,7 +353,7 @@
 </ol>
 <p>注：本文JDK版本为1.8</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -488,7 +488,7 @@
     <link href="http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/"/>
     <id>http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/</id>
     <published>2016-09-01T07:57:17.000Z</published>
-    <updated>2016-09-01T09:27:12.000Z</updated>
+    <updated>2016-09-25T13:28:26.000Z</updated>
     
     <content type="html"><![CDATA[<p><code>hlist_head</code>和<code>hlist_node</code>用于散列表，分表表示列表头（数组中的一项）和列表头所在双向链表中的某项，两者结构如下:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_head &#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
@@ -505,8 +505,7 @@
 <p>在删除链表头结点的时候，<code>pprev</code>这个设计无需判断删除的节点是否为头结点。如果是普通双向链表的设计，那么删除头结点之后，<code>hlist_head</code>中的<code>first指针</code>需要指向新的头结点。通过下面2个函数来加深理解:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//添加节点到链表头</span></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">hlist_add_head</span><span class="params">(<span class="keyword">struct</span> hlist_node *n, <span class="keyword">struct</span> hlist_head *h)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first = h-&gt;first;</div><div class="line">    n-&gt;next = first;<span class="comment">//新节点的next指针指向原头结点</span></div><div class="line">    <span class="keyword">if</span> (first)</div><div class="line">        first-&gt;pprev = &amp;n-&gt;next;<span class="comment">//原头结点的pprev指向新节点的next字段</span></div><div class="line">    h-&gt;first = n;<span class="comment">//first指针指向新的节点（更换了头结点）</span></div><div class="line">    n-&gt;pprev = &amp;h-&gt;first; <span class="comment">//此时n是链表的头结点,将它的pprev指向list_head的first字段</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//删除节点</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="number">__</span>hlist_del(<span class="keyword">struct</span> hlist_node *n)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *next = n-&gt;next;</div><div class="line">    <span class="keyword">struct</span> hlist_node **pprev = n-&gt;pprev;</div><div class="line">    *pprev = next; <span class="comment">// pprev指向的是前一个节点的next指针,当该节点是头节点时指向 hlist_head的first,两种情况下不论该节点是一般的节点还是头结点都可以通过这个操作删除掉所需删除的节点。</span></div><div class="line">    <span class="keyword">if</span> (next)</div><div class="line">        next-&gt;pprev = pprev;<span class="comment">//使删除节点的后一个节点的pprev指向删除节点的前一个节点的next字段，节点成功删除。</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-</blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -603,7 +602,7 @@
     <link href="http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/"/>
     <id>http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/</id>
     <published>2016-08-29T02:47:24.000Z</published>
-    <updated>2016-08-29T03:06:40.000Z</updated>
+    <updated>2016-09-25T13:28:43.000Z</updated>
     
     <content type="html"><![CDATA[<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x, y;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</div><div class="line">        x++;</div><div class="line">        myMethod();</div><div class="line">        System.out.println(x + y + ++x);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">myMethod</span><span class="params">()</span> </span>&#123;</div><div class="line">        y = x++ + ++x;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p><strong>如果以上代码的结果你很自信能做对,那么本文或许对你帮助不大,但仍然可以看下java底层的实现.在最后将给出以上代码的结果以及解析.</strong></p>
@@ -719,7 +718,7 @@
 <p>x==3,y==4</p>
 <p>最后输出的结果就是3+4+4==11</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -998,7 +997,7 @@
     <link href="http://vinoit.me/2016/08/19/maven-common-command-and-operation/"/>
     <id>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</id>
     <published>2016-08-19T02:15:15.000Z</published>
-    <updated>2016-08-19T08:34:37.000Z</updated>
+    <updated>2016-09-25T13:29:00.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Maven-Archetypes"><a href="#Maven-Archetypes" class="headerlink" title="Maven Archetypes"></a>Maven Archetypes</h4><p>Maven archetypes是一个项目模板，可以让Maven按照指定的模板构建出一个项目最基本的文件结构，以及创建一些文件。Maven中有许多项目模板供我们使用，使用方式如下:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mvn archetype:generate</div></pre></td></tr></table></figure>
@@ -1046,8 +1045,7 @@
 </ul>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了Maven的一些常见操作和命令，未整理的部分日后再补充吧。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
-
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1077,7 +1075,7 @@
     <link href="http://vinoit.me/2016/08/18/maven-tutorial/"/>
     <id>http://vinoit.me/2016/08/18/maven-tutorial/</id>
     <published>2016-08-18T08:47:15.000Z</published>
-    <updated>2016-09-14T06:12:29.000Z</updated>
+    <updated>2016-09-25T13:28:51.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
 <ul>
@@ -1168,7 +1166,7 @@
 <p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>以上是我整理的一些Maven相关的信息，主要是一些基础的原理性的内容。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1191,7 +1189,7 @@
     <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-two/"/>
     <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</id>
     <published>2016-08-16T12:31:04.000Z</published>
-    <updated>2016-08-18T14:19:33.000Z</updated>
+    <updated>2016-09-25T13:31:43.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h4><p>进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来对进程进行管理。进程描述符的数据结构是<code>struct task_struct</code>,与进程相关的所有信息都包含在该数据结构中，可想而知该数据结构是十分复杂的。</p>
 <p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L1458" target="_blank" rel="external"><strong>这里</strong></a>可以查看<code>task_struct</code>的完整结构，下图示意性地描述了该数据结构：<br><img src="/images/linux-kernel-note/process-two-0.png" alt=""><br>在这里只讨论进程的某几个属性，其余属性在之后有关其他内容的文章中会逐渐涉及到，内核的学习需要联系的思维。</p>
@@ -1294,7 +1292,7 @@
 </ol>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1322,7 +1320,7 @@
     <link href="http://vinoit.me/2016/08/15/linux-kernel-note-process-one/"/>
     <id>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</id>
     <published>2016-08-15T05:56:35.000Z</published>
-    <updated>2016-08-18T14:19:23.000Z</updated>
+    <updated>2016-09-25T13:31:34.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="进程定义"><a href="#进程定义" class="headerlink" title="进程定义"></a>进程定义</h4><p>说起进程，真是既熟悉又陌生，感觉知道这个玩意儿，但是又不知该如何说起。按照UTLK中的说法，进程是任何多道程序设计的操作系统中的基本概念，<code>通常把进程定义为程序执行的一个实例</code>,貌似大多数OS教科书也是这么定义的。</p>
 <p>从内核的角度来看，进程就是消耗系统资源（内存，CPU时间片等）的一个实体。因为每个进程都会有他的执行代码，内核通过调度，让不同的进程可以在CPU上分时执行代码，同时每个进程也都会占用相应的RAM资源。</p>
@@ -1336,7 +1334,7 @@
 <p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font></blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1359,7 +1357,7 @@
     <link href="http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/"/>
     <id>http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/</id>
     <published>2016-08-14T07:07:15.000Z</published>
-    <updated>2016-08-18T14:19:16.000Z</updated>
+    <updated>2016-09-25T13:31:23.000Z</updated>
     
     <content type="html"><![CDATA[<p>一个逻辑地址经过<a href="/2016/08/13/linux-kernel-note-segment-mechanism/">分段机制</a>转换为一个线性地址之后，便需要分页单元将线性地址转换为实际的物理地址。</p>
 <h4 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h4><p>从80386开始，所有的80x86处理器都支持分页。是否开启分页通过设置cr0寄存器的PG标志来决定，当PG为0时，表示不开启分页，此时线性地址呗解释为物理地址。</p>
@@ -1412,7 +1410,7 @@
 <p>从软件的角度，由于多引入了两部份，也就是说，共有五部份。要让二层架构的硬件认识五部分，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。</p>
 <p>这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，软硬件又和谐了。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1618,7 +1616,7 @@
     <link href="http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/"/>
     <id>http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/</id>
     <published>2016-08-13T07:59:27.000Z</published>
-    <updated>2016-08-18T14:19:41.000Z</updated>
+    <updated>2016-09-25T13:32:00.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="为什么要有分段机制？"><a href="#为什么要有分段机制？" class="headerlink" title="为什么要有分段机制？"></a>为什么要有分段机制？</h4><ul>
 <li><p>在8086处理器诞生之前，内存寻址方式就是直接访问物理地址,也就是所谓的实模式。8086处理器为了寻址1M的内存空间，把地址总线扩展到了20位。但是，ALU的宽度<code>只有16位</code>，也就是说，ALU不能计算20位的地址。为了解决这个问题，从而引入了分段机制。<br>为了支持分段，8086处理器设置了四个段寄存器：CS, DS, SS, ES.每个段寄存器都是16位的，都包含着相应段的基址，访存指令中的地址也是16位的。但是，在送入地址总线之前，CPU先把它与某个段寄存器内的值按以下方式相加：<br><code>实际物理地址 = （段寄存器地址 &lt;&lt; 4） + （指令访存地址）</code></p>
@@ -1723,7 +1721,7 @@
 <p>这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，<strong>在Linux下，逻辑地址与线性地址总是一致的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。</strong></p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流,转载请在正文明显处注明原文地址，谢谢！</font>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     
