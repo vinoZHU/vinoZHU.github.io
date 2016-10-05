@@ -1,11 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
   <title>是非之地</title>
-  <subtitle>Vino Zhu&#39;s Blog</subtitle>
+  <subtitle>VinoZhu&#39;s Blog</subtitle>
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-25T13:25:17.000Z</updated>
+  <updated>2016-09-25T13:58:42.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://vinoit.me/2016/09/25/ext3-journal-file-system/"/>
     <id>http://vinoit.me/2016/09/25/ext3-journal-file-system/</id>
     <published>2016-09-25T03:32:57.000Z</published>
-    <updated>2016-09-25T13:25:17.000Z</updated>
+    <updated>2016-09-25T13:58:42.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是日志文件系统"><a href="#什么是日志文件系统" class="headerlink" title="什么是日志文件系统"></a>什么是日志文件系统</h4><p>当我们修改某个文件时，必然要对相应文件系统上的块进行更新。但是对文件系统块的更新可能因为页高速缓存的影响在内存保留相当长的时间后才刷新到磁盘，此时若发生断电故障或系统崩溃这样的不可预测的时间，可能会导致文件系统处于不一致的状态。文件系统的不一致状态，是指元数据中存储的信息与磁盘实际情况不一致。这个相当长的时间是相对于计算机运行速度来说，事实上也是极短的（通常为1/500 秒?）。为了克服这个问题，传统的Unix文件系统在安装之前都要进行检查；如果它没有被正常卸载（例如：超级块的<code>s_mount_state</code> ！= <code>EXT2_VALID_FS</code>），那么一个特定的程序（e2fsck）将执行彻底、耗时的检查，并修正磁盘文件系统的所有数据结构。</p>
 <p>然而当文件系统的文件数、目录数增大到一定程度时，一次一致性检查接可能花费数个小时，这显然是无法接受的。日志文件系统的目标就是避免对整个文件系统进行耗时的一致性检查。简单来说，当文件系统没有被正常卸载时，只需要直接去查看日志的内容，日志存放在一个特定的磁盘区，然后对日志中的内容进行检查和修正就可以了。</p>
@@ -39,15 +39,15 @@
 <li>预定（Ordered）<br>  只将文件元数据的改变记入日志。但在日志被写入前，数据必须被先写入文件系统。这是Ext3的缺省模式。</li>
 <li>写回（Writeback）<br> 只将文件元数据的改变记入日志。不要求日志必须在数据被写入之后才被写，可以同时进行。</li>
 </ul>
-<p>三种模式下的所有文件元数据都是通过下文的JDB来写入磁盘的。日志模式下的文件数据由JDB写入磁盘，预定模式下的文件数据由JDB写入磁盘（PS：UTLK中写到该模式下的缓冲区同时被加入到了索引节点的脏缓冲区链表，这我不是很理解，望明白的同学可以指教一下。），写回模式下的数据则由磁盘高速缓存的刷新机制写入磁盘（脏页写回）。</p>
-<h4 id="JBD"><a href="#JBD" class="headerlink" title="JBD"></a>JBD</h4><p>Ext3文件系统本身不处理日志，而是利用所谓的日志块设备（Journaling Block Device,JDB）的通用内核层。</p>
+<p>三种模式下的所有文件元数据都是通过下文的JBD来写入磁盘的。日志模式下的文件数据由JBD写入磁盘，预定模式下的文件数据由JBD写入磁盘（PS：UTLK中写到该模式下的缓冲区同时被加入到了索引节点的脏缓冲区链表，这我不是很理解，望明白的同学可以指教一下。），写回模式下的数据则由磁盘高速缓存的刷新机制写入磁盘（脏页写回）。</p>
+<h4 id="JBD"><a href="#JBD" class="headerlink" title="JBD"></a>JBD</h4><p>Ext3文件系统本身不处理日志，而是利用所谓的日志块设备（Journaling Block Device,JBD）的通用内核层。</p>
 <p>EXT3文件系统和JBD之间相互独立，它们交互的基本单元有3个:</p>
 <ol>
 <li>日志记录:记录日志文件系统中一个磁盘块的一次更新;</li>
 <li>原子操作处理(handle_s):文件系统的一次系统调用所对应的日志记录，包含了多个日志记录，具有原子性，要么包含的日志记录全部完成，要么全不完成;</li>
 <li>事务(journal_s):包含多个原子操作处理，是JBD对磁盘写操作的单位。</li>
 </ol>
-<p>一般情况下，JBD如下工作，每次系统调用都会把若干对文件系统的修改以原子操作处理的方式打包，然后写入当前的事务中，当前的事务收集原子操作处理。每隔固定的时间间隔(5 s)，或是事务剩余空间不足，JBD会将事务写到磁盘的日志中，如下图所示：<br><img src="/images/ext3/ext3-journal-file-system-0.png" alt="JDB处理原始流程"></p>
+<p>一般情况下，JBD如下工作，每次系统调用都会把若干对文件系统的修改以原子操作处理的方式打包，然后写入当前的事务中，当前的事务收集原子操作处理。每隔固定的时间间隔(5 s)，或是事务剩余空间不足，JBD会将事务写到磁盘的日志中，如下图所示：<br><img src="/images/ext3/ext3-journal-file-system-0.png" alt="JBD处理原始流程"></p>
 <p>若出现断电或是系统崩溃，重启后自动进行的 e2fsck 检查可分为以下2种情况:</p>
 <ul>
 <li>若事务是完整的，则将日志中的事务内容重新写到磁盘上;</li>
@@ -56,9 +56,9 @@
 <h4 id="日志如何工作"><a href="#日志如何工作" class="headerlink" title="日志如何工作"></a>日志如何工作</h4><p>以下是一个比较通用的模式，可能在默写特定情况下不是很符合，但还是具有参考意义的。</p>
 <ol>
 <li>用户使用<code>write()</code>系统调用写入文件。</li>
-<li>（1）操作对应于一个原子操作，被加入到JDB的一个事务中。</li>
-<li>JDB在条件满足时将该事务写入到日志的磁盘区。（文件数据并没有开始写）</li>
-<li>JDB激活事务中的所有I/O数据传送。</li>
+<li>（1）操作对应于一个原子操作，被加入到JBD的一个事务中。</li>
+<li>JBD在条件满足时将该事务写入到日志的磁盘区。（文件数据并没有开始写）</li>
+<li>JBD激活事务中的所有I/O数据传送。</li>
 <li>传送成功完成后，磁盘上相应的事务记录由内核的一个周期性程序删除。</li>
 </ol>
 <h4 id="存在的缺陷"><a href="#存在的缺陷" class="headerlink" title="存在的缺陷"></a>存在的缺陷</h4><p>理论上，上述机制足以应付断电或是系统崩溃等状况，但在实际操作中存在着不足之处。在频繁地断电或是系统故障条件下，表现尤为明显。</p>
@@ -76,7 +76,7 @@
 <li>[PDF]基于 JBD 的日志型文件系统性能优化（作者：陈 颖，奚宏生）</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>，谢谢！</font> 
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -90,9 +90,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
-    
       <category term="Ext3" scheme="http://vinoit.me/tags/Ext3/"/>
+    
+      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
   </entry>
   
@@ -101,13 +101,13 @@
     <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
     <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
     <published>2016-09-23T09:57:48.000Z</published>
-    <updated>2016-09-25T13:27:37.000Z</updated>
+    <updated>2016-09-28T04:34:07.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
 <p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
 <p>在Ext2中定义了如下几种数据类型:</p>
 <ul>
-<li><code>__u8</code> 、<code>__u16</code> 、<code>__u32</code>分表表示长度为8、16、32的无符号数。</li>
+<li><code>__u8</code> 、<code>__u16</code> 、<code>__u32</code>分别表示长度为8、16、32的无符号数。</li>
 <li><code>__s8</code> 、<code>__s16</code> 、<code>__s32</code>分别表示长度为8、16、32的有符号数。</li>
 <li><code>__le16</code> 、<code>__le32</code>分别表示字、双字的little-endian排序方式。 </li>
 <li><code>__be16</code> 、<code>__be32</code>分别表示字、双字的big-endian排序方式。</li>
@@ -176,12 +176,12 @@
 <p><code>name</code>是一个char数组，数组长度上限为<code>EXT2_NAME_LEN</code>(通常为255)。</p>
 <p>下图是一个Ext2目录的例子:<br><img src="/images/ext2/ext2-file-system-1.png" alt="Ext2目录"><br>其中文件名为<code>oldfile</code>那一项的<code>inode</code>值为0，所以该目录项已经被删除，也可以看到该项的上一项(文件名<code>user</code>)的<code>rec_len</code>为28（user项的长度加上oldfile项长度）。</p>
 <h4 id="数据块寻址"><a href="#数据块寻址" class="headerlink" title="数据块寻址"></a>数据块寻址</h4><p>每个非空的普通文件都含有一组数据块，这些数据块可以由所在文件的文件块号或者磁盘分区的逻辑块号来标识。在索引节点中有一个<code>i_block</code>字段，这是一个数组，元素内容就是一个指向数据块的指针，<code>i_block</code>的示意图如下:<br><img src="/images/ext2/ext2-file-system-2.png" alt="数据块寻址"><br><code>i_block</code>数组就相当于是一个目录，用于进行文件块号和逻辑块号的转换。其中0~11号元素直接进行一对一映射，将一个文件块号对应到块组数据块中的某一个逻辑快号，而下标12、13、14的元素分别指向一个一级数组、二级数组、三级数组。</p>
-<p>从文件内的偏移量ƒ到处相应数据块的逻辑块号需要两个步骤：</p>
+<p>根据文件内的偏移量ƒ导出相应数据块的逻辑块号需要两个步骤：</p>
 <ol>
 <li>将偏移量ƒ转换为文件块号。</li>
 <li>将文件块号转换为数据块的逻辑块号。</li>
 </ol>
-<p>假设数据块的大小为1024 bytes，如果ƒ小于1024,则ƒ对应的字符存在于第0个文件块号，也就是<code>i_block</code>数组的第0项，<code>i_block[0]</code>的内容就是该文件块号所对应的数据块块号。如果转换出来的文件块号n满足  <code>12 &lt;= n &lt;= b/4 + 11</code>(b表示块大小，在这里就是1024)，则表示该文件块号存在于<code>i_block[11]</code>指向的数组中。通过<code>i_block[11]</code>的值，找到一个间接块，然后找到下标为<code>n-12</code>的项，其中的值便是对应的逻辑块号。<code>i_block[12]</code>、<code>i_block[13]</code>情况类似，只不过中间多了些转换过程。</p>
+<p>假设数据块的大小为1024 bytes，如果ƒ小于1024,则ƒ对应的字符存在于第0个文件块号，也就是<code>i_block</code>数组的第0项，<code>i_block[0]</code>的内容就是该文件块号所对应的数据块块号。如果转换出来的文件块号n满足  <code>12 &lt;= n &lt;= b/4 + 11</code>(b表示块大小，在这里就是1024。除以4是因为一个文件块号占用4 bytes，也就是i_block数组的元素大小为4 bytes。)，则表示该文件块号存在于<code>i_block[11]</code>指向的数组中。通过<code>i_block[11]</code>的值，找到一个间接块（结构类似于i_block数组），然后找到下标为<code>n-12</code>的项，其中的值便是对应的逻辑块号。<code>i_block[12]</code>、<code>i_block[13]</code>情况类似，只不过中间多了些转换过程。</p>
 <p>参考：</p>
 <ul>
 <li>UTLK</li>
@@ -200,9 +200,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
-    
       <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+      <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
     
   </entry>
   
