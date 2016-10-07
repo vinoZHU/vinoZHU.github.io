@@ -4,6 +4,12 @@
   
     
     <entry>
+      <title><![CDATA[聊聊java中codepoint和UTF-16相关的一些事]]></title>
+      <url>http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/</url>
+      <content type="html"><![CDATA[聊聊java中codepoint和UTF-16相关的一些事]]></content>
+    </entry>
+    
+    <entry>
       <title><![CDATA[Ext3日志文件系统简述]]></title>
       <url>http://vinoit.me/2016/09/25/ext3-journal-file-system/</url>
       <content type="html"><![CDATA[Ext3日志文件系统简述]]></content>

@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-09-25T13:58:42.000Z</updated>
+  <updated>2016-10-07T12:54:54.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -14,6 +14,78 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>聊聊java中codepoint和UTF-16相关的一些事</title>
+    <link href="http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/"/>
+    <id>http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/</id>
+    <published>2016-10-07T05:43:06.000Z</published>
+    <updated>2016-10-07T12:54:54.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="Unicode和UTF-8-UTF-16-UTF-32的关系"><a href="#Unicode和UTF-8-UTF-16-UTF-32的关系" class="headerlink" title="Unicode和UTF-8/UTF-16/UTF-32的关系"></a>Unicode和UTF-8/UTF-16/UTF-32的关系</h4><p>Unicode和UTF-8/UTF-16/UTF-32之间就是字符集和编码的关系。字符集的概念实际上包含两个方面，一个是字符的集合，一个是编码方案。字符集定义了它所包含的所有符号，狭义上的字符集并不包含编码方案，它仅仅是定义了属于这个字符集的所有符号。但通常来说，一个字符集并不仅仅定义字符集合，它还为每个符号定义一个二进制编码。当我们提到GB2312或者ASCII的时候，它隐式地指明了编码方案是GB2312或者ASCII，在这些情况下可以认为字符集与编码方案互等。</p>
+<p>但是Unicode具有多种编码方案。Unicode字符集规定的标准编码方案是UCS-2（UTF-16），用两个字节表示一个Unicode字符（UTF-16中两个字节的为基本多语言平面字符，4个字节的为辅助平面字符）。而UCS-4(UTF-32）用4个字节表示一个Unicode字符。另外一个常用的Unicode编码方案–UTF-8用1到4个变长字节来表示一个Unicode字符，并可以从一个简单的转换算法从UTF-16直接得到。所以在使用Unicode字符集时有多种编码方案，分别用于合适的场景。</p>
+<p>再通俗一点地讲，Unicode字符集就相当于是一本字典，里面记载着所有字符（即图像）以及各自所对应的Unicode码（与具体编码方案无关），UTF-8/UTF-16/UTF-32码就是Unicode码经过相应的公式计算得到的并且实际存储、传输的数据。</p>
+<h4 id="UTF-16"><a href="#UTF-16" class="headerlink" title="UTF-16"></a>UTF-16</h4><p>JVM规范中明确说明了java的char类型使用的编码方案是UTF-16，所以先来了解下UTF-16。</p>
+<p>Unicode的编码空间从U+0000到U+10FFFF，共有1112064个码位(code point)可用来映射字符，，码位就是字符的数字形式。这部分编码空间可以划分为17个平面（plane）,每个平面包含2^16（65536）个码位。第一个平面称为基本多语言平面（Basic Multilingual Plane, BMP），或称第零平面（Plane 0）。其他平面称为辅助平面（Supplementary Planes）。基本多语言平面内，从U+D800到U+DFFF之间的码位区块是永久保留不映射到Unicode字符。UTF-16就利用保留下来的0xD800-0xDFFF区段的码位来对辅助平面的字符的码位进行编码。</p>
+<p>最常用的字符都包含在BMP中，用2个字节表示。辅助平面中的码位，在UTF-16中被编码为一对16比特长的码元，称作代理对（surrogate pair），具体方法是：</p>
+<ol>
+<li>将码位减去0x10000,得到的值的范围为20比特长的0~0xFFFFF。</li>
+<li>高位的10比特的值（值的范围为0~0x3FF）被加上0xD800得到第一个码元或称作高位代理（high surrogate），值的范围是0xD800~0xDBFF.由于高位代理比低位代理的值要小，所以为了避免混淆使用，Unicode标准现在称高位代理为前导代理（lead surrogates）。</li>
+<li>低位的10比特的值（值的范围也是0~0x3FF）被加上0xDC00得到第二个码元或称作低位代理（low surrogate），现在值的范围是0xDC00~0xDFFF.由于低位代理比高位代理的值要大，所以为了避免混淆使用，Unicode标准现在称低位代理为后尾代理（trail surrogates）。</li>
+</ol>
+<p>例如U+10437编码:</p>
+<ul>
+<li>0x10437减去0x10000,结果为0x00437,二进制为0000 0000 0100 0011 0111。</li>
+<li>分区它的上10位值和下10位值（使用二进制）:0000000001 and 0000110111。</li>
+<li>添加0xD800到上值，以形成高位：0xD800 + 0x0001 = 0xD801。</li>
+<li>添加0xDC00到下值，以形成低位：0xDC00 + 0x0037 = 0xDC37。</li>
+</ul>
+<p>由于前导代理、后尾代理、BMP中的有效字符的码位，三者互不重叠，搜索时一个字符编码的一部分不可能与另一个字符编码的不同部分相重叠。所以可以通过仅检查一个码元（构成码位的基本单位，2个字节）就可以判定给定字符的下一个字符的起始码元。</p>
+<h4 id="java中的codepoint相关"><a href="#java中的codepoint相关" class="headerlink" title="java中的codepoint相关"></a>java中的codepoint相关</h4><p>对于一个字符串对象，其内容是通过一个char数组存储的。char类型由2个字节存储，这2个字节实际上存储的就是UTF-16编码下的码元。我们使用charAt和length方法的时候，返回的实际上是一个码元和码元的数量，虽然一般情况下没有问题，但是如果这个字符属于辅助平面字符，以上2个方法便无法得到正确的结果。正确的处理方式如下：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">int</span> character = aString.codePointAt(i);</div><div class="line"><span class="keyword">int</span> length = aString.codePointCount(<span class="number">0</span>, aString.length())；</div></pre></td></tr></table></figure>
+<p>需要注意codePointAt的返回值，是int而非char,这个值就是Unicode码。</p>
+<p>codePointAt方法调用了codePointAtImpl：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">int</span> <span class="title">codePointAtImpl</span><span class="params">(<span class="keyword">char</span>[] a, <span class="keyword">int</span> index, <span class="keyword">int</span> limit)</span> </span>&#123;</div><div class="line">        <span class="keyword">char</span> c1 = a[index];</div><div class="line">        <span class="keyword">if</span> (isHighSurrogate(c1) &amp;&amp; ++index &lt; limit) &#123;</div><div class="line">            <span class="keyword">char</span> c2 = a[index];</div><div class="line">            <span class="keyword">if</span> (isLowSurrogate(c2)) &#123;</div><div class="line">                <span class="keyword">return</span> toCodePoint(c1, c2);</div><div class="line">            &#125;</div><div class="line">        &#125;</div><div class="line">        <span class="keyword">return</span> c1;</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p>isHighSurrogate方法判断下标字符的2个字节是否为UTF-16中的前导代理（0xD800~0xDBFF）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isHighSurrogate</span><span class="params">(<span class="keyword">char</span> ch)</span> </span>&#123;</div><div class="line">        <span class="comment">// Help VM constant-fold; MAX_HIGH_SURROGATE + 1 == MIN_LOW_SURROGATE</span></div><div class="line">        <span class="keyword">return</span> ch &gt;= MIN_HIGH_SURROGATE &amp;&amp; ch &lt; (MAX_HIGH_SURROGATE + <span class="number">1</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> MIN_HIGH_SURROGATE = <span class="string">'\uD800'</span>;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> MAX_HIGH_SURROGATE = <span class="string">'\uDBFF'</span>;</div></pre></td></tr></table></figure>
+<p>然后++index,isLowSurrogate方法判断下一个字符的2个字节是否为后尾代理（0xDC00~0xDFFF）：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">boolean</span> <span class="title">isLowSurrogate</span><span class="params">(<span class="keyword">char</span> ch)</span> </span>&#123;</div><div class="line">        <span class="keyword">return</span> ch &gt;= MIN_LOW_SURROGATE &amp;&amp; ch &lt; (MAX_LOW_SURROGATE + <span class="number">1</span>);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> MIN_LOW_SURROGATE  = <span class="string">'\uDC00'</span>;</div><div class="line"></div><div class="line"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">final</span> <span class="keyword">char</span> MAX_LOW_SURROGATE  = <span class="string">'\uDFFF'</span>;</div></pre></td></tr></table></figure>
+<p>toCodePoint方法将这2个码元组装成一个Unicode码：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">int</span> <span class="title">toCodePoint</span><span class="params">(<span class="keyword">char</span> high, <span class="keyword">char</span> low)</span> </span>&#123;</div><div class="line">        <span class="comment">// Optimized form of:</span></div><div class="line">        <span class="comment">// return ((high - MIN_HIGH_SURROGATE) &lt;&lt; 10)</span></div><div class="line">        <span class="comment">//         + (low - MIN_LOW_SURROGATE)</span></div><div class="line">        <span class="comment">//         + MIN_SUPPLEMENTARY_CODE_POINT;</span></div><div class="line">        <span class="keyword">return</span> ((high &lt;&lt; <span class="number">10</span>) + low) + (MIN_SUPPLEMENTARY_CODE_POINT</div><div class="line">                                       - (MIN_HIGH_SURROGATE &lt;&lt; <span class="number">10</span>)</div><div class="line">                                       - MIN_LOW_SURROGATE);</div><div class="line">    &#125;</div></pre></td></tr></table></figure>
+<p> 这个过程就是以上将一个辅助平面的Unicode码位转换成2个码元的逆过程。</p>
+<p> 所以，枚举字符串的正确方法：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; aString.length();) &#123;</div><div class="line">	<span class="keyword">int</span> character = aString.codePointAt(i);</div><div class="line">	<span class="comment">//如果是辅助平面字符，则i+2</span></div><div class="line">	<span class="keyword">if</span> (Character.isSupplementaryCodePoint(character)) i += <span class="number">2</span>;</div><div class="line">	<span class="keyword">else</span> ++i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>将codePoint转换为char[]可调用Character.toChars方法，然后可进一步转换为字符串：</p>
+<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">new</span> String(Character.toChars(codePoint));</div></pre></td></tr></table></figure>
+<p>toChars方法所做的就是以上将Unicode码位转换为2个码元的过程。</p>
+<p>参考：</p>
+<ul>
+<li>维基百科</li>
+<li><a href="https://www.zhihu.com/question/30945431/answer/50046808" target="_blank" rel="external">https://www.zhihu.com/question/30945431/answer/50046808</a></li>
+</ul>
+<blockquote>
+<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;Unicode和UTF-8-UTF-16-UTF-32的关系&quot;&gt;&lt;a href=&quot;#Unicode和UTF-8-UTF-16-UTF-32的关系&quot; class=&quot;headerlink&quot; title=&quot;Unicode和UTF-8/UTF-16/UTF-32的关系&quot;&gt;
+    
+    </summary>
+    
+      <category term="java" scheme="http://vinoit.me/categories/java/"/>
+    
+    
+      <category term="java" scheme="http://vinoit.me/tags/java/"/>
+    
+      <category term="String" scheme="http://vinoit.me/tags/String/"/>
+    
+      <category term="utf-16" scheme="http://vinoit.me/tags/utf-16/"/>
+    
+  </entry>
   
   <entry>
     <title>Ext3日志文件系统简述</title>
@@ -101,7 +173,7 @@
     <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
     <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
     <published>2016-09-23T09:57:48.000Z</published>
-    <updated>2016-09-28T04:34:07.000Z</updated>
+    <updated>2016-10-07T12:52:37.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
 <p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
@@ -1608,136 +1680,6 @@
     
     
       <category term="JMM" scheme="http://vinoit.me/tags/JMM/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>linux内核笔记之分段机制</title>
-    <link href="http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/"/>
-    <id>http://vinoit.me/2016/08/13/linux-kernel-note-segment-mechanism/</id>
-    <published>2016-08-13T07:59:27.000Z</published>
-    <updated>2016-09-25T13:32:00.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="为什么要有分段机制？"><a href="#为什么要有分段机制？" class="headerlink" title="为什么要有分段机制？"></a>为什么要有分段机制？</h4><ul>
-<li><p>在8086处理器诞生之前，内存寻址方式就是直接访问物理地址,也就是所谓的实模式。8086处理器为了寻址1M的内存空间，把地址总线扩展到了20位。但是，ALU的宽度<code>只有16位</code>，也就是说，ALU不能计算20位的地址。为了解决这个问题，从而引入了分段机制。<br>为了支持分段，8086处理器设置了四个段寄存器：CS, DS, SS, ES.每个段寄存器都是16位的，都包含着相应段的基址，访存指令中的地址也是16位的。但是，在送入地址总线之前，CPU先把它与某个段寄存器内的值按以下方式相加：<br><code>实际物理地址 = （段寄存器地址 &lt;&lt; 4） + （指令访存地址）</code></p>
-</li>
-<li><p>80286处理器的地址总线为24位，寻址空间达16M，同时引入了保护模式（指令给出的地址不对应实际的物理地址）</p>
-</li>
-<li><p>80386处理器是一个32位处理器，ALU和地址总线都是32位的，寻址空间达 4G。它可以不通过分段机制，直接访问4G的内存空间。然而为了兼容前代的处理器，它必须同时支持实模式和保护模式。所以，80386在段寄存器的基础上构筑保护模式，并且保留16位的段寄存器。</p>
-</li>
-<li><p>从80386之后的处理器，架构基本相似，统称为IA32（32 Bit Intel Architecture）。</p>
-</li>
-</ul>
-<h4 id="IA32架构下的内存寻址"><a href="#IA32架构下的内存寻址" class="headerlink" title="IA32架构下的内存寻址"></a>IA32架构下的内存寻址</h4><h5 id="IA32的三类地址"><a href="#IA32的三类地址" class="headerlink" title="IA32的三类地址"></a>IA32的三类地址</h5><ul>
-<li>逻辑地址:<br>机器语言指令用这类地址指定一个操作数的地址或一条指令的地址，最原始的地址就是逻辑地址。</li>
-<li>线性地址：<br>将逻辑地址经过分段机制转换之后，便得到了线性地址,每个线性地址都由一个段基址和段内偏移量组成。</li>
-<li>物理地址：<br>线性地址经过分页单元的处理之后得到一个实际物理地址，也就是内存单元的实际地址，用于芯片级内存单元寻址。</li>
-</ul>
-<h5 id="MMU地址转化过程"><a href="#MMU地址转化过程" class="headerlink" title="MMU地址转化过程"></a>MMU地址转化过程</h5><p>以上3类地址是通过MMU（内存管理单元）来进行转换。其中MMU处理时包含2个过程，分段和分页。在这里简单的说明下具体过程：</p>
-<blockquote>
-<p>当一条机器指令给出一个地址时，这时候的地址便是逻辑地址。</p>
-<p>为了得到线性地址，需要从相应的段寄存器中取出16位的段标识符（段选择符），通过这个段标识符可以得到一个段基址。然后将得到的段基址与指令中的地址相加，从而得到一个线性地址。</p>
-<p>有了线性地址之后，再通过分页单元得到实际的物理地址。</p>
-</blockquote>
-<h5 id="IA32的段寄存器"><a href="#IA32的段寄存器" class="headerlink" title="IA32的段寄存器"></a>IA32的段寄存器</h5><p>IA32中有六个16位段寄存器：CS, DS, SS, ES，FS, GS.跟8086的段寄存器不同的是，这些寄存器存放的不再是某个段的基地址，而是某个段的选择符（Selector）。</p>
-<h4 id="硬件中的分段"><a href="#硬件中的分段" class="headerlink" title="硬件中的分段"></a>硬件中的分段</h4><h5 id="段选择符和段寄存器"><a href="#段选择符和段寄存器" class="headerlink" title="段选择符和段寄存器"></a>段选择符和段寄存器</h5><p>段寄存器的唯一目的就是存放段选择符，段选择符是一个16位长的字段：<br><img src="/images/linux-kernel-note/segment-mechanism-0.jpg" alt=""></p>
-<p>第01位表示的是请求者的特权，第2位是表指示器，用于指定所使用的描述符表。3~15位是一个索引号，定位到描述符表中的某一项段描述符。</p>
-<h5 id="段描述符"><a href="#段描述符" class="headerlink" title="段描述符"></a>段描述符</h5><p>段描述符说白了就是用来描述段的特征，段描述表放在全局描述符表（GDT）或者局部描述符表（LDT），每个段描述符为8个字节大小。GDT的地址和大小存放在寄存器gdtr中，LDT的地址和大小存放在寄存器ldtr中。</p>
-<p>有几种不同类型的段以及它们对应的段描述符，下面列出了Linux中广泛采用的类型：</p>
-<p><strong>代码段描述符</strong></p>
-<p>表示这个段描述符代表一个代码段，它可以放在GDT或LDT中。该描述符置S标志为1，并且为非系统段。</p>
-<p><strong>数据段描述符</strong></p>
-<p>表示这个段描述符代表一个数据段，它可以放在GDT或LDT中。该描述符置S标志为1，栈段是通过数据段实现的。</p>
-<p><strong>任务状态段描述符（TSSD）</strong></p>
-<p>表示这个段描述符代表一个任务状态段（Task State Segment，TSS），也就是说这个段用于保存处理器寄存器的内容。它只能出现在GDT中。根据相应的进程是否正在CPU上运行，其Type字段的值分别为11或9。这个描述符的S标志被置为0。</p>
-<p><strong>局部描述符表描述符（LDTD）</strong></p>
-<p>这个表示段描述符代表一个包含LDT的段，他置出现在GDT中。相应的Type字段的值为2，S标志被置为0。</p>
-<p>下图为段描述符的字段表示：<br><img src="/images/linux-kernel-note/segment-mechanism-1.png" alt=""></p>
-<p>相应字段的意义如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">字段名</th>
-<th style="text-align:left">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">Base</td>
-<td style="text-align:left">包含段的首字节的线性地址</td>
-</tr>
-<tr>
-<td style="text-align:center">G</td>
-<td style="text-align:left">粒度标志，如果为0，则段大小以字节为单位，否则以4096字节的倍数计算</td>
-</tr>
-<tr>
-<td style="text-align:center">Limit</td>
-<td style="text-align:left">存放段最后一个内存单元的偏移量，从而决定段的长度。如果G被置为0，则一个段的大小在一个字节到1MB之间变化，否则，将在4KB到4GB之间变化</td>
-</tr>
-<tr>
-<td style="text-align:center">S</td>
-<td style="text-align:left">系统标志，如果被置为0，则这是一个系统段，否则为普通的代码段或者数据段</td>
-</tr>
-<tr>
-<td style="text-align:center">Type</td>
-<td style="text-align:left">描述了段的类型特征和它的存取权限</td>
-</tr>
-<tr>
-<td style="text-align:center">DPL</td>
-<td style="text-align:left">描述符特权等级字段，用于限制这个段的存取。它表示为访问这个段而要求的CPU最小的优先级，因此DPL设置为0的段只能当CPL为0时，也就是内核态才可以访问。DPL设为3则堆任何CPL值都是可访问的</td>
-</tr>
-<tr>
-<td style="text-align:center">P</td>
-<td style="text-align:left">Segment-Present标志，等于0表示段当前不在主存中。Linux总是把此标志设为1，因为Linux从来不把整个段交换到磁盘上去</td>
-</tr>
-<tr>
-<td style="text-align:center">D或B</td>
-<td style="text-align:left">称为D或B标志，取决于是代码段还是数据段，D和B的含义在两种情况下有区别，如果段偏移量的地址是32位长，就基本上把它设置为1，如果偏移量是16位长，则清零</td>
-</tr>
-<tr>
-<td style="text-align:center">AVL</td>
-<td style="text-align:left">可以由操作系统使用，但是被Linux忽略</td>
-</tr>
-</tbody>
-</table>
-<p>当指令给出一个地址后，硬件的处理顺序如下：</p>
-<ol>
-<li>根据指令类型选择好段选择符，检查段选择符的TI字段，决定使用GDT还是LDT，再从gftr寄存器或者ldtr寄存器中获得描述符表的地址。</li>
-<li>使用段选择符的索引号，定位到段描述符，<code>描述符地址 = 索引号 * 8 + gdtr(ldtr)中的地址</code>。</li>
-<li>将段描述符中的Base值与给出的地址相加，从而得到线性地址。</li>
-<li>将线性地址通过分页单元换换成物理地址。</li>
-</ol>
-<p>其中的段描述符地址，在寄存器内容不变的情况下会保存在一个与段寄存器相关的不可编程寄存器中，相当于缓存了这个地址，于是就可以省去前面2个步骤。</p>
-<h4 id="Linux中的分段"><a href="#Linux中的分段" class="headerlink" title="Linux中的分段"></a>Linux中的分段</h4><p> Linux的段式管理，事实上只是“哄骗”了一下硬件而已。从2.2版开始，Linux让所有的进程（或叫任务）都使用相同的逻辑地址空间，因此就没有必要使用局部描述符表LDT。但内核中也用到LDT，那只是在VM86模式中运行Wine，因为就是说在Linux上模拟运行Winodws软件或DOS软件的程序时才使用。</p>
-<p> 在内核源码<code>include/asm-i386/segment.h</code>中定义了如下宏:</p>
- <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> GDT_ENTRY_DEFAULT_USER_CS        14</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __USER_CS (GDT_ENTRY_DEFAULT_USER_CS * 8 + 3)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> GDT_ENTRY_DEFAULT_USER_DS        15</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __USER_DS (GDT_ENTRY_DEFAULT_USER_DS * 8 + 3)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> GDT_ENTRY_KERNEL_BASE        12</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> GDT_ENTRY_KERNEL_CS                (GDT_ENTRY_KERNEL_BASE + 0)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __KERNEL_CS (GDT_ENTRY_KERNEL_CS * 8)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> GDT_ENTRY_KERNEL_DS                (GDT_ENTRY_KERNEL_BASE + 1)</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __KERNEL_DS (GDT_ENTRY_KERNEL_DS * 8)</span></div></pre></td></tr></table></figure>
-<p> 把其中的宏替换成数值，则为：</p>
- <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __USER_CS 115      [00000000 1110  0  11]（用户代码段）</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __USER_DS 123      [00000000 1111  0  11]（用户数据段）</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __KERNEL_CS 96     [00000000 1100  0  00]（内核代码段）</span></div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> __KERNEL_DS 104    [00000000 1101  0  00]（内核数据段）</span></div></pre></td></tr></table></figure>
-<p> 方括号后是这四个段选择符的16位二制表示，它们的索引号和T1字段值也可以算出来了：</p>
- <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">__USER_CS             index= 14   T1=0</div><div class="line">__USER_DS             index= 15   T1=0</div><div class="line">__KERNEL_CS           index= 12   T1=0</div><div class="line">__KERNEL_DS           index= 13   T1=0</div></pre></td></tr></table></figure>
-<p> T1均为0，则表示都使用了GDT，再来看初始化GDT的内容中相应的12-15项(arch/i386/head.S)：</p>
- <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line">.quad <span class="number">0x00cf9a000000ffff</span>        <span class="comment">/* 0x60 kernel 4GB code at 0x00000000 */</span></div><div class="line">.quad <span class="number">0x00cf92000000ffff</span>        <span class="comment">/* 0x68 kernel 4GB data at 0x00000000 */</span></div><div class="line">.quad <span class="number">0x00cffa000000ffff</span>        <span class="comment">/* 0x73 user 4GB code at 0x00000000 */</span></div><div class="line">.quad <span class="number">0x00cff2000000ffff</span>        <span class="comment">/* 0x7b user 4GB data at 0x00000000 */</span></div></pre></td></tr></table></figure>
-<p>按照前面段描述符表中的描述，可以把它们展开，发现其16-31位全为0，即四个段的基地址全为0。</p>
-<p>这样，给定一个段内偏移地址，按照前面转换公式，0 + 段内偏移，转换为线性地址，可以得出重要的结论，<strong>在Linux下，逻辑地址与线性地址总是一致的，即逻辑地址的偏移量字段的值与线性地址的值总是相同的。</strong></p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。</p>
-<blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;为什么要有分段机制？&quot;&gt;&lt;a href=&quot;#为什么要有分段机制？&quot; class=&quot;headerlink&quot; title=&quot;为什么要有分段机制？&quot;&gt;&lt;/a&gt;为什么要有分段机制？&lt;/h4&gt;&lt;ul&gt;
-&lt;li&gt;&lt;p&gt;在8086处理器诞生之前，内存寻址方式就是直接访问物理地址
-    
-    </summary>
-    
-      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
     
   </entry>
   
