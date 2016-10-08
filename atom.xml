@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-10-07T12:54:54.000Z</updated>
+  <updated>2016-10-08T12:36:29.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/"/>
     <id>http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/</id>
     <published>2016-10-07T05:43:06.000Z</published>
-    <updated>2016-10-07T12:54:54.000Z</updated>
+    <updated>2016-10-08T12:36:29.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Unicode和UTF-8-UTF-16-UTF-32的关系"><a href="#Unicode和UTF-8-UTF-16-UTF-32的关系" class="headerlink" title="Unicode和UTF-8/UTF-16/UTF-32的关系"></a>Unicode和UTF-8/UTF-16/UTF-32的关系</h4><p>Unicode和UTF-8/UTF-16/UTF-32之间就是字符集和编码的关系。字符集的概念实际上包含两个方面，一个是字符的集合，一个是编码方案。字符集定义了它所包含的所有符号，狭义上的字符集并不包含编码方案，它仅仅是定义了属于这个字符集的所有符号。但通常来说，一个字符集并不仅仅定义字符集合，它还为每个符号定义一个二进制编码。当我们提到GB2312或者ASCII的时候，它隐式地指明了编码方案是GB2312或者ASCII，在这些情况下可以认为字符集与编码方案互等。</p>
 <p>但是Unicode具有多种编码方案。Unicode字符集规定的标准编码方案是UCS-2（UTF-16），用两个字节表示一个Unicode字符（UTF-16中两个字节的为基本多语言平面字符，4个字节的为辅助平面字符）。而UCS-4(UTF-32）用4个字节表示一个Unicode字符。另外一个常用的Unicode编码方案–UTF-8用1到4个变长字节来表示一个Unicode字符，并可以从一个简单的转换算法从UTF-16直接得到。所以在使用Unicode字符集时有多种编码方案，分别用于合适的场景。</p>
@@ -59,7 +59,7 @@
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">for</span> (<span class="keyword">int</span> i = <span class="number">0</span>; i &lt; aString.length();) &#123;</div><div class="line">	<span class="keyword">int</span> character = aString.codePointAt(i);</div><div class="line">	<span class="comment">//如果是辅助平面字符，则i+2</span></div><div class="line">	<span class="keyword">if</span> (Character.isSupplementaryCodePoint(character)) i += <span class="number">2</span>;</div><div class="line">	<span class="keyword">else</span> ++i;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p>将codePoint转换为char[]可调用Character.toChars方法，然后可进一步转换为字符串：</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">new</span> String(Character.toChars(codePoint));</div></pre></td></tr></table></figure>
-<p>toChars方法所做的就是以上将Unicode码位转换为2个码元的过程。</p>
+<p>toChars方法所做的就是以上将Unicode码位转换为2个码元的过程,这2个码元最后就成了字符串对象包含的char数组中的2个元素。</p>
 <p>参考：</p>
 <ul>
 <li>维基百科</li>
@@ -162,9 +162,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="Ext3" scheme="http://vinoit.me/tags/Ext3/"/>
-    
       <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+      <category term="Ext3" scheme="http://vinoit.me/tags/Ext3/"/>
     
   </entry>
   
@@ -272,9 +272,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
-    
       <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
+    
+      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
   </entry>
   

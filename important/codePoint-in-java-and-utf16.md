@@ -116,7 +116,7 @@ for (int i = 0; i < aString.length();) {
 ```java
 new String(Character.toChars(codePoint));
 ```
-toChars方法所做的就是以上将Unicode码位转换为2个码元的过程。
+toChars方法所做的就是以上将Unicode码位转换为2个码元的过程,这2个码元最后就成了字符串对象包含的char数组中的2个元素。
 
 参考：
 
