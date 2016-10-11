@@ -17,7 +17,7 @@ Unicode和UTF-8/UTF-16/UTF-32之间就是字符集和编码的关系。字符集
 #### UTF-16
 JVM规范中明确说明了java的char类型使用的编码方案是UTF-16，所以先来了解下UTF-16。
 
-Unicode的编码空间从U+0000到U+10FFFF，共有1112064个码位(code point)可用来映射字符，，码位就是字符的数字形式。这部分编码空间可以划分为17个平面（plane）,每个平面包含2^16（65536）个码位。第一个平面称为基本多语言平面（Basic Multilingual Plane, BMP），或称第零平面（Plane 0）。其他平面称为辅助平面（Supplementary Planes）。基本多语言平面内，从U+D800到U+DFFF之间的码位区块是永久保留不映射到Unicode字符。UTF-16就利用保留下来的0xD800-0xDFFF区段的码位来对辅助平面的字符的码位进行编码。
+Unicode的编码空间从U+0000到U+10FFFF，共有1112064个码位(code point)可用来映射字符，码位就是字符的数字形式。这部分编码空间可以划分为17个平面（plane）,每个平面包含2^16（65536）个码位。第一个平面称为基本多语言平面（Basic Multilingual Plane, BMP），或称第零平面（Plane 0）。其他平面称为辅助平面（Supplementary Planes）。基本多语言平面内，从U+D800到U+DFFF之间的码位区块是永久保留不映射到Unicode字符。UTF-16就利用保留下来的0xD800-0xDFFF区段的码位来对辅助平面的字符的码位进行编码。
 
 最常用的字符都包含在BMP中，用2个字节表示。辅助平面中的码位，在UTF-16中被编码为一对16比特长的码元，称作代理对（surrogate pair），具体方法是：
 
