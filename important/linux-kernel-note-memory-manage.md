@@ -31,7 +31,7 @@ ZONE_DMA中的页框可以由老式基于ISA的设备通过DMA使用。
 
 ZONE_NORMAL中的页框全部映射到内核使用的第4个GB地址空间，这部分页框的映射方式很简单，例如物理地址为`0x10000000`,只需要直接加上3GB的地址，得到的线性地址为`0xc0000000`。
 
-ZONE_HIGHMEM和ZONE_NORMAL都属于“常规”页框，但内核使用的第4个GB地址空间的最后128M才能映射到该部分页框。
+ZONE_HIGHMEM和ZONE_NORMAL都属于“常规”页框，但内核使用的第4个GB地址空间的最后128M才能映射到ZONE_HIGHMEM的部分页框。
 
 #### 分区页框分配器
 
@@ -65,11 +65,23 @@ linux内核的伙伴算法最大限度的减少了内存的碎片，其实应该
 
 #### slab机制
 
-当我们需要分配一些小对象时，如果还使用页框分配器，那未免太浪费了，无论是从时间上还是空间上。slab分配器用于这些小对象的分配，其大致组成如下:
-![](/images/linux-kernel-note/memory-manage-1.png)
-高速缓存的大小为2的幂，从32B到131072B共13个级别。对于每种大小都有2个高速缓存：一个适用于ISA DMA分配，另一个适用于常规分配。
+当我们需要分配一些小对象时，如果还使用页框分配器，那未免太浪费了，无论是从时间上还是空间上。slab分配器用于这些小对象的分配，一个slab由若干个页框构成，可由页框分配器分配。
 
-高速缓存描述符如下:
+每个slab根据其内部对象的大小，都被链接到一个相应的高速缓存描述符中:
+![](/images/linux-kernel-note/memory-manage-1.png)
+其中的高速缓存的大小为2的幂，从32B到131072B共13个级别，所链接的slab链表中的每个slab中的对象的大小都与其对应。其中每个级别的高速缓存描述符都存放于`malloc_sizes`数组中，数组的元素类型为`struct cache_sizes`：
+
+```c
+struct cache_sizes {
+        size_t                  cs_size;
+        struct kmem_cache       *cs_cachep;
+#ifdef CONFIG_ZONE_DMA
+        struct kmem_cache       *cs_dmacachep;
+#endif
+};
+extern struct cache_sizes malloc_sizes[];
+```
+高速缓存描述符(kmem_cache)如下:
 
 ```c
 struct kmem_cache {  
@@ -105,7 +117,7 @@ struct kmem_cache {
   
 /* 5) cache creation/removal */  
     const char *name;  
-    struct list_head next;  
+    struct list_head next; //链接下一个高速缓存描述符 
   
 /* 6) statistics */  
 #ifdef CONFIG_DEBUG_SLAB  
@@ -164,7 +176,11 @@ struct kmem_list3 {
     int free_touched;       /* updated without locking */  
 }; 
 ```
-`struct kmem_list3`中包含3条slab链表，slab描述符如下:
+
+一个高速缓存描述符包含3条slab链表，通过`struct kmem_list3`字段链接，每个同大小（对象）的高速缓存描述符链接在一起：
+![](/images/linux-kernel-note/memory-manage-2.png)
+
+slab描述符如下：
 
 ```c
 struct slab {  
@@ -176,15 +192,19 @@ struct slab {
     unsigned short nodeid;  /*节点标识号*/  
 };
 ```
-**一个slab中的是同类对象，一个高速缓存中的是相同大小的对象。**
 
-一个高速缓存描述符包含3条slab链表：
-![](/images/linux-kernel-note/memory-manage-2.png)
+一个slab中每个对象的大小都是相同的2的幂，其中的对象描述符为`kmem_bufctl_t`,它是一个无符号整数，用于表示对象在slab中的下标：
 
-高速缓存描述符中的`struct array_cache *array[NR_CPUS];/*local cache*/  `表示本地高速缓存。
+`typedef unsigned int kmem_bufctl_t;`
+
+对象描述符存放在slab描述符后面，按照描述符是否存放在slab中，slab描述符和对象描述符的关系如下：
+![](/images/linux-kernel-note/memory-manage-3.png)
+
+
+高速缓存描述符中的`struct array_cache *array[NR_CPUS];/*local cache*/  `表示本地高速缓存数组，每个CPU对应一个本地高速缓存。
 
 ```c
-struct c {  
+struct array_cache {  
     unsigned int avail;/*本地高速缓存中可用的空闲对象数*/  
     unsigned int limit;/*空闲对象的上限*/  
     unsigned int batchcount;/*一次转入和转出的对象数量*/  
@@ -197,11 +217,11 @@ struct c {
              */  
 };
 ```
-当我们要求内核给我们分配一个小对象时，是从本地高速缓存中获取的。**本地高速缓存中的对象依次放置在该本地高速缓存描述符的地址后面。**
+当我们要求内核给我们分配一个小对象时，是从本地高速缓存中获取的。**本地高速缓存中的对象依次放置在该本地高速缓存描述符的地址后面。**从本地高速缓存获取对象时，首先根据当前CPU，从本地高速缓存数组中获取对应的到本地高速缓存描述符指针`ac`，`((void **)(ac+1))[--ac->avail]`返回的就是所分配的对象。
 
 #### slab分配对象小结
 
-当我们需要一个小对象时，首先根据该对象大小，选择合适的**高速缓存**(kmem_cache)。然后获取当前CPU id,到对应的**本地高速缓存**(array_cache)中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些slab对象，数量为本地高速缓存描述符中`batchcount `值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab。
+当我们需要一个小对象时，首先根据该对象大小，选择合适的**高速缓存**(kmem_cache)。然后获取当前CPU id,到对应的**本地高速缓存**(array_cache)中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些对象，数量为本地高速缓存描述符中`batchcount `值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab添加到高速缓存中，并且初始化，然后分配对象给本地高速缓存。
 
 #### 总结
 
