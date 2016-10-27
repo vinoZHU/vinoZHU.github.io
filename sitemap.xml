@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://vinoit.me/2016/10/27/regain-data-structure-binary-tree/</loc>
+    
+    <lastmod>2016-10-27T08:42:56.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://vinoit.me/2016/08/30/linux-kernel-note-memory-manage/</loc>
     
     <lastmod>2016-10-26T03:08:42.000Z</lastmod>
@@ -282,49 +289,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/16/git-branch-remote/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/17/linux-fd-file/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/19/java-memory-model-basis/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -338,6 +303,41 @@
   </url>
   
   <url>
+    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/17/linux-fd-file/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/19/java-memory-model-basis/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://vinoit.me/2016/06/13/what-happens-when/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
@@ -345,7 +345,14 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
+    <loc>http://vinoit.me/2016/05/16/git-branch-remote/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
