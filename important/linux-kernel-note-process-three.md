@@ -199,3 +199,4 @@ __switch_to(struct task_struct *prev_p, struct task_struct *next_p)
 - 汇编语言指令ret把栈顶保存的返回地址装入eip程序计数器。不过，__swtich_to()函数时通过简单的跳转被调用的。因此，ret汇编指令在栈中找到标号为1的指令地址，其中标号为1的地址是由switch_to()宏推入堆栈的。
 
 
+><font color= Darkorange>因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 

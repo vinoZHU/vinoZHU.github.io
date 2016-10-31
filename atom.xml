@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-10-30T08:07:34.000Z</updated>
+  <updated>2016-10-31T08:36:28.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,7 +20,7 @@
     <link href="http://vinoit.me/2016/10/30/regain-data-structure-rb-tree/"/>
     <id>http://vinoit.me/2016/10/30/regain-data-structure-rb-tree/</id>
     <published>2016-10-30T04:07:38.000Z</published>
-    <updated>2016-10-30T08:07:34.000Z</updated>
+    <updated>2016-10-31T08:36:28.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="自平衡二叉查找树（AVL）"><a href="#自平衡二叉查找树（AVL）" class="headerlink" title="自平衡二叉查找树（AVL）"></a>自平衡二叉查找树（AVL）</h4><p>了解自平衡二叉查找树前，先讲讲二叉查找树。二叉查找树是一颗二叉树，对于其中的每一个节点，左孩子小于自己，右孩子大于自己。在插入一个节点时，判断插入节点与当前遍历的树节点的大小，若小于当前树节点，则与左孩子比较，反之，则与右孩子比较。<br><img src="/images/data-structure/rb-tree-0.png" alt=""><br>但是，一颗普通的二叉查找树容易退化成链表：<br><img src="/images/data-structure/rb-tree-1.png" alt=""><br>我们希望一颗二叉查找树的时间复杂度为O（logn）,而这种情况下时间复杂度已经变成了O（n）。所以就出现了<code>自平衡二叉查找树</code>。</p>
 <p>在AVL树中任何节点的两个子树的高度最大差别为一，所以它也被称为高度平衡树。查找、插入和删除在平均和最坏情况下都是O（log n）。增加和删除可能需要通过一次或多次树旋转来重新平衡这个树。</p>
@@ -81,7 +81,7 @@
 <li>维基百科</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     
@@ -96,9 +96,9 @@
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
-      <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
-    
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    
+      <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
     
   </entry>
   
@@ -107,7 +107,7 @@
     <link href="http://vinoit.me/2016/10/27/regain-data-structure-binary-tree/"/>
     <id>http://vinoit.me/2016/10/27/regain-data-structure-binary-tree/</id>
     <published>2016-10-27T05:47:14.000Z</published>
-    <updated>2016-10-30T08:03:25.000Z</updated>
+    <updated>2016-10-31T08:36:15.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="常见基本概念"><a href="#常见基本概念" class="headerlink" title="常见基本概念"></a>常见基本概念</h4><ul>
 <li>节点的度：某节点的度定义为该节点孩子节点的个数。</li>
@@ -157,7 +157,7 @@
 <h4 id="求高度"><a href="#求高度" class="headerlink" title="求高度"></a>求高度</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">getHigh</span><span class="params">(treeNodeP root)</span></span>&#123;</div><div class="line">    <span class="keyword">if</span>(!root)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="number">0</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">int</span> h1 = getHigh(root-&gt;leftChild);</div><div class="line">    <span class="keyword">int</span> h2 = getHigh(root-&gt;rightChild);</div><div class="line">    <span class="keyword">return</span> h1 &gt; h2 ? h1 + <span class="number">1</span> : h2 +<span class="number">1</span>;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="所使用的栈、队列数据结构"><a href="#所使用的栈、队列数据结构" class="headerlink" title="所使用的栈、队列数据结构"></a>所使用的栈、队列数据结构</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div><div class="line">42</div><div class="line">43</div><div class="line">44</div><div class="line">45</div><div class="line">46</div><div class="line">47</div><div class="line">48</div><div class="line">49</div><div class="line">50</div><div class="line">51</div><div class="line">52</div><div class="line">53</div><div class="line">54</div><div class="line">55</div><div class="line">56</div><div class="line">57</div><div class="line">58</div><div class="line">59</div><div class="line">60</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> treeStack&#123;</div><div class="line">    treeNodeP node[SIZE];</div><div class="line">    <span class="keyword">int</span> top;</div><div class="line">    </div><div class="line">&#125;;</div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> treeStack * treeStackP;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">push</span><span class="params">(treeStackP <span class="built_in">stack</span>, treeNodeP node)</span></span>&#123;</div><div class="line">    <span class="keyword">if</span>(<span class="built_in">stack</span>-&gt;top &lt; SIZE - <span class="number">1</span>)&#123;</div><div class="line">        <span class="built_in">stack</span>-&gt;node[++<span class="built_in">stack</span>-&gt;top] = node;</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span>&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"the stack is full!\n"</span>);</div><div class="line">    &#125;</div><div class="line">    </div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">treeNodeP <span class="title">pop</span><span class="params">(treeStackP <span class="built_in">stack</span>)</span></span>&#123;</div><div class="line">    <span class="keyword">if</span>(<span class="built_in">stack</span>-&gt;top &gt; <span class="number">-1</span>)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="built_in">stack</span>-&gt;node[<span class="built_in">stack</span>-&gt;top--];</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function">treeNodeP <span class="title">top</span><span class="params">(treeStackP <span class="built_in">stack</span>)</span></span>&#123;</div><div class="line">    <span class="keyword">if</span>(<span class="built_in">stack</span>-&gt;top &gt; <span class="number">-1</span>)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="built_in">stack</span>-&gt;node[<span class="built_in">stack</span>-&gt;top];</div><div class="line">    &#125;</div><div class="line">    <span class="keyword">else</span>&#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</div><div class="line">    &#125;</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="keyword">struct</span> treeQueue &#123;</div><div class="line">    treeNodeP node[SIZE];</div><div class="line">    <span class="keyword">int</span> front;</div><div class="line">    <span class="keyword">int</span> rear;</div><div class="line">&#125;;</div><div class="line"></div><div class="line"><span class="keyword">typedef</span> <span class="keyword">struct</span> treeQueue * treeQueueP;</div><div class="line"></div><div class="line"><span class="function">treeNodeP <span class="title">getNode</span><span class="params">(treeQueueP <span class="built_in">queue</span>)</span></span>&#123;</div><div class="line">    <span class="keyword">if</span>(<span class="built_in">queue</span>-&gt;front == <span class="built_in">queue</span>-&gt;rear)&#123;</div><div class="line">        <span class="keyword">return</span> <span class="literal">NULL</span>;</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">queue</span>-&gt;front = (<span class="built_in">queue</span>-&gt;front + <span class="number">1</span>) % SIZE;</div><div class="line">    <span class="keyword">return</span> <span class="built_in">queue</span>-&gt;node[<span class="built_in">queue</span>-&gt;front];</div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">enterNode</span><span class="params">(treeQueueP <span class="built_in">queue</span>, treeNodeP node)</span></span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">if</span>((<span class="built_in">queue</span>-&gt;rear + <span class="number">1</span>) % SIZE == <span class="built_in">queue</span>-&gt;front)&#123;</div><div class="line">        <span class="built_in">printf</span>(<span class="string">"the queue is full!"</span>);</div><div class="line">    &#125;</div><div class="line">    <span class="built_in">queue</span>-&gt;rear = (<span class="built_in">queue</span>-&gt;rear + <span class="number">1</span>)% SIZE;</div><div class="line">    <span class="built_in">queue</span>-&gt;node[<span class="built_in">queue</span>-&gt;rear] = node;</div><div class="line">    </div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     
@@ -183,7 +183,7 @@
     <link href="http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/"/>
     <id>http://vinoit.me/2016/10/07/codePoint-in-java-and-utf16/</id>
     <published>2016-10-07T05:43:06.000Z</published>
-    <updated>2016-10-11T02:59:17.000Z</updated>
+    <updated>2016-10-31T08:36:51.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Unicode和UTF-8-UTF-16-UTF-32的关系"><a href="#Unicode和UTF-8-UTF-16-UTF-32的关系" class="headerlink" title="Unicode和UTF-8/UTF-16/UTF-32的关系"></a>Unicode和UTF-8/UTF-16/UTF-32的关系</h4><p>Unicode和UTF-8/UTF-16/UTF-32之间就是字符集和编码的关系。字符集的概念实际上包含两个方面，一个是字符的集合，一个是编码方案。字符集定义了它所包含的所有符号，狭义上的字符集并不包含编码方案，它仅仅是定义了属于这个字符集的所有符号。但通常来说，一个字符集并不仅仅定义字符集合，它还为每个符号定义一个二进制编码。当我们提到GB2312或者ASCII的时候，它隐式地指明了编码方案是GB2312或者ASCII，在这些情况下可以认为字符集与编码方案互等。</p>
 <p>但是Unicode具有多种编码方案。Unicode字符集规定的标准编码方案是UCS-2（UTF-16），用两个字节表示一个Unicode字符（UTF-16中两个字节的为基本多语言平面字符，4个字节的为辅助平面字符）。而UCS-4(UTF-32）用4个字节表示一个Unicode字符。另外一个常用的Unicode编码方案–UTF-8用1到4个变长字节来表示一个Unicode字符，并可以从一个简单的转换算法从UTF-16直接得到。所以在使用Unicode字符集时有多种编码方案，分别用于合适的场景。</p>
@@ -229,7 +229,7 @@
 <li><a href="https://www.zhihu.com/question/30945431/answer/50046808" target="_blank" rel="external">https://www.zhihu.com/question/30945431/answer/50046808</a></li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font>  
 </blockquote>
 ]]></content>
     
@@ -255,7 +255,7 @@
     <link href="http://vinoit.me/2016/09/25/ext3-journal-file-system/"/>
     <id>http://vinoit.me/2016/09/25/ext3-journal-file-system/</id>
     <published>2016-09-25T03:32:57.000Z</published>
-    <updated>2016-09-25T13:58:42.000Z</updated>
+    <updated>2016-10-31T08:37:14.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是日志文件系统"><a href="#什么是日志文件系统" class="headerlink" title="什么是日志文件系统"></a>什么是日志文件系统</h4><p>当我们修改某个文件时，必然要对相应文件系统上的块进行更新。但是对文件系统块的更新可能因为页高速缓存的影响在内存保留相当长的时间后才刷新到磁盘，此时若发生断电故障或系统崩溃这样的不可预测的时间，可能会导致文件系统处于不一致的状态。文件系统的不一致状态，是指元数据中存储的信息与磁盘实际情况不一致。这个相当长的时间是相对于计算机运行速度来说，事实上也是极短的（通常为1/500 秒?）。为了克服这个问题，传统的Unix文件系统在安装之前都要进行检查；如果它没有被正常卸载（例如：超级块的<code>s_mount_state</code> ！= <code>EXT2_VALID_FS</code>），那么一个特定的程序（e2fsck）将执行彻底、耗时的检查，并修正磁盘文件系统的所有数据结构。</p>
 <p>然而当文件系统的文件数、目录数增大到一定程度时，一次一致性检查接可能花费数个小时，这显然是无法接受的。日志文件系统的目标就是避免对整个文件系统进行耗时的一致性检查。简单来说，当文件系统没有被正常卸载时，只需要直接去查看日志的内容，日志存放在一个特定的磁盘区，然后对日志中的内容进行检查和修正就可以了。</p>
@@ -311,7 +311,7 @@
 <li>[PDF]基于 JBD 的日志型文件系统性能优化（作者：陈 颖，奚宏生）</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 </blockquote>
 ]]></content>
@@ -336,7 +336,7 @@
     <link href="http://vinoit.me/2016/09/23/ext2-file-system/"/>
     <id>http://vinoit.me/2016/09/23/ext2-file-system/</id>
     <published>2016-09-23T09:57:48.000Z</published>
-    <updated>2016-10-07T12:52:37.000Z</updated>
+    <updated>2016-10-31T08:37:01.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Ext2磁盘数据结构"><a href="#Ext2磁盘数据结构" class="headerlink" title="Ext2磁盘数据结构"></a>Ext2磁盘数据结构</h4><p>任何Ext2分区中的第一个块从不受Ext2文件系统的管理，因为第一个块是分区的引导扇区。分区中剩下来的其他部分分成了块组，其分布图如下:<br><img src="/images/ext2/ext2-file-system-0.png" alt="Ext2块组分布图"><br>典型的块大小是1024 bytes或者4096 bytes。这个大小在创建Ext2文件系统的时候被决定，它可以由系统管理员指定，也可以由文件系统的创建程序根据硬盘分区的大小，自动选择一个较合理的值。</p>
 <p>每个块组的开头部分都由超级块描述符和块组描述符占用，而且每个块组的超级块描述符和块组描述符都是相同的，冗余的主要目的就是保证超级块描述符和组描述符能在描述符数据损坏的情况下依旧能回到一个一致的状态。这里的块组描述符其实是一个块组描述符组，这n个块中存放着分区中所有的块组对应的块组描述符。只有块组0中所包含的超级块和块组描述符才由内核使用，其余的保持不变。</p>
@@ -422,7 +422,7 @@
 <li>UTLK</li>
 </ul>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 </blockquote>
 ]]></content>
     
@@ -531,7 +531,7 @@
     <link href="http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/"/>
     <id>http://vinoit.me/2016/09/14/JNI-explore-FileDescriptor-and-FileInputStream/</id>
     <published>2016-09-14T01:13:07.000Z</published>
-    <updated>2016-09-25T13:28:05.000Z</updated>
+    <updated>2016-10-31T08:37:30.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="介绍"><a href="#介绍" class="headerlink" title="介绍"></a>介绍</h4><p>使用JAVA读取文件时需要用到<code>FileInputStream</code>这个类，最简单的使用方式如下:</p>
 <figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String[] args)</span></span>&#123;</div><div class="line">        <span class="keyword">try</span> &#123;</div><div class="line">            FileInputStream fileInputStream = <span class="keyword">new</span> FileInputStream(<span class="string">"test.txt"</span>);</div><div class="line">            System.out.println(fileInputStream.read());</div><div class="line">        &#125; <span class="keyword">catch</span> (FileNotFoundException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125; <span class="keyword">catch</span> (IOException e) &#123;</div><div class="line">            e.printStackTrace();</div><div class="line">        &#125;</div><div class="line"></div><div class="line">    &#125;</div></pre></td></tr></table></figure>
@@ -588,7 +588,7 @@
 </ol>
 <p>注：本文JDK版本为1.8</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -723,7 +723,7 @@
     <link href="http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/"/>
     <id>http://vinoit.me/2016/09/01/linux-kernel-hlist_head-and-hlist_node/</id>
     <published>2016-09-01T07:57:17.000Z</published>
-    <updated>2016-09-25T13:28:26.000Z</updated>
+    <updated>2016-10-31T08:37:39.000Z</updated>
     
     <content type="html"><![CDATA[<p><code>hlist_head</code>和<code>hlist_node</code>用于散列表，分表表示列表头（数组中的一项）和列表头所在双向链表中的某项，两者结构如下:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_head &#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
@@ -740,7 +740,7 @@
 <p>在删除链表头结点的时候，<code>pprev</code>这个设计无需判断删除的节点是否为头结点。如果是普通双向链表的设计，那么删除头结点之后，<code>hlist_head</code>中的<code>first指针</code>需要指向新的头结点。通过下面2个函数来加深理解:</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div></pre></td><td class="code"><pre><div class="line"><span class="comment">//添加节点到链表头</span></div><div class="line"><span class="function"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="title">hlist_add_head</span><span class="params">(<span class="keyword">struct</span> hlist_node *n, <span class="keyword">struct</span> hlist_head *h)</span></span></div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *first = h-&gt;first;</div><div class="line">    n-&gt;next = first;<span class="comment">//新节点的next指针指向原头结点</span></div><div class="line">    <span class="keyword">if</span> (first)</div><div class="line">        first-&gt;pprev = &amp;n-&gt;next;<span class="comment">//原头结点的pprev指向新节点的next字段</span></div><div class="line">    h-&gt;first = n;<span class="comment">//first指针指向新的节点（更换了头结点）</span></div><div class="line">    n-&gt;pprev = &amp;h-&gt;first; <span class="comment">//此时n是链表的头结点,将它的pprev指向list_head的first字段</span></div><div class="line">&#125;</div><div class="line"></div><div class="line"><span class="comment">//删除节点</span></div><div class="line"><span class="keyword">static</span> <span class="keyword">inline</span> <span class="keyword">void</span> <span class="number">__</span>hlist_del(<span class="keyword">struct</span> hlist_node *n)</div><div class="line">&#123;</div><div class="line">    <span class="keyword">struct</span> hlist_node *next = n-&gt;next;</div><div class="line">    <span class="keyword">struct</span> hlist_node **pprev = n-&gt;pprev;</div><div class="line">    *pprev = next; <span class="comment">// pprev指向的是前一个节点的next指针,当该节点是头节点时指向 hlist_head的first,两种情况下不论该节点是一般的节点还是头结点都可以通过这个操作删除掉所需删除的节点。</span></div><div class="line">    <span class="keyword">if</span> (next)</div><div class="line">        next-&gt;pprev = pprev;<span class="comment">//使删除节点的后一个节点的pprev指向删除节点的前一个节点的next字段，节点成功删除。</span></div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -766,7 +766,7 @@
     <link href="http://vinoit.me/2016/08/30/linux-kernel-note-memory-manage/"/>
     <id>http://vinoit.me/2016/08/30/linux-kernel-note-memory-manage/</id>
     <published>2016-08-30T12:10:18.000Z</published>
-    <updated>2016-10-26T03:08:42.000Z</updated>
+    <updated>2016-10-31T08:42:40.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="非一致内存访问（NUMA）"><a href="#非一致内存访问（NUMA）" class="headerlink" title="非一致内存访问（NUMA）"></a>非一致内存访问（NUMA）</h4><p>我们习惯上认为计算机内存是一种均匀、共享的资源。在忽略硬件高速缓存的情况下，我们期望不管内存单元处于何处，也不管CPU处于何处，CPU对内存单元的访问都需要相同的时间。但是，在某些体系结构中并不总是成立。</p>
 <p>在NUMA模型中，给定CPU对不同内存单元的访问时间可能不一样。系统的物理内存被划分为几个节点(node)。在一个单独的节点内，任一给定CPU访问页面所需的时间都是相同的。然而，对不同的CPU，这个时间可能就不同。每个节点的物理内存又可以分为几个管理区（zone）。</p>
@@ -819,6 +819,8 @@
 <p>当我们要求内核给我们分配一个小对象时，是从本地高速缓存中获取的。<strong>本地高速缓存中的对象依次放置在该本地高速缓存描述符的地址后面。</strong>从本地高速缓存获取对象时，首先根据当前CPU，从本地高速缓存数组中获取对应的到本地高速缓存描述符指针<code>ac</code>，<code>((void **)(ac+1))[--ac-&gt;avail]</code>返回的就是所分配的对象。</p>
 <h4 id="slab分配对象小结"><a href="#slab分配对象小结" class="headerlink" title="slab分配对象小结"></a>slab分配对象小结</h4><p>当我们需要一个小对象时，首先根据该对象大小，选择合适的<strong>高速缓存</strong>(kmem_cache)。然后获取当前CPU id,到对应的<strong>本地高速缓存</strong>(array_cache)中获取对象。如果无空闲对象，则从空闲slab链表或者半空闲slab链表中分配一些对象，数量为本地高速缓存描述符中<code>batchcount</code>值。如果slab链表中的对象都已被使用，则从伙伴系统中分配若干个页框作为slab添加到高速缓存中，并且初始化，然后分配对象给本地高速缓存。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文从整体上描述了Linux中的内存管理，并没有涉及到具体源码以及细节问题，更多细节待日后整理。</p>
+<blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -841,7 +843,7 @@
     <link href="http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/"/>
     <id>http://vinoit.me/2016/08/29/understand-java-auto-increment-by-bytecode/</id>
     <published>2016-08-29T02:47:24.000Z</published>
-    <updated>2016-09-25T13:28:43.000Z</updated>
+    <updated>2016-10-31T08:44:52.000Z</updated>
     
     <content type="html"><![CDATA[<figure class="highlight java"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">public</span> <span class="class"><span class="keyword">class</span> <span class="title">Test</span> </span>&#123;</div><div class="line">    </div><div class="line">    <span class="keyword">static</span> <span class="keyword">int</span> x, y;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">main</span><span class="params">(String args[])</span> </span>&#123;</div><div class="line">        x++;</div><div class="line">        myMethod();</div><div class="line">        System.out.println(x + y + ++x);</div><div class="line">    &#125;</div><div class="line"></div><div class="line">    <span class="function"><span class="keyword">public</span> <span class="keyword">static</span> <span class="keyword">void</span> <span class="title">myMethod</span><span class="params">()</span> </span>&#123;</div><div class="line">        y = x++ + ++x;</div><div class="line">    &#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <p><strong>如果以上代码的结果你很自信能做对,那么本文或许对你帮助不大,但仍然可以看下java底层的实现.在最后将给出以上代码的结果以及解析.</strong></p>
@@ -957,7 +959,7 @@
 <p>x==3,y==4</p>
 <p>最后输出的结果就是3+4+4==11</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -980,7 +982,7 @@
     <link href="http://vinoit.me/2016/08/26/linux-kernel-note-process-scheduling/"/>
     <id>http://vinoit.me/2016/08/26/linux-kernel-note-process-scheduling/</id>
     <published>2016-08-26T08:23:54.000Z</published>
-    <updated>2016-08-26T13:51:43.000Z</updated>
+    <updated>2016-10-31T08:43:08.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="概览"><a href="#概览" class="headerlink" title="概览"></a>概览</h4><p>传统Unix操作系统的调度算法必须实现几个互相冲突的目标：进程响应时间尽可能快，后台作业的吞吐量尽可能高，进程的饥饿现象尽可能避免，低优先级和高优先级进程的需要尽可能调和等等。决定什么时候以怎样的方式选择一个新进程运行的这组规则就是所谓的调度策略（scheduling policy）。</p>
 <p>Linux的进程调度是基于分时技术（time-sharing）。允许多个进程“并发”运行就意味着CPU 的时间被粗略地分成“片”，给每个可运行进程分配一片。</p>
@@ -1017,6 +1019,8 @@
 <h5 id="struct-cfs-rq"><a href="#struct-cfs-rq" class="headerlink" title="struct cfs_rq"></a>struct cfs_rq</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> cfs_rq &#123;</div><div class="line"><span class="number">232</span>         <span class="keyword">struct</span> load_weight load;</div><div class="line"><span class="number">233</span>         <span class="keyword">unsigned</span> <span class="keyword">long</span> nr_running;</div><div class="line"><span class="number">234</span> </div><div class="line"><span class="number">235</span>         u64 exec_clock;</div><div class="line"><span class="number">236</span>         u64 min_vruntime;</div><div class="line"><span class="number">237</span> </div><div class="line"><span class="number">238</span>         <span class="keyword">struct</span> rb_root tasks_timeline;</div><div class="line"><span class="number">239</span>         <span class="keyword">struct</span> rb_node *rb_leftmost;</div><div class="line"><span class="number">240</span>         <span class="keyword">struct</span> rb_node *rb_load_balance_curr;</div><div class="line"><span class="number">241</span>         <span class="comment">/* 'curr' points to currently running entity on this cfs_rq.</span></div><div class="line">242          * It is set to NULL otherwise (i.e when none are currently running).</div><div class="line">243          */</div><div class="line"><span class="number">244</span>         <span class="keyword">struct</span> sched_entity *curr;</div><div class="line"><span class="number">245</span> </div><div class="line"><span class="number">246</span>         <span class="keyword">unsigned</span> <span class="keyword">long</span> nr_spread_over;</div><div class="line"><span class="number">247</span> </div><div class="line"><span class="number">248</span> <span class="meta">#<span class="meta-keyword">ifdef</span> CONFIG_FAIR_GROUP_SCHED</span></div><div class="line"><span class="number">249</span>         <span class="keyword">struct</span> rq *rq;  <span class="comment">/* cpu runqueue to which this cfs_rq is attached */</span></div><div class="line"><span class="number">250</span> </div><div class="line"><span class="number">251</span>         <span class="comment">/*</span></div><div class="line">252          * leaf cfs_rqs are those that hold tasks (lowest schedulable entity in</div><div class="line">253          * a hierarchy). Non-leaf lrqs hold other higher schedulable entities</div><div class="line">254          * (like users, containers etc.)</div><div class="line">255          *</div><div class="line">256          * leaf_cfs_rq_list ties together list of leaf cfs_rq's in a cpu. This</div><div class="line">257          * list is used during load balance.</div><div class="line">258          */</div><div class="line"><span class="number">259</span>         <span class="keyword">struct</span> list_head leaf_cfs_rq_list;</div><div class="line"><span class="number">260</span>         <span class="keyword">struct</span> task_group *tg;  <span class="comment">/* group that "owns" this runqueue */</span></div><div class="line"><span class="number">261</span> <span class="meta">#<span class="meta-keyword">endif</span></span></div><div class="line"><span class="number">262</span> &#125;;</div></pre></td></tr></table></figure>
 <h5 id="struct-rt-rq"><a href="#struct-rt-rq" class="headerlink" title="struct rt_rq"></a>struct rt_rq</h5><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> rt_rq &#123;</div><div class="line"><span class="number">266</span>         <span class="keyword">struct</span> rt_prio_array active;</div><div class="line"><span class="number">267</span>         <span class="keyword">int</span> rt_load_balance_idx;</div><div class="line"><span class="number">268</span>         <span class="keyword">struct</span> list_head *rt_load_balance_head, *rt_load_balance_curr;</div><div class="line"><span class="number">269</span> &#125;;</div></pre></td></tr></table></figure>
 <p><code>struct rq</code>为一个运行队列，每个CPU都有一个这样的数据结构，在<code>rq</code>中有<code>struct cfs_rq</code>类型的cfs字段，该字段表示一个CFS调度器的运行队列，<code>rq</code>中的<code>struct rt_rq</code>类型的rt字段表示一个实时进程的运行队列。具体细节日后有时间在整理。</p>
+<blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1156,7 +1160,7 @@
     <link href="http://vinoit.me/2016/08/24/linux-kernel-note-process-three/"/>
     <id>http://vinoit.me/2016/08/24/linux-kernel-note-process-three/</id>
     <published>2016-08-24T05:42:48.000Z</published>
-    <updated>2016-08-24T15:23:41.000Z</updated>
+    <updated>2016-10-31T08:43:23.000Z</updated>
     
     <content type="html"><![CDATA[<h3 id="进程切换"><a href="#进程切换" class="headerlink" title="进程切换"></a>进程切换</h3><p>为了控制进程的执行，内核必须有能力挂起正在CPU上运行的进程，并恢复以前挂起的某个进程的执行。这种行为被称为进程切换（process switch）、任务切换（task switch）或上下文切换（content switch）。</p>
 <h4 id="硬件上下文"><a href="#硬件上下文" class="headerlink" title="硬件上下文"></a>硬件上下文</h4><p>尽管每个进程都有自己的地址空间，但所有进程必须共享CPU寄存器。因此，在恢复一个进程的执行之前，内核必须确保每个寄存器装载了挂起进程时所需要的值。</p>
@@ -1214,6 +1218,8 @@
 <li><p>汇编语言指令ret把栈顶保存的返回地址装入eip程序计数器。不过，__swtich_to()函数时通过简单的跳转被调用的。因此，ret汇编指令在栈中找到标号为1的指令地址，其中标号为1的地址是由switch_to()宏推入堆栈的。</p>
 </li>
 </ul>
+<blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1236,7 +1242,7 @@
     <link href="http://vinoit.me/2016/08/19/maven-common-command-and-operation/"/>
     <id>http://vinoit.me/2016/08/19/maven-common-command-and-operation/</id>
     <published>2016-08-19T02:15:15.000Z</published>
-    <updated>2016-09-25T13:29:00.000Z</updated>
+    <updated>2016-10-31T08:44:33.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="Maven-Archetypes"><a href="#Maven-Archetypes" class="headerlink" title="Maven Archetypes"></a>Maven Archetypes</h4><p>Maven archetypes是一个项目模板，可以让Maven按照指定的模板构建出一个项目最基本的文件结构，以及创建一些文件。Maven中有许多项目模板供我们使用，使用方式如下:</p>
 <figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line">mvn archetype:generate</div></pre></td></tr></table></figure>
@@ -1284,7 +1290,7 @@
 </ul>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了Maven的一些常见操作和命令，未整理的部分日后再补充吧。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1314,7 +1320,7 @@
     <link href="http://vinoit.me/2016/08/18/maven-tutorial/"/>
     <id>http://vinoit.me/2016/08/18/maven-tutorial/</id>
     <published>2016-08-18T08:47:15.000Z</published>
-    <updated>2016-09-25T13:28:51.000Z</updated>
+    <updated>2016-10-31T08:44:42.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
 <ul>
@@ -1405,7 +1411,7 @@
 <p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>以上是我整理的一些Maven相关的信息，主要是一些基础的原理性的内容。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1428,7 +1434,7 @@
     <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-two/"/>
     <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</id>
     <published>2016-08-16T12:31:04.000Z</published>
-    <updated>2016-09-25T13:31:43.000Z</updated>
+    <updated>2016-10-31T08:43:35.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h4><p>进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来对进程进行管理。进程描述符的数据结构是<code>struct task_struct</code>,与进程相关的所有信息都包含在该数据结构中，可想而知该数据结构是十分复杂的。</p>
 <p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L1458" target="_blank" rel="external"><strong>这里</strong></a>可以查看<code>task_struct</code>的完整结构，下图示意性地描述了该数据结构：<br><img src="/images/linux-kernel-note/process-two-0.png" alt=""><br>在这里只讨论进程的某几个属性，其余属性在之后有关其他内容的文章中会逐渐涉及到，内核的学习需要联系的思维。</p>
@@ -1531,7 +1537,7 @@
 </ol>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 
@@ -1559,7 +1565,7 @@
     <link href="http://vinoit.me/2016/08/15/linux-kernel-note-process-one/"/>
     <id>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</id>
     <published>2016-08-15T05:56:35.000Z</published>
-    <updated>2016-09-25T13:31:34.000Z</updated>
+    <updated>2016-10-31T08:42:51.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="进程定义"><a href="#进程定义" class="headerlink" title="进程定义"></a>进程定义</h4><p>说起进程，真是既熟悉又陌生，感觉知道这个玩意儿，但是又不知该如何说起。按照UTLK中的说法，进程是任何多道程序设计的操作系统中的基本概念，<code>通常把进程定义为程序执行的一个实例</code>,貌似大多数OS教科书也是这么定义的。</p>
 <p>从内核的角度来看，进程就是消耗系统资源（内存，CPU时间片等）的一个实体。因为每个进程都会有他的执行代码，内核通过调度，让不同的进程可以在CPU上分时执行代码，同时每个进程也都会占用相应的RAM资源。</p>
@@ -1573,7 +1579,7 @@
 <p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
 <h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
 ]]></content>
     
     <summary type="html">
@@ -1596,7 +1602,7 @@
     <link href="http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/"/>
     <id>http://vinoit.me/2016/08/14/linux-kernel-note-page-mechanism/</id>
     <published>2016-08-14T07:07:15.000Z</published>
-    <updated>2016-09-25T13:31:23.000Z</updated>
+    <updated>2016-10-31T08:42:31.000Z</updated>
     
     <content type="html"><![CDATA[<p>一个逻辑地址经过<a href="/2016/08/13/linux-kernel-note-segment-mechanism/">分段机制</a>转换为一个线性地址之后，便需要分页单元将线性地址转换为实际的物理地址。</p>
 <h4 id="硬件中的分页"><a href="#硬件中的分页" class="headerlink" title="硬件中的分页"></a>硬件中的分页</h4><p>从80386开始，所有的80x86处理器都支持分页。是否开启分页通过设置cr0寄存器的PG标志来决定，当PG为0时，表示不开启分页，此时线性地址呗解释为物理地址。</p>
@@ -1649,7 +1655,7 @@
 <p>从软件的角度，由于多引入了两部份，也就是说，共有五部份。要让二层架构的硬件认识五部分，在地址划分的时候，将页上级目录和页中间目录的长度设置为0就可以了。</p>
 <p>这样，操作系统见到的是五部份，硬件还是按它死板的三部份划分，软硬件又和谐了。</p>
 <blockquote>
-<font color="Darkorange">如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
 
 
 

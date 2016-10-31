@@ -48,4 +48,4 @@ asmlinkage long sys_getpid(void)
 #### 总结
 本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。
 
-><font color= Darkorange>如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 
+><font color= Darkorange>因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 

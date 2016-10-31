@@ -142,4 +142,4 @@ __KERNEL_DS           index= 13   T1=0
 #### 总结
 分段机制的存在主要是为了兼容前代处理器，而Linux巧妙的避开了硬件的死套路，有时候软硬件的结合的确很和谐。
 
-><font color= Darkorange>如若觉得本文尚可，欢迎转载交流。转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 
+><font color= Darkorange>因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 

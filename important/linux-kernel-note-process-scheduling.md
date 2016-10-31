@@ -222,3 +222,5 @@ struct rt_rq {
 ```
 
 `struct rq`为一个运行队列，每个CPU都有一个这样的数据结构，在`rq`中有`struct cfs_rq`类型的cfs字段，该字段表示一个CFS调度器的运行队列，`rq`中的`struct rt_rq`类型的rt字段表示一个实时进程的运行队列。具体细节日后有时间在整理。
+
+><font color= Darkorange>因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明[原站地址](http://vinoit.me)以及原文地址，谢谢！</font> 
