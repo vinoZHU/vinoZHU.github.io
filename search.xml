@@ -4,15 +4,21 @@
   
     
     <entry>
-      <title><![CDATA[重拾数据结构--红黑树]]></title>
-      <url>http://vinoit.me/2016/10/30/regain-data-structure-rb-tree/</url>
-      <content type="html"><![CDATA[重拾数据结构--红黑树]]></content>
+      <title><![CDATA[Trie树介绍及实现（传统&双数组）]]></title>
+      <url>http://vinoit.me/2016/11/02/trie-tree/</url>
+      <content type="html"><![CDATA[Trie树介绍及实现（传统&双数组）]]></content>
     </entry>
     
     <entry>
-      <title><![CDATA[重拾数据结构--二叉树基础以及常用操作]]></title>
-      <url>http://vinoit.me/2016/10/27/regain-data-structure-binary-tree/</url>
-      <content type="html"><![CDATA[重拾数据结构--二叉树基础以及常用操作]]></content>
+      <title><![CDATA[红黑树介绍及实现]]></title>
+      <url>http://vinoit.me/2016/10/30/rb-tree/</url>
+      <content type="html"><![CDATA[红黑树介绍及实现]]></content>
+    </entry>
+    
+    <entry>
+      <title><![CDATA[二叉树基础以及常用操作]]></title>
+      <url>http://vinoit.me/2016/10/27/binary-tree/</url>
+      <content type="html"><![CDATA[二叉树基础以及常用操作]]></content>
     </entry>
     
     <entry>
