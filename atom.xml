@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-11-02T03:44:41.000Z</updated>
+  <updated>2016-11-07T10:53:29.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -16,11 +16,88 @@
   <generator uri="http://hexo.io/">Hexo</generator>
   
   <entry>
+    <title>堆</title>
+    <link href="http://vinoit.me/2016/11/07/heap/"/>
+    <id>http://vinoit.me/2016/11/07/heap/</id>
+    <published>2016-11-07T07:42:09.000Z</published>
+    <updated>2016-11-07T10:53:29.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="堆介绍"><a href="#堆介绍" class="headerlink" title="堆介绍"></a>堆介绍</h4><p>堆（也叫优先队列），是一棵完全二叉树，它的特点是父节点的值大于（小于）两个子节点的值（分别称为大顶堆和小顶堆）。堆可以用数组来存储，但为了喝完全二叉树的性质对应，数组的0号元素不存储节点，0号元素可以用来记录堆的节点数量。由于是完全二叉树，假定<code>i</code>是其中某个节点，可定义如下操作：</p>
+<ul>
+<li>PARENT(i) = i/2</li>
+<li>LEFT(i) = 2*i</li>
+<li>RIGHT(i) = 2*i+1</li>
+</ul>
+<p>大顶堆以及数组存储：<br><img src="/images/data-structure/heap-0.png" alt=""></p>
+<h4 id="维护堆的性质"><a href="#维护堆的性质" class="headerlink" title="维护堆的性质"></a>维护堆的性质</h4><p>对于大顶堆，如果父节点的值小于某个字节点，那么这个堆的性质就需要恢复，过程如下：<br><img src="/images/data-structure/heap-1.png" alt=""><br>这里的前提是i的左右孩子都是堆（在建堆的时候是自下而上的），然后在A[i]、A[LEFT(i)]、A[RIGHT(i)]中选择一个最大的，如果A[i]最大，则堆的性质没有被破坏，否则A[i]和某个孩子交换位置，然后使交换位置后的子节点重复上述过程：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">maxHeapify</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> i, <span class="keyword">int</span> n)</span></span>&#123;<span class="comment">//n为堆的容量大小 </span></div><div class="line">  <span class="keyword">int</span> left = LEFT(i);</div><div class="line">  <span class="keyword">int</span> right = RIGHT(i);</div><div class="line">  <span class="keyword">int</span> max = i;<span class="comment">//max记录最大节点的下标</span></div><div class="line">  <span class="keyword">if</span>(left &lt;= n)&#123;</div><div class="line">  		max = A[left] &gt; A[max] ? left : max;</div><div class="line">  &#125;      </div><div class="line">  <span class="keyword">if</span>(right &lt;= n) &#123;</div><div class="line">  		max = A[right] &gt; A[max] ? right : max;</div><div class="line">  &#125;    </div><div class="line">  <span class="keyword">if</span>(max != i)&#123;</div><div class="line">    swap(A, max, i);</div><div class="line">    maxHeapify(A, max, n);</div><div class="line">  &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="建堆"><a href="#建堆" class="headerlink" title="建堆"></a>建堆</h4><p>给定一个数组A，n=A.length,其子数组A[(n/2)+1..n]中的元素都是堆这颗完全二叉树的叶子节点，可以利用这个性质,先找到堆的最后一个非叶子节点（即为第n/2个节点），然后从该节点开始，从后往前逐个调整每个子树，使之称为堆，最终整个数组便是一个堆。来将这个数组转换成一个大顶堆，以下是一个示意图：<br><img src="/images/data-structure/heap-2.png" alt=""></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">buildMaxHeap</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">  <span class="keyword">int</span> i;</div><div class="line">  <span class="keyword">for</span>(i = n/<span class="number">2</span>; i&gt;<span class="number">0</span>; i--)&#123;</div><div class="line">    maxHeapify(A, i, n);<span class="comment">//依次向上维护堆的性质</span></div><div class="line">  &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="堆排序"><a href="#堆排序" class="headerlink" title="堆排序"></a>堆排序</h4><p>给定一个数组A,使用堆排序的步骤如下：</p>
+<ol>
+<li>建堆</li>
+<li>n:=heap-size,swap(A[1],A[n])</li>
+<li>heap-size–</li>
+<li>heapify(A,1,heap-size)//维护堆</li>
+<li>if(heap-size&gt;0) goto (2)</li>
+</ol>
+<p>示意图：<br><img src="/images/data-structure/heap-3.png" alt=""><br><img src="/images/data-structure/heap-4.png" alt=""></p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">heapSort</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">	buildMaxHeap(A,n);</div><div class="line">	<span class="keyword">int</span> i;</div><div class="line">	<span class="keyword">while</span>(n &gt; <span class="number">0</span>)&#123;</div><div class="line">		swap(A[<span class="number">1</span>],A[i]);</div><div class="line">		n--;</div><div class="line">		maxHeapify(A,<span class="number">1</span>,n);</div><div class="line">	&#125;</div><div class="line"></div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="优先队列"><a href="#优先队列" class="headerlink" title="优先队列"></a>优先队列</h4><p>堆当作优先队列使用时，每个元素都有一个key，常见操作如下：</p>
+<ul>
+<li>insert(A,x):将元素x插入到队列中</li>
+<li>maximum（A):返回最大key所在的元素</li>
+<li>extract-max(A):返回并删除最大key所在的元素</li>
+<li>increase-key(A,x,k):将元素x的key增加为k，假设k大于x</li>
+</ul>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">heapMaximun</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">	<span class="keyword">if</span>(n &lt; <span class="number">1</span>) <span class="keyword">return</span> <span class="number">-1</span>;<span class="comment">//error</span></div><div class="line">	<span class="keyword">return</span> A[<span class="number">1</span>];</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">heapExtractMax</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">	<span class="keyword">if</span>(n &lt; <span class="number">1</span>) <span class="keyword">return</span> <span class="number">-1</span>;<span class="comment">//error</span></div><div class="line">	<span class="keyword">int</span> max = A[<span class="number">1</span>];</div><div class="line">	A[<span class="number">1</span>] = A[n];</div><div class="line">	n--;</div><div class="line">	maxHeapify(A,<span class="number">1</span>,n);</div><div class="line">	<span class="keyword">return</span> max;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">heapIncreaseKey</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> i, <span class="keyword">int</span> key)</span></span>&#123;</div><div class="line">	<span class="keyword">if</span>(key &lt; A[i]) error;</div><div class="line">	A[i] = key;</div><div class="line">	<span class="keyword">while</span>(i &gt; <span class="number">1</span> &amp;&amp; A[PARENT(i)] &lt; A[i])&#123;</div><div class="line">		swap(A[i],A[PARENT(i)]);</div><div class="line">		i = PARENT(i);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">maxHeapInsert</span><span class="params">(<span class="keyword">int</span> A[],<span class="keyword">int</span> x,<span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">	A[++n] = x;</div><div class="line">	<span class="keyword">while</span>(n &gt; <span class="number">1</span> &amp;&amp; A[n] &gt; A[PARENT(n)])&#123;</div><div class="line">		swap(A[n],A[PARENT(n)]);</div><div class="line">		n = PARENT(n);</div><div class="line">	&#125;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="堆的应用"><a href="#堆的应用" class="headerlink" title="堆的应用"></a>堆的应用</h4><ul>
+<li><p>堆的最常见应用是堆排序，时间复杂度为O(N lg N)。如果是从小到大排序，用大顶堆；从大到小排序，用小顶堆。</p>
+</li>
+<li><p>在O(n lg k)时间内，将k个排序表合并成一个排序表，n为所有有序表中元素个数。</p>
+</li>
+<li><p>一个文件中包含了1亿个随机整数，如何快速的找到最大(小)的100万个数字?（时间复杂度：O（n lg k））</p>
+<p>  【解析】取前100 万个整数，构造成了一棵数组方式存储的具有小顶堆，然后接着依次取下一个整数，如果它大于最小元素亦即堆顶元素，则将其赋予堆顶元素，然后用Heapify调整整个堆，如此下去，则最后留在堆中的100万个整数即为所求 100万个数字。该方法可大大节约内存。</p>
+</li>
+</ul>
+<p>参考：</p>
+<ul>
+<li>《算法导论》</li>
+</ul>
+<blockquote>
+<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
+
+
+
+</blockquote>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;堆介绍&quot;&gt;&lt;a href=&quot;#堆介绍&quot; class=&quot;headerlink&quot; title=&quot;堆介绍&quot;&gt;&lt;/a&gt;堆介绍&lt;/h4&gt;&lt;p&gt;堆（也叫优先队列），是一棵完全二叉树，它的特点是父节点的值大于（小于）两个子节点的值（分别称为大顶堆和小顶堆）。堆可以用数组来存储，
+    
+    </summary>
+    
+      <category term="数据结构" scheme="http://vinoit.me/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+    
+      <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+      <category term="堆" scheme="http://vinoit.me/tags/%E5%A0%86/"/>
+    
+      <category term="排序" scheme="http://vinoit.me/tags/%E6%8E%92%E5%BA%8F/"/>
+    
+  </entry>
+  
+  <entry>
     <title>Trie树介绍及实现（传统&amp;双数组）</title>
     <link href="http://vinoit.me/2016/11/02/trie-tree/"/>
     <id>http://vinoit.me/2016/11/02/trie-tree/</id>
     <published>2016-11-02T01:13:54.000Z</published>
-    <updated>2016-11-02T03:44:41.000Z</updated>
+    <updated>2016-11-07T07:43:33.000Z</updated>
     
     <content type="html"><![CDATA[<p>本文属于一个整理性质，参考了几篇较好的文章，在文末给出参考链接。</p>
 <h4 id="什么是Trie树"><a href="#什么是Trie树" class="headerlink" title="什么是Trie树"></a>什么是Trie树</h4><p>Trie树，又叫字典树、前缀树（Prefix Tree）、单词查找树 或 键树，是一种树形结构。典型应用是用于统计和排序大量的字符串（但不仅限于字符串），所以经常被搜索引擎系统用于文本词频统计。它的优点是最大限度地减少无谓的字符串比较，<code>查询效率比较高</code>。</p>
@@ -88,6 +165,8 @@
     
       <category term="trie树" scheme="http://vinoit.me/tags/trie%E6%A0%91/"/>
     
+      <category term="字符串" scheme="http://vinoit.me/tags/%E5%AD%97%E7%AC%A6%E4%B8%B2/"/>
+    
   </entry>
   
   <entry>
@@ -95,7 +174,7 @@
     <link href="http://vinoit.me/2016/10/30/rb-tree/"/>
     <id>http://vinoit.me/2016/10/30/rb-tree/</id>
     <published>2016-10-30T04:07:38.000Z</published>
-    <updated>2016-11-02T01:12:53.000Z</updated>
+    <updated>2016-11-07T07:43:09.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="自平衡二叉查找树（AVL）"><a href="#自平衡二叉查找树（AVL）" class="headerlink" title="自平衡二叉查找树（AVL）"></a>自平衡二叉查找树（AVL）</h4><p>了解自平衡二叉查找树前，先讲讲二叉查找树。二叉查找树是一颗二叉树，对于其中的每一个节点，左孩子小于自己，右孩子大于自己。在插入一个节点时，判断插入节点与当前遍历的树节点的大小，若小于当前树节点，则与左孩子比较，反之，则与右孩子比较。<br><img src="/images/data-structure/rb-tree-0.png" alt=""><br>但是，一颗普通的二叉查找树容易退化成链表：<br><img src="/images/data-structure/rb-tree-1.png" alt=""><br>我们希望一颗二叉查找树的时间复杂度为O（logn）,而这种情况下时间复杂度已经变成了O（n）。所以就出现了<code>自平衡二叉查找树</code>。</p>
 <p>在AVL树中任何节点的两个子树的高度最大差别为一，所以它也被称为高度平衡树。查找、插入和删除在平均和最坏情况下都是O（log n）。增加和删除可能需要通过一次或多次树旋转来重新平衡这个树。</p>
@@ -174,6 +253,8 @@
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
     
       <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
+    
+      <category term="查找" scheme="http://vinoit.me/tags/%E6%9F%A5%E6%89%BE/"/>
     
   </entry>
   
@@ -1623,43 +1704,6 @@
     <summary type="html">
     
       &lt;h4 id=&quot;进程描述符&quot;&gt;&lt;a href=&quot;#进程描述符&quot; class=&quot;headerlink&quot; title=&quot;进程描述符&quot;&gt;&lt;/a&gt;进程描述符&lt;/h4&gt;&lt;p&gt;进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来
-    
-    </summary>
-    
-      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>linux内核笔记之进程（一）</title>
-    <link href="http://vinoit.me/2016/08/15/linux-kernel-note-process-one/"/>
-    <id>http://vinoit.me/2016/08/15/linux-kernel-note-process-one/</id>
-    <published>2016-08-15T05:56:35.000Z</published>
-    <updated>2016-10-31T08:42:51.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="进程定义"><a href="#进程定义" class="headerlink" title="进程定义"></a>进程定义</h4><p>说起进程，真是既熟悉又陌生，感觉知道这个玩意儿，但是又不知该如何说起。按照UTLK中的说法，进程是任何多道程序设计的操作系统中的基本概念，<code>通常把进程定义为程序执行的一个实例</code>,貌似大多数OS教科书也是这么定义的。</p>
-<p>从内核的角度来看，进程就是消耗系统资源（内存，CPU时间片等）的一个实体。因为每个进程都会有他的执行代码，内核通过调度，让不同的进程可以在CPU上分时执行代码，同时每个进程也都会占用相应的RAM资源。</p>
-<h4 id="进程、轻量级进程、线程"><a href="#进程、轻量级进程、线程" class="headerlink" title="进程、轻量级进程、线程"></a>进程、轻量级进程、线程</h4><p>现代OS基本上都支持多线程应用程序–拥有很多相对独立执行流的用户程序共享应用程序的大部分数据结构，Linux也一样。在这样的系统中，一个进程由由多个用户线程组成，每个线程都代表进程的一个执行流。</p>
-<p>Linux使用轻量级进程对多线程应用程序提供更好的支持。两个轻量进程程基本上可以共享一些资源，只要其中一个修改了共享资源，另一个就立即查看这种修改。实现多线程应用程序的一个简单方式就是把轻量级进程与每个线程关联起来。在Linux中，一个线程组基本上就是实现了多线程应用的一组轻量级进程。</p>
-<p>下图描述了几者之间的关系：<br><img src="/images/linux-kernel-note/process-one-0.png" alt=""><br><figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line">进程P0有四条执行流，也就是线程，</div><div class="line">主线程t0是它的第一个线程，与进程P0相关联，</div><div class="line">之后衍生出t1、t2、t3三个线程，这三个线程分别与轻量级进程P1、P2、P3相关联，</div><div class="line">所有的进程、轻量级进程、线程组成了线程组。</div><div class="line">轻量级进程也是进程，只不过它与某进程的某特定线程相关联，而且轻量级进程与原进程之间共享了大部分应用程序的数据结构。</div></pre></td></tr></table></figure></p>
-<p>pid是进程标识符，tgid是线程组标识符。</p>
-<p>每个进程都有自己的pid,同属于一个线程组的所有进程、轻量级进程有同样的tgid，且其为第一个线程所关联的pid。</p>
-<p>上图中的所有轻量级进程和进程的tgid均为a,等同于进程的pid。<br>我们看下两个系统调用的实现，就能发现一些端倪（位于kernel/timer.c）:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div></pre></td><td class="code"><pre><div class="line"><span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_getpid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">  &#123;</div><div class="line">    <span class="keyword">return</span> current-&gt;tgid;</div><div class="line">  &#125;</div><div class="line"> <span class="function">asmlinkage <span class="keyword">long</span> <span class="title">sys_gettid</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line"> &#123;</div><div class="line">   <span class="keyword">return</span> current-&gt;pid;</div><div class="line"> &#125;</div></pre></td></tr></table></figure>
-<p>从代码里可以清楚的看到，getpid返回的是线程组标识符，gettgid返回的是进程标识符。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要整理了进程的定义以及进程、轻量级进程、线程在Linux中的关系。</p>
-<blockquote>
-<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;进程定义&quot;&gt;&lt;a href=&quot;#进程定义&quot; class=&quot;headerlink&quot; title=&quot;进程定义&quot;&gt;&lt;/a&gt;进程定义&lt;/h4&gt;&lt;p&gt;说起进程，真是既熟悉又陌生，感觉知道这个玩意儿，但是又不知该如何说起。按照UTLK中的说法，进程是任何多道程序设计的操作系统
     
     </summary>
     
