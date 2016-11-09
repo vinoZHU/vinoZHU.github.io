@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-11-07T10:53:29.000Z</updated>
+  <updated>2016-11-09T00:47:05.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -20,16 +20,16 @@
     <link href="http://vinoit.me/2016/11/07/heap/"/>
     <id>http://vinoit.me/2016/11/07/heap/</id>
     <published>2016-11-07T07:42:09.000Z</published>
-    <updated>2016-11-07T10:53:29.000Z</updated>
+    <updated>2016-11-09T00:47:05.000Z</updated>
     
-    <content type="html"><![CDATA[<h4 id="堆介绍"><a href="#堆介绍" class="headerlink" title="堆介绍"></a>堆介绍</h4><p>堆（也叫优先队列），是一棵完全二叉树，它的特点是父节点的值大于（小于）两个子节点的值（分别称为大顶堆和小顶堆）。堆可以用数组来存储，但为了喝完全二叉树的性质对应，数组的0号元素不存储节点，0号元素可以用来记录堆的节点数量。由于是完全二叉树，假定<code>i</code>是其中某个节点，可定义如下操作：</p>
+    <content type="html"><![CDATA[<h4 id="堆介绍"><a href="#堆介绍" class="headerlink" title="堆介绍"></a>堆介绍</h4><p>堆（也叫优先队列），是一棵完全二叉树，它的特点是父节点的值大于（小于）两个子节点的值（分别称为大顶堆和小顶堆）。堆可以用数组来存储，但为了和完全二叉树的性质对应，数组的0号元素不存储节点，0号元素可以用来记录堆的节点数量。由于是完全二叉树，假定<code>i</code>是其中某个节点，可定义如下操作：</p>
 <ul>
 <li>PARENT(i) = i/2</li>
 <li>LEFT(i) = 2*i</li>
 <li>RIGHT(i) = 2*i+1</li>
 </ul>
 <p>大顶堆以及数组存储：<br><img src="/images/data-structure/heap-0.png" alt=""></p>
-<h4 id="维护堆的性质"><a href="#维护堆的性质" class="headerlink" title="维护堆的性质"></a>维护堆的性质</h4><p>对于大顶堆，如果父节点的值小于某个字节点，那么这个堆的性质就需要恢复，过程如下：<br><img src="/images/data-structure/heap-1.png" alt=""><br>这里的前提是i的左右孩子都是堆（在建堆的时候是自下而上的），然后在A[i]、A[LEFT(i)]、A[RIGHT(i)]中选择一个最大的，如果A[i]最大，则堆的性质没有被破坏，否则A[i]和某个孩子交换位置，然后使交换位置后的子节点重复上述过程：</p>
+<h4 id="维护堆的性质"><a href="#维护堆的性质" class="headerlink" title="维护堆的性质"></a>维护堆的性质</h4><p>对于大顶堆，如果父节点的值小于某个子节点，那么这个堆的性质就需要恢复，过程如下：<br><img src="/images/data-structure/heap-1.png" alt=""><br>这里的前提是i的左右孩子都是堆（在建堆的时候是自下而上的），然后在A[i]、A[LEFT(i)]、A[RIGHT(i)]中选择一个最大的，如果A[i]最大，则堆的性质没有被破坏，否则A[i]和某个孩子交换位置，然后使交换位置后的子节点重复上述过程：</p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">maxHeapify</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> i, <span class="keyword">int</span> n)</span></span>&#123;<span class="comment">//n为堆的容量大小 </span></div><div class="line">  <span class="keyword">int</span> left = LEFT(i);</div><div class="line">  <span class="keyword">int</span> right = RIGHT(i);</div><div class="line">  <span class="keyword">int</span> max = i;<span class="comment">//max记录最大节点的下标</span></div><div class="line">  <span class="keyword">if</span>(left &lt;= n)&#123;</div><div class="line">  		max = A[left] &gt; A[max] ? left : max;</div><div class="line">  &#125;      </div><div class="line">  <span class="keyword">if</span>(right &lt;= n) &#123;</div><div class="line">  		max = A[right] &gt; A[max] ? right : max;</div><div class="line">  &#125;    </div><div class="line">  <span class="keyword">if</span>(max != i)&#123;</div><div class="line">    swap(A, max, i);</div><div class="line">    maxHeapify(A, max, n);</div><div class="line">  &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
 <h4 id="建堆"><a href="#建堆" class="headerlink" title="建堆"></a>建堆</h4><p>给定一个数组A，n=A.length,其子数组A[(n/2)+1..n]中的元素都是堆这颗完全二叉树的叶子节点，可以利用这个性质,先找到堆的最后一个非叶子节点（即为第n/2个节点），然后从该节点开始，从后往前逐个调整每个子树，使之称为堆，最终整个数组便是一个堆。来将这个数组转换成一个大顶堆，以下是一个示意图：<br><img src="/images/data-structure/heap-2.png" alt=""></p>
 <figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">buildMaxHeap</span><span class="params">(<span class="keyword">int</span> A[], <span class="keyword">int</span> n)</span></span>&#123;</div><div class="line">  <span class="keyword">int</span> i;</div><div class="line">  <span class="keyword">for</span>(i = n/<span class="number">2</span>; i&gt;<span class="number">0</span>; i--)&#123;</div><div class="line">    maxHeapify(A, i, n);<span class="comment">//依次向上维护堆的性质</span></div><div class="line">  &#125;</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
@@ -81,10 +81,12 @@
     
     </summary>
     
-      <category term="数据结构" scheme="http://vinoit.me/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+      <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
       <category term="堆" scheme="http://vinoit.me/tags/%E5%A0%86/"/>
     
@@ -97,7 +99,7 @@
     <link href="http://vinoit.me/2016/11/02/trie-tree/"/>
     <id>http://vinoit.me/2016/11/02/trie-tree/</id>
     <published>2016-11-02T01:13:54.000Z</published>
-    <updated>2016-11-07T07:43:33.000Z</updated>
+    <updated>2016-11-09T00:47:19.000Z</updated>
     
     <content type="html"><![CDATA[<p>本文属于一个整理性质，参考了几篇较好的文章，在文末给出参考链接。</p>
 <h4 id="什么是Trie树"><a href="#什么是Trie树" class="headerlink" title="什么是Trie树"></a>什么是Trie树</h4><p>Trie树，又叫字典树、前缀树（Prefix Tree）、单词查找树 或 键树，是一种树形结构。典型应用是用于统计和排序大量的字符串（但不仅限于字符串），所以经常被搜索引擎系统用于文本词频统计。它的优点是最大限度地减少无谓的字符串比较，<code>查询效率比较高</code>。</p>
@@ -158,10 +160,12 @@
     
     </summary>
     
-      <category term="数据结构" scheme="http://vinoit.me/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+      <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
       <category term="trie树" scheme="http://vinoit.me/tags/trie%E6%A0%91/"/>
     
@@ -174,7 +178,7 @@
     <link href="http://vinoit.me/2016/10/30/rb-tree/"/>
     <id>http://vinoit.me/2016/10/30/rb-tree/</id>
     <published>2016-10-30T04:07:38.000Z</published>
-    <updated>2016-11-07T07:43:09.000Z</updated>
+    <updated>2016-11-09T00:47:45.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="自平衡二叉查找树（AVL）"><a href="#自平衡二叉查找树（AVL）" class="headerlink" title="自平衡二叉查找树（AVL）"></a>自平衡二叉查找树（AVL）</h4><p>了解自平衡二叉查找树前，先讲讲二叉查找树。二叉查找树是一颗二叉树，对于其中的每一个节点，左孩子小于自己，右孩子大于自己。在插入一个节点时，判断插入节点与当前遍历的树节点的大小，若小于当前树节点，则与左孩子比较，反之，则与右孩子比较。<br><img src="/images/data-structure/rb-tree-0.png" alt=""><br>但是，一颗普通的二叉查找树容易退化成链表：<br><img src="/images/data-structure/rb-tree-1.png" alt=""><br>我们希望一颗二叉查找树的时间复杂度为O（logn）,而这种情况下时间复杂度已经变成了O（n）。所以就出现了<code>自平衡二叉查找树</code>。</p>
 <p>在AVL树中任何节点的两个子树的高度最大差别为一，所以它也被称为高度平衡树。查找、插入和删除在平均和最坏情况下都是O（log n）。增加和删除可能需要通过一次或多次树旋转来重新平衡这个树。</p>
@@ -245,12 +249,14 @@
     
     </summary>
     
-      <category term="数据结构" scheme="http://vinoit.me/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+      <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
       <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
     
@@ -263,7 +269,7 @@
     <link href="http://vinoit.me/2016/10/27/binary-tree/"/>
     <id>http://vinoit.me/2016/10/27/binary-tree/</id>
     <published>2016-10-27T05:47:14.000Z</published>
-    <updated>2016-11-02T01:12:28.000Z</updated>
+    <updated>2016-11-09T00:47:32.000Z</updated>
     
     <content type="html"><![CDATA[<h4 id="常见基本概念"><a href="#常见基本概念" class="headerlink" title="常见基本概念"></a>常见基本概念</h4><ul>
 <li>节点的度：某节点的度定义为该节点孩子节点的个数。</li>
@@ -325,12 +331,14 @@
     
     </summary>
     
-      <category term="数据结构" scheme="http://vinoit.me/categories/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+      <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
   </entry>
   
