@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-11-09T03:06:43.000Z</updated>
+  <updated>2016-11-09T10:20:41.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -14,6 +14,195 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>《程序员的自我修养-链接、装载与库》学习笔记</title>
+    <link href="http://vinoit.me/2016/11/09/programmer-self-culture-link-load-and-lib-notes/"/>
+    <id>http://vinoit.me/2016/11/09/programmer-self-culture-link-load-and-lib-notes/</id>
+    <published>2016-11-09T09:51:54.000Z</published>
+    <updated>2016-11-09T10:20:41.000Z</updated>
+    
+    <content type="html"><![CDATA[<p>正所谓圆越大，圆外圈的空白越大。你当前学习的知识很大程度上是由之前的某个知识引出的，我就是这种情况下开始看这本书的。书的内容没有涉及到很细节，但是对于这方面知识体系的建立很有帮助，让你对程序运行的背后机制有了深一层的了解，值得推荐。该文是一个学习笔记，转载自<a href="http://noalgo.info/582.html" target="_blank" rel="external">程序的编译、链接与装载</a>。</p>
+<h4 id="编译过程"><a href="#编译过程" class="headerlink" title="编译过程"></a>编译过程</h4><p>许多IDE和编译器将编译和链接的过程合并在一起，称为构建（Build），使用起来非常方便。但只有深入理解其中的机制，才能看清许多问题的本质，正确解决问题。</p>
+<p>一般的编译过程可以分解为4个步骤，预处理，编译，汇编和链接：</p>
+<ul>
+<li>预编译：处理源代码中的以”#”开始的预编译指令，如”#include”、”#define”等。</li>
+<li>编译：把预处理完的文件进行一系列的词法分析、语法分析、语义分析及优化后产生相应的汇编代码文件，是程序构建的核心部分，也是最复杂的部分之一。</li>
+<li>汇编：将汇编代码根据指令对照表转变成机器可以执行的指令，一个汇编语句一般对应一条机器指令。</li>
+<li>链接：将多个目标文件综合起来形成一个可执行文件。</li>
+</ul>
+<p>而对于第2步，编译由编译器完成器，编译器是将高级语言翻译成机器语言的一个工具，其具体步骤包括：</p>
+<ul>
+<li>词法分析：将源代码程序输入扫描器，将源代码字符序列分割成一系列记号（Token）。</li>
+<li>语法分析：对产生的记号使用上下文无关语法进行语法分析，产生语法树。</li>
+<li>语义分析：进行静态语义分析，通常包括声明和类型的匹配，类型的转换。</li>
+<li>中间语言生成：使用源代码优化器将语法树转换成中间代码并进行源码级的优化。</li>
+<li>目标代码生成：使用代码生成器将中间代码转成依赖于具体机器的目标机器代码。</li>
+<li>目标代码优化：使用目标代码优化器对目标代码进行优化，比如选择合适的寻址方式、使用位移替代乘法、删除多余指令等。</li>
+</ul>
+<p>如果一个源代码文件中有变量或函数等符号定义在其他模块，那么编译后得到的目标代码中，该符号的地址并没有确定下来，因为编译器不知道到哪里去找这些符号，事实上这些变量和函数的最终地址要在链接的时候才能确定。现代的编译器只是将一个源代码编译成一个未链接的目标文件，最终由链接器将这些目标文件链接起来形成可执行文件。</p>
+<h4 id="目标文件格式"><a href="#目标文件格式" class="headerlink" title="目标文件格式"></a>目标文件格式</h4><p>编译器编译源代码后生成的文件称为目标文件，事实上，目标文件是按照可执行文件的格式存储的，二者结构只是稍有不同。Linux下的目标文件和可执行文件可以看成一种类型的文件，统称为ELF文件，一般有以下几类：</p>
+<ul>
+<li>可重定位文件：如.o文件，包含代码和数据，可以被链接成可执行文件或共享目标文件，静态链接库属于这一类。</li>
+<li>可执行文件：如/bin/bash文件，包含了可以直接执行的程序，一般没有扩展名。</li>
+<li>共享目标文件：如.so文件，包含代码和数据，可以跟其他可重定位文件和共享目标文件链接产生新的目标文件，也可以跟可执行文件结合作为进程映像的一部分。</li>
+</ul>
+<p>目标文件由许多段组成，其中主要的段包括：</p>
+<ul>
+<li>代码段（.text）：保存编译后得到的指令数据。</li>
+<li>数据段（.data）：保存已经初始化的全局静态变量和局部静态变量。</li>
+<li>只读数据段（.rodata）：保存只读变量和字符串常量，有些编译器会把字符串常量放到”.data”段。</li>
+<li>BSS段（.bss）：保存未初始化的全局变量和局部静态变量。</li>
+</ul>
+<p>除了这几个常用的段之外，ELF可能包含其他的段，保存与程序相关的信息，如：</p>
+<ul>
+<li>.comment 编译器版本信息</li>
+<li>.debug 调试信息</li>
+<li>.dynamic 动态链接信息</li>
+<li>.hash 符号哈希表</li>
+<li>.line 调试时的行号表，源代码行号与编译后指令的对应表</li>
+<li>.note 额外的比编译器信息</li>
+<li>.strtab String Table，字符串表，存储用到的各种字符串</li>
+<li>.symtab Symbol Table，符号表</li>
+<li>.shstrtab Section String Table，段名表</li>
+<li>.plt 动态链接跳转表</li>
+<li>.got 动态链接全局入口表</li>
+<li>.init 程序初始化代码段</li>
+<li>.fini 程序终结代码段<br>ELF目标文件的总体结构如下图所示，其中省去了一些繁琐的结果，把最终的提出出来。</li>
+</ul>
+<p><img src="/images/programmer-self-culture/link-load-and-lib-0.png" alt=""><br>以下选取较为重要的进行介绍。<br>ELF文件头（ELF Header）：保存描述整个文件的基本属性，如ELF魔数、文件机器字节长度、数据存储格式等。</p>
+<p>段表（Section Header Table）：保存各个段的基本属性，是除了文件头之最重要的结构。节选样例内容如下：<br><img src="/images/programmer-self-culture/link-load-and-lib-1.png" alt=""><br>其表示的意义为，下标为1的段是.text段，类型是程序段（PROGBITS包括代码段和数据段），加载地址为0，在文件中的偏移量是0×34，长度为0x5b，项的长度为0（表示该段不包含固定大小的项），标志AX表示该段要分配空间及可以被执行，链接信息的两个0没有意义（不是与链接相关的段），最后的4表示段地址对齐为2^4=16字节。</p>
+<p>重定位表：链接器在处理目标文件的时候，需要对目标文件中某些部位进行重定位，即代码段和数据段中那些绝对地址的引用位置，这些重定位信息记录在重定位表里。每个需要重定位的代码段或数据段都会有一个相应的重定位表，如.rel.text是针对”.text”段的重定位表，”.rel.data”是针对”.data”段的重定位表。</p>
+<p>字符串表：ELF文件中用到很多字符串，如段名、变量名，因为字符串的长度不固定，用固定的结构来表示它比较困难，一般把字符串集中起来存放到一个表，然后使用字符串在表中的偏移来引用字符串。一般字符串表在ELF中以段的形式保存，常见的有.strtab（字符串表，String Table）和.shstrtab（段表字符串表，Section Header String Table），前者保存如符号名字等普通字符串，后者保存如段名等段表中用到的字符串。</p>
+<p>符号表：函数和变量统称为符号，其名称称为符号名。链接过程中关键的部分就是符号的管理，每一个目标文件都会有一个相应的符号表，记录了目标文件用到的所有符号，每个符号有一个对应的符号值，一般为符号的地址。一个样例如下：<br><img src="/images/programmer-self-culture/link-load-and-lib-2.png" alt=""><br>其意义如下：下标为13的符号的符号值为0x1b，大小为64字节，类型为函数，绑定信息为全局符号，VIS可以忽略，Ndx表示其所在段的下标为1（通过上一个样例可知，该段为.text段），符号名称为main。如果Ndx下标一项为UND（undefine），则表示该符号在其他模块定义，以后需要重定位。</p>
+<p>调试信息：目标文件里可能保存有调试信息，如在GCC编译时加上”-g”参数，会生成许多以”.debug”开头的段。</p>
+<h4 id="静态链接"><a href="#静态链接" class="headerlink" title="静态链接"></a>静态链接</h4><p>几个目标文件进行链接时，每个目标文件都有其自身的代码段、数据段等，链接器需要将它们各个段的合并到输出文件中，具体有两种合并方法：</p>
+<ul>
+<li>按序叠加：将输入的目标文件按照次序叠加起来。</li>
+<li>相似段合并：将相同性质的段合并到一起，比如将所有输入文件的”.text”合并到输出文件的”.text”段，接着是”.data”段、”.bss”段等。</li>
+</ul>
+<p>第一种方法会产生很多零散的段，而且每个段有一定的地址和空间对齐要求，会造成内存空间大量的内部碎片。所以现在的链接器空间分配基本采用第二种方法，而且一般采用一种称为两部链接的方法：</p>
+<ol>
+<li><p>空间与地址分配。扫描所有输入的目标文件，获得他们各个段的长度、属性和位置，收集它们符号表中所有的符号定义和符号引用，统一放到一个全局符号表中。此时，链接器可以获得所有输入目标文件的段长度，将他们合并，计算出输出文件中各个段合并后的长度与位置并建立映射关系。</p>
+</li>
+<li><p>符号解析与重定位。使用上面收集到的信息，读取输入文件中段的数据、重定位信息，并且进行符号解析与重定位、调整代码中的地址等。<br>经过第一步后，输入文件中的各个段在链接后的虚拟地址已经确定了，链接器开始计算各个符号的虚拟地址。各个符号在段内的相对地址是固定的，链接器只需要给他们加上一个偏移量，调整到正确的虚拟地址即可。</p>
+</li>
+</ol>
+<p>ELF中每个需要重定位的段都有一个对应的重定位表，也称为重定位段。重定位表中每个需要重定位的地方叫一个重定位入口，包含：</p>
+<ul>
+<li><p>重定位入口的偏移：对于可重定位文件来说，偏移指该重定位入口所要修正的位置的第一个字节相对于该段的起始偏移。</p>
+</li>
+<li><p>重定位入口的类型和符号：低8位表示重定位入口的类型，高24位表示重定位入口的符号在符号表的下标。</p>
+</li>
+</ul>
+<p>不同的处理器指令对于地址的格式和方式都不一样，对于每一个重定位入口，根据其重定位类型使用对应的指令修正方式修改其指令地址，完成重定位过程。</p>
+<h4 id="可执行文件的装载"><a href="#可执行文件的装载" class="headerlink" title="可执行文件的装载"></a>可执行文件的装载</h4><p>32位硬件平台上进程的虚拟地址空间的地址为0到2^32-1：0×00000000~0xFFFFFFFF，即通常说的4GB虚拟空间大小。在Linux操作系统下，4GB被划分成两部分，操作系统本身占用了0xC00000000到0xFFFFFFFF共1GB的空间，剩下的从0×00000000到0xBFFFFFFFF共3GB的空间留给进程使用。</p>
+<p>可执行文件只有被装载到内存以后才能运行，最简单的办法是把所有的指令和数据全部装入内存，但这可能需要大量的内存，为了更有效地利用内存，根据程序运行的局部性原理，我们可以把程序中最常用的部分驻留内存，将不太常用的数据放在磁盘中，即动态装入。</p>
+<p>现在大部分操作系统采用的是页映射的方法进行程序装载。页映射并不是一下把程序的所有数据和指令都装入内存，而是将内存和所有磁盘中的数据和指令按照”页（Page）”为单位划分成若干个页，以后所有的装载和操作的单位就是页。目前一般的页大小为4K=4096字节。装载管理器负责控制程序的装载问题，当运行到的某条指令不在内存的时候，会将该指令所在的页装载到内存中的一个地方，然后继续程序的运行。如果内存中已经没有位置，装载管理器会根据一定的算法放弃某个正在使用的页，并用新的页来替代，然后程序可以继续运行。</p>
+<p>可执行文件中包含代码段、数据段、BSS段等一系列的段，其中很多段都要映射进进程的虚拟地址空间。当段的数量增加时，会产生空间浪费问题。因为ELF文件被映射时是以系统的页长度为单位进行的，一个段映射的长度应为页长度的整数倍，如果不是，那么多余部分也将占用一个页，从而产生内存浪费。</p>
+<p>实际上操作系统并不关心可执行文件各个段所包含的实际内容，它只关心一些跟装载有关的问题，最主要的是段的权限（可读、可写、可执行）。ELF中，段的权限组合可以分成三类：</p>
+<ul>
+<li>以代码段为代表的权限为可读可执行的段。</li>
+<li>以数据段和BSS段为代表的权限为可读可写的段。</li>
+<li>以只读数据段为代表的权限为只读的段。</li>
+</ul>
+<p>于是，对于相同权限的段，可以把它们合并到一起当做一个段进行映射，这样可以把原先的多个段当做一个整体进行映射，明显地减少页面内部碎片，节省内存空间。这个称为”Segment”，表示一个或多个属性类似的”Section”，可以认为”Section”是链接时的概念，”Segment”是装载时的概念。链接器会把属性相似的”Section”放在一起，然后系统会按照这些”Section”组成的”Segment”来映射并装载可执行文件。</p>
+<p>进程的虚拟地址空间中除了被用来映射可执行文件的各个”Segment”之外，还有包括栈（Stack）和堆（Heap）的空间，一个进程中的栈和堆在也是以虚拟内存区域（VMA, Virtual Memrory Area）的形式存在。操作系统通过给进程空间划分出一个个的VMA来管理进程的虚拟空间，基本原则是将相同权限属性的、有相同映像文件的映射成一个VMA，一个进程基本可以分为如下几种VMA区域：</p>
+<ul>
+<li>代码VMA，权限只读，可执行，有映像文件。</li>
+<li>数据VMA，权限可读写，可执行，有映像文件。</li>
+<li>堆VMA，权限可读写，可执行，无映像文件，匿名，可向上扩展。</li>
+<li>栈VMA，权限可读写，不可执行，无映像文件，匿名，可向下扩展。</li>
+</ul>
+<p>其常见的分布情况如下图所示：<br><img src="/images/programmer-self-culture/link-load-and-lib-3.png" alt=""></p>
+<h4 id="动态链接"><a href="#动态链接" class="headerlink" title="动态链接"></a>动态链接</h4><p>静态链接允许不同程序开发者相对独立地开发和测试自己的程序模块，促进程序开发的效率，但其也有相应的缺点：</p>
+<ul>
+<li><p>浪费内存和磁盘空间。在多进程操作系统下，每个程序内部都保留了公用的库函数及其他数量可观的库函数及辅助数据结构，浪费大量空间。</p>
+</li>
+<li><p>程序开发和发布困难。一个程序如果使用了很多第三方的静态库，那么程序中一旦有任何库的更新，整个程序就要重新链接并重新发布给客户，非常不方便。</p>
+</li>
+</ul>
+<p>动态链接可以解决空间浪费和更新困难的问题，其不对那些组成程序的目标文件进行链接，而是等到程序运行时才进行链接。使用了动态链接之后，当我们运行一个程序时，系统会首先加载该程序依赖的其他的目标文件，如果其他目标文件还有依赖，系统会按照同样方法将它们全部加载到内存。当所需要的所有目标文件加载完毕之后，如果依赖关系满足，系统开始进行链接工作，包括符号解析及地址重定位等。完成之后，系统把控制权交回给原程序，程序开始运行。此时如果运行第二个程序，它依赖于一个已经加载过的目标文件，则系统不需要重新加载目标文件，而只要将它们连接起来即可。</p>
+<p>动态链接可以解决共享的目标文件存在多个副本浪费磁盘和内存空间的问题，因为同一个目标文件在内存中只保存一份。另外，当一个程序所依赖的库升级之后，只需要将简单地用新的库将旧的覆盖掉，无需将所有的程序再重新链接一遍，当程序下次运行时，新版本的库会被自动加载到内存并链接起来，程序仍然可以正常运行，并且完成了升级过程。</p>
+<p>对于静态链接的可执行文件来说，整个进程只有一个文件要被映射，那就是可执行文件本身。但是对于动态链接来说，除了可执行文件本身，还有它所依赖的共享目标文件，此时，它们都是被操作系统用同样的方法映射进进程的虚拟地址空间，只是它们占用的虚拟地址和长度不同。另外，动态链接器也和普通共享对象一样被映射到进程的地址空间。系统开始运行程序之前，会把控制权交给动态链接器，由它完成所有的动态链接工作，然后再把控制权交回给程序，程序就开始执行。</p>
+<h5 id="装载时重定位"><a href="#装载时重定位" class="headerlink" title="装载时重定位"></a>装载时重定位</h5><p>动态链接的共享对象在被装载时，其在进程虚拟地址空间的位置是不确定的，为了使共享对象能够在任意地址装载，可以参考静态链接时的重定位（Link Time Relocation）思想，在链接时对所有的绝对地址的引用不做重定位，把这一步推迟到装载时再完成。一旦模块装载完毕，其地址就确定了，即目标地址确定，系统就对程序中所有的绝对地址引用进行重定位。这种装载时重定位（Load Time Relocation）又称为基址重置（Rebasing）。</p>
+<p>但是动态链接模块被装载映射至虚拟空间后，指令部分是在多个进程之间共享的，由于装载时重定位的方法需要修改指令，所以没有办法做到同一份指令被多个进程共享，因为指令被重定位之后对于每个进程来讲是不同的。当然，动态链接库中的可修改的数据部分对于不同的进程来说有多个副本，所以它们可以采用装载时重定位的方法来解决。</p>
+<h5 id="地址无关代码"><a href="#地址无关代码" class="headerlink" title="地址无关代码"></a>地址无关代码</h5><p>装载时重定位导致指令部分无法在多个进程之间共享，失去了动态链接节省内存的一大优势。为了程序模块中共享的指令部分在装载时不需要因为装载地址的改变而改变，可以把指令中那些需要改变的部分分离出来，跟数据部分放在一起，这样指令部分就可以保持不变了，而数据部分可以在每个进程中拥有一个副本。这种方案称为地址无关代码（PIC, Position-independent Code）技术。<br>我们把共享对象模块中的地址引用按照是否扩模块分成模块内部引用和模块外部引用，按照不用的引用方式分成指令引用和数据引用，然后把得到的4种情况分别进行处理：</p>
+<ul>
+<li><p>模块内部调用或跳转。因为被调用的函数和调用者处于同一个模块，相对位置固定，而现代的系统对于模块内部的跳转、函数调用可以采用相对地址调用或者给予寄存器的相对调用，所以这种指令不需要重定位，其是地址无关的。</p>
+</li>
+<li><p>模块内部数据访问。显然指令不能包含数据的绝对地址，那么只有进行相对寻址。因为一个模块前面一半是若干个页的代码，然后是若干个也的数据，这些页之间的相对位置是固定的，即任何一条指令与它所需要访问的模块颞部数据之间的相对位置是固定的，那么只需要相对当前指令加上固定的偏移量就可以访问模块内部数据了。现代的体系结构中，数据的相对寻址往往没有相对当前指令地址（PC）的寻址方式，ELF中使用了巧妙的办法获取当前的PC值，然后再加上一个偏移量达到访问相应变量的目的。</p>
+</li>
+<li><p>模块间数据访问。模块间的数据访问目标地址要等到装载时才能确定，这些变量的地址跟模块的装载地址相关。ELF在数据段里建立一个指向这些变量的指针数组，称为全局偏移表（GOT, Global Offset Table），当代码需要引用该全局变量时，可以通过GOT中相对应的项间接引用。当指令需要一个其他模块的变量时，程序会先找到GOT，然后根据GOT中变量对应的项找到该变量的目标地址。每个变量对应一个4字节的地址，链接器在装载模块的时候会查找每个变量所在的地址，然后填充GOT的各个项，以确保每个指针所指向的地址都正确。由于GOT本身放在数据段，它可以在被模块装载时修改，并且每个进程都可以有独立的副本，相互不受影响。</p>
+</li>
+<li><p>模块间调用、跳转。采用上述类似的方法，不同的是，GOT中相应保存的是目标函数的地址，当模块需要调用目标函数时，可以通过GOT中的项进行间接跳转。调用一个函数时，先得到当前指令地址PC，然后加上一个偏移得到函数地址在GOT中的偏移，然后进行间接调用。<br>于是，四种地址引用方式在理论上都实现了地址无关性。</p>
+</li>
+</ul>
+<h4 id="数据段地址无关性"><a href="#数据段地址无关性" class="headerlink" title="数据段地址无关性"></a>数据段地址无关性</h4><p>以上的方法能够保证共享对象中代码部分地址无关，但数据部分并不是地址无关的，比如：</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">int</span> a;</div><div class="line"><span class="keyword">static</span> <span class="keyword">int</span>* p = &amp;a;</div></pre></td></tr></table></figure>
+<p>指针p的地址是绝对地址，指向变量a，但a的地址会随着共享对象的装载地址改变而变。</p>
+<p>数据段在每个进程都有一份独立的副本，并不担心被进程改变，于是可以选择装载时重定位的方法来解决数据段中绝对地址引用的问题。对于共享对象来说，如果数据段中有绝对地址的引用，那么编译器和链接器会产生一个重定位表，这个表中包含了”R_386_RELATIVE”类型的重定位入口来解决上述问题。当动态链接器装载共享对象时，如果发现共享对象上有这样的重定位入口，就会对该共享对象进行重定位。</p>
+<p>其实对代码段也可以使用装载时重定位而不是地址无关代码的方法，它有以下特点：</p>
+<ul>
+<li>代码段不是地址无关，不能被多个进程共享，失去了节省内存的有点。</li>
+<li>运行速度比地址无关代码的共享对象块，因为它省去了地址无关代码中每次访问全局数据和函数时都要做一次计算当前地址以及间接地址寻址的过程。</li>
+</ul>
+<h5 id="动态链接相关结构"><a href="#动态链接相关结构" class="headerlink" title="动态链接相关结构"></a>动态链接相关结构</h5><p>动态链接下可执行文件的装载与静态链接下基本一样，首先操作系统会读取可执行文件的头部，检查文件的合法性，然后从头部中的”Program Header”中读取每个”Segment”的虚拟地址、文件地址和属性，并将它们映射到进程虚拟空间的相应位置，这些步骤跟前面的静态链接情况下的装载基本无异。在静态链接情况下，操作系统接着就可以把控制权交给可执行文件的入口地址，然后程序开始执行。但在动态链接情况下，操作系统会先启动一个动态链接器，动态链接器得到控制权后，开始执行一系列自身的初始化操作，然后根据当前的环境参数，开始对可执行文件进行动态链接工作。当所有动态链接工作完成以后，动态链接器会将控制权转交到可执行文件的入口地址，程序开始正式执行。</p>
+<p>动态链接涉及到的段主要如下：</p>
+<ul>
+<li><p>“.interp”段。在Linux中，操作系统在对可执行文件进行加载时，会寻找装载该可执行文件需要的相应的动态链接器，即”.interp”段指定的路径的共享对象。</p>
+</li>
+<li><p>“.dynamic”段。动态链接ELF中最重要的结构，保存了动态链接器需要的基本信息，比如依赖于哪些共享对象、动态链接符号表的位置、动态链接重定位表的位置、共享对象初始化代码的地址等。”.dynamic”段保存的信息类似于ELF文件头，只是ELF文件头保存的是静态链接相关的内容，这里换成动态链接所使用的相应信息。</p>
+</li>
+<li><p>动态符号表。ELF中专门保存符号信息的段为”.dynsym”。类似于”.symtab”，但”.dynsym”只保存与动态链接相关的符号，而”.symtab”则保存了所有的符号，包括”.synsyms”中的符号。同样地，动态符号表也需要一些辅助的表，如保存符号名的字符串表，静态链接时叫符号字符串表”.strtab”，在这里就是动态符号字符串表”.dynstr”（Dynamic String Table）。为了加快动态链接下程序符号查找的过程，往往还有扶着的符号哈希表”.hash”。动态链接符号表的结构与静态链接的符号表几乎一样，可以简单地将导入函数看做是对其他目标文件函数的引用，把导出函数看做是在本目标文件定义的函数即可。</p>
+</li>
+<li><p>动态链接重定位表。动态链接下，可执行文件一旦依赖于其他共享对象，它的代码或数据中就会有对于导入符号的引用，这些导入符号的地址在运行时才确定，所以需要在运行时将这些导入符号的引用修正，即需要重定位。如果共享对象不是以PIC编译的，那么它需要在装载是被重定位；如果它是PIC编译的，虽然代码段不需要重定位，但是数据段还包含了绝对地址的引用，其绝对地址被分离出来成了GOT，而GOT是数据段的一部分，需要重定位。</p>
+<p>  装载时重定位跟静态链接中的目标文件重定位十分相似。静态链接中，目标文件里包含专门用于重定位信息的重定位表，如”.rel.txt”表示代码段的重定位表，”.rel.data”表示数据段的重定位表。类似地，动态链接中，重定位表分别为”.rel.dyn”和”.rel.plt”，前者是对数据引用的修正，修正的位置位于”.got”以及数据段，后者是对于函数引用的修正，修正的位置位于”.got.plt”。</p>
+</li>
+</ul>
+<h5 id="动态链接的步骤"><a href="#动态链接的步骤" class="headerlink" title="动态链接的步骤"></a>动态链接的步骤</h5><p>动态链接的步骤基本上分为3步：启动动态链接器本身，然后是装载所有需要的共享对象，最后是重定位和初始化。</p>
+<ol>
+<li><p>动态链接器自举。普通共享对象文件的重定位工作由动态链接器完成，动态链接器本身本身不可以依赖于其他共享对象，其重定位工作由其自身完成，这需要动态链接器在启动时有一段非常精巧的代码可以完成这项艰巨的工作而同时不能用到全局和静态变量，甚至不能调用函数，这种具有一定限制的启动代码称为自举（Bootstrap）。</p>
+</li>
+<li><p>动态链接器获得控制权后，自举代码开始执行。自举代码首先找到自己的GOT，而GOT的第一个入口即是”.dynamic”段的偏移地址，由此找到了动态链接器本身的”.dynamic”段。通过”.dynamic”的信息，自举代码可以获得动态链接器本身的重定位表和符号表，从而得到动态链接器本身的重定位入口，先将他们全部重定位，然后动态链接器代码可以使用自己的全局变量和静态变量。</p>
+</li>
+<li><p>装载共享对象。自举完成后，动态链接器将可执行文件盒链接器本身的符号表合并到一个全局符号表中，然后开始寻找可执行文件依赖的共享对象。通过”.dynamic”段中类型的入口是DT_NEEDED的项，链接器可以列出可执行文件所依赖的所有共享对象，将他们的名字放入一个装载集合中。然后从集合中取出一个共享对象的名字，找到相应的文件后打开，读取相应的ELF文件头”.dynamic”段，然后将它相应的代码段和数据段映射到进程空间。如果这个ELF共享对象还依赖其他共享对象，则将所依赖的共享对象的名字放入装载集合中。如此循环把所有依赖对象都装载进内存为止。如果把依赖关系看做一个图的话，装载过程就是图的遍历过程，可以使用广度优先或深度优先搜索的顺序进行编译。</p>
+<p> 重定位和初始化。上述步骤完成后，链接器开始重新遍历可执行文件和每个共享对象的重定位表，将他们的GOT/PLT中的每个需要重定位的位置进行修正。因为此时动态链接器已经拥有了进程的全局符号表，所以这个修正过程比较容易，和前面的地址重定位原理基本相同。</p>
+<p> 重定位完成后，如果共享对象有”.init”段，那么动态链接器会执行”.init”段的代码，用来实现共享对象特有的初始化过程，比如共享对象中C++的全局/静态对象的构造。相应地，如果有”.finit”段，当进程退出时会执行”.finit”段中的代码，比如类似的C++全局对象的析构。而进程的可执行文件本身的的”.init”和”.finit”段不是由动态链接器执行，而是有运行库的初始化部分代码负责执行。</p>
+</li>
+</ol>
+<p>重定位和初始化后，准备工作宣告完成，所需要的共享对象也都已经装载并且链接完成，这是动态链接器就如释重负，将进程的控制权交给程序的入口并开始执行。</p>
+<h5 id="显式运行时链接"><a href="#显式运行时链接" class="headerlink" title="显式运行时链接"></a>显式运行时链接</h5><p>动态链接还有一种更加灵活的模块加载方式，称为显式运行时链接（Explicit Run-time Linking），也叫运行时加载。就是让程序自己在运行时控制加载指定的模块，并且可以在不需要该模块时将其卸载。一般的共享对象不需要进行任何修改就可以进行运行时加载，称为动态装载库（Dynamic Loading Library）。动态库的装载通过以下一系列的动态链接器API完成：</p>
+<ul>
+<li>dlopen：打开一个动态库，加载到进程的地址空间，完成初始化过程。</li>
+<li>dysm：通过指定的动态库句柄找到制定的符号的地址。</li>
+<li>dlerror：每次调用dlopen()、dlsym()或dlclose()以后，可以调用dlerror()来判断上一次调用是否成功。</li>
+<li>dlclose：将一个已经加载的模块卸载。系统会维持一个加载引用计数器，每次使用dlopen()加载时，计数器加一；每次使用dlclose()卸载时，计数器减一。当计数器减到0时，模块才真正地卸载。</li>
+</ul>
+<p>下面是一个简单的例子，这个程序将数学库模块用运行时加载的方法加载到进程中，然后获取sin()函数符号地址，调用sin()并且返回结果。</p>
+<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;stdio.h&gt;</span></span></div><div class="line"><span class="meta">#<span class="meta-keyword">include</span> <span class="meta-string">&lt;dlfcn.h&gt;</span></span></div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">mian</span> <span class="params">()</span></span></div><div class="line">&#123;</div><div class="line">	<span class="keyword">void</span> *handle;</div><div class="line">	<span class="keyword">double</span> (*func)(<span class="keyword">double</span>);</div><div class="line">	<span class="keyword">char</span> *error;</div><div class="line">	</div><div class="line">	handle = dlopen(argv[<span class="number">1</span>], RTLD_NOW);</div><div class="line">	<span class="keyword">if</span> (handle == <span class="literal">NULL</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"Open library %s error: %s\n"</span>, argv[<span class="number">1</span>], dlerror());</div><div class="line">		<span class="keyword">return</span> <span class="number">-1</span>;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	func = dlsym(handle, <span class="string">"sin"</span>);</div><div class="line">	<span class="keyword">if</span> ( (error = dlerror()) != <span class="literal">NULL</span>)</div><div class="line">	&#123;</div><div class="line">		<span class="built_in">printf</span>(<span class="string">"Symbol sin not found: %s\n"</span>, error);</div><div class="line">		<span class="keyword">goto</span> exit_runso;</div><div class="line">	&#125;</div><div class="line">	</div><div class="line">	<span class="built_in">printf</span>(<span class="string">"%f\n"</span>, func(<span class="number">3.1415926</span>/<span class="number">2</span>));</div><div class="line">	</div><div class="line">	exit_runso:</div><div class="line">	dlclose(handle);</div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<p>编译运行结果如下：</p>
+<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">$gcc -o RunSoSimple RunSoSimple.c -ldl</div><div class="line">$./RunSoSimple /lib/libm-2.6.1.so</div><div class="line">1.000000</div></pre></td></tr></table></figure>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;p&gt;正所谓圆越大，圆外圈的空白越大。你当前学习的知识很大程度上是由之前的某个知识引出的，我就是这种情况下开始看这本书的。书的内容没有涉及到很细节，但是对于这方面知识体系的建立很有帮助，让你对程序运行的背后机制有了深一层的了解，值得推荐。该文是一个学习笔记，转载自&lt;a href=
+    
+    </summary>
+    
+      <category term="程序员的自我修养" scheme="http://vinoit.me/categories/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/"/>
+    
+    
+      <category term="装载" scheme="http://vinoit.me/tags/%E8%A3%85%E8%BD%BD/"/>
+    
+      <category term="链接" scheme="http://vinoit.me/tags/%E9%93%BE%E6%8E%A5/"/>
+    
+      <category term="库" scheme="http://vinoit.me/tags/%E5%BA%93/"/>
+    
+      <category term="程序员的自我修养" scheme="http://vinoit.me/tags/%E7%A8%8B%E5%BA%8F%E5%91%98%E7%9A%84%E8%87%AA%E6%88%91%E4%BF%AE%E5%85%BB/"/>
+    
+  </entry>
   
   <entry>
     <title>位图法以及相关应用</title>
@@ -61,11 +250,11 @@
       <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
     
-      <category term="位图" scheme="http://vinoit.me/tags/%E4%BD%8D%E5%9B%BE/"/>
-    
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
       <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="位图" scheme="http://vinoit.me/tags/%E4%BD%8D%E5%9B%BE/"/>
     
       <category term="压缩" scheme="http://vinoit.me/tags/%E5%8E%8B%E7%BC%A9/"/>
     
@@ -310,9 +499,9 @@
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
-      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
-    
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
       <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
     
@@ -392,9 +581,9 @@
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
-      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
-    
       <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
     
   </entry>
   
@@ -1523,120 +1712,6 @@
     <summary type="html">
     
       &lt;h4 id=&quot;Maven-Archetypes&quot;&gt;&lt;a href=&quot;#Maven-Archetypes&quot; class=&quot;headerlink&quot; title=&quot;Maven Archetypes&quot;&gt;&lt;/a&gt;Maven Archetypes&lt;/h4&gt;&lt;p&gt;Maven archetyp
-    
-    </summary>
-    
-      <category term="maven" scheme="http://vinoit.me/categories/maven/"/>
-    
-    
-      <category term="maven" scheme="http://vinoit.me/tags/maven/"/>
-    
-      <category term="tools" scheme="http://vinoit.me/tags/tools/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>Maven基础教程</title>
-    <link href="http://vinoit.me/2016/08/18/maven-tutorial/"/>
-    <id>http://vinoit.me/2016/08/18/maven-tutorial/</id>
-    <published>2016-08-18T08:47:15.000Z</published>
-    <updated>2016-10-31T08:44:42.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="什么是Maven"><a href="#什么是Maven" class="headerlink" title="什么是Maven"></a>什么是Maven</h4><p>Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven是一个java项目构建工具(build tool)。通常来说，一个项目构建工具需要具备以下这些功能甚至更多:</p>
-<ul>
-<li>在条件允许的情况下能自动生成源代码。</li>
-<li>根据源代码能自动生成文档</li>
-<li>能编译源代码</li>
-<li>对于java项目，要能将编译好的代码打包成JAR包，WAR包等。</li>
-<li>能将打包后的文件部署在服务器、仓库或者其他地方。</li>
-<li>。。。</li>
-</ul>
-<p>这些步骤虽然也可以人工手动完成，但是效率比不上构建工具，况且人工出错的概率更大。</p>
-<h4 id="Maven总览–核心概念"><a href="#Maven总览–核心概念" class="headerlink" title="Maven总览–核心概念"></a>Maven总览–核心概念</h4><h5 id="pom-xml"><a href="#pom-xml" class="headerlink" title="pom.xml"></a>pom.xml</h5><p>Maven最核心的就是一个叫做<code>pom.xml</code>的文件，使用Maven构建项目时所需要的所有信息都包含在该文件中，例如项目的版本号，需要的依赖包等等。当你执行一条<code>mvn *</code>命令时，Maven需要根据<code>pom.xml</code>中的描述来进行操作。</p>
-<h5 id="Build-Life-Cycles-Phases-and-Goals"><a href="#Build-Life-Cycles-Phases-and-Goals" class="headerlink" title="Build Life Cycles, Phases and Goals"></a>Build Life Cycles, Phases and Goals</h5><p>Maven的构建过程被分成几个生命周期，一个生命周期又被分为若干个阶段，同时一个阶段中又会有若干个目标(相当于一个特定任务)。一条Maven命令通常为<code>mvn *</code>,其中<code>*</code>的内容为某个生命周期的名字，或者某个阶段的名字，又或者某个目标的名字。这三者在后文会给出具体解释。</p>
-<h5 id="Dependencies-and-Repositories"><a href="#Dependencies-and-Repositories" class="headerlink" title="Dependencies and Repositories"></a>Dependencies and Repositories</h5><p>所谓依赖就是项目中需要用到的一些第三方库(JAR files)，如果在本地仓库找不到需要的依赖，Maven会从中央仓库下载到本地仓库。具体内容在后文会涉及到。</p>
-<h5 id="Build-Plugins"><a href="#Build-Plugins" class="headerlink" title="Build Plugins"></a>Build Plugins</h5><p>插件的作用是往构建时的阶段（Phases）中增添一些目标(Goals),相当于做一些额外的任务。Maven提供了一些标准插件，同时你也可以实现自己的插件。更多插件相关信息可查看官网，<a href="http://maven.apache.org/plugin-developers/index.html" target="_blank" rel="external">http://maven.apache.org/plugin-developers/index.html</a></p>
-<h5 id="Build-Profiles"><a href="#Build-Profiles" class="headerlink" title="Build Profiles"></a>Build Profiles</h5><p>在开发过程中项目可能需要处于不同的环境，这时候<code>pom.xml</code>中的一些配置可能需要修改。<code>Profiles</code>的作用就是当你在<code>pom.xml</code>中声明了一个<code>&lt;profile&gt;&lt;/profile&gt;</code>标签对之后，标签对里面的内容可以用来替换原本的配置值，具体内容在后文会涉及到。</p>
-<h4 id="Maven和Ant的区别"><a href="#Maven和Ant的区别" class="headerlink" title="Maven和Ant的区别"></a>Maven和Ant的区别</h4><p>Ant也是Apache的一个构建工具，两者之间的最大区别是:Ant必须要求指定具体动作，细化程度达到如拷贝一个文件之类的操作。而Maven只要告诉它要做什么，具体做法在Maven中已经预先在<code>Phases</code>和<code>Goals</code>中定义过了。Ant强调怎么去做，而Maven则强调做什么。</p>
-<h4 id="Maven-pom-xml分析"><a href="#Maven-pom-xml分析" class="headerlink" title="Maven pom.xml分析"></a>Maven pom.xml分析</h4><p>pom是（Project Object Model）的缩写，每个Maven项目都有一个<code>pom.xml</code>与之对应，文件处于项目的根目录。当一个项目含有多个子项目时，主项目和每个子项目都对应一个<code>pom.xml</code>。此时既可以把整个项目一同构建，也可以只根据子项目的<code>pom.xml</code>来单独构建每个子项目。</p>
-<p>文件内容描述了该Maven项目的本身信息，需要的依赖（JAR files），应该构建哪些内容，需要的资源等等。以下是一个最简化的<code>pom.xml</code>文件：</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">                      http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure>
-<ul>
-<li><code>modelVersion</code>元素指定你所使用的POM模型，4.0.0版本对应Maven 2.x或者3.x版本。</li>
-<li><code>groupId</code>元素对于开源项目(e.g.中央仓库的依赖）来说必须是唯一的，因为Maven寻找依赖时必须根据groupId。对于大多数普通使用者来说，groupId和项目包名类似。如果是个网站项目，也可以是网站的域名。这里提一点，假如想让自己的项目变成一个Maven库，以上<code>pom.xml</code>的groupId为<code>com.vino</code>,则在Maven库中的文件目录存在形式为:<code>MAVEN_REPO/com/vino/</code>。</li>
-<li><code>artifactId</code>元素包含着项目名。将项目打包时，包名就是该元素内的值。该值中的点号不会变成文件分隔符。假如我有2个项目，groupId都为<code>com.vino</code>, artifactId一个为<code>app1</code>，一个为<code>maven.app2</code>,当我将2个项目部署成本地Maven库时，目录形式为:<code>MAVEN_REPO/com/vino/app1/</code>、<code>MAVEN_REPO/com/vino/maven.app2/</code>。</li>
-<li><code>version</code>元素表明当前项目的版本号，相当于在一个项目下面再划分了一个层次。</li>
-</ul>
-<p>使用上述<code>pom.xml</code>部署成本地Maven库的文件为:<code>MAVEN_REPO/com/vino/maven-app/1.0.0/maven-app-1.0.0.jar</code></p>
-<h4 id="Maven依赖"><a href="#Maven依赖" class="headerlink" title="Maven依赖"></a>Maven依赖</h4><p>只要不是太小的项目，基本上都需要第三方的JAR包。但是这些JAR包一般都是有不同的版本的，如果手动更新、管理这些JAR包，必定又麻烦又费时。Maven内置了依赖管理，只需要在<code>pom.xml</code>中声明，在构建项目时Maven便会将依赖从中央仓库下载到你的本地仓库。如果这些第三方的依赖同时也需要一些其他依赖，Maven会将这些依赖统统下载到你的本地仓库。以下是使用的一个样例:<br><figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">   http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">    <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">    </div><div class="line">      <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>org.jsoup<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>jsoup<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.7.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line"></div><div class="line">        <span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>junit<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">version</span>&gt;</span>4.8.1<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">scope</span>&gt;</span>test<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></div><div class="line">        <span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div><div class="line"></div><div class="line">      <span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div><div class="line">    </div><div class="line"></div><div class="line">    <span class="tag">&lt;<span class="name">build</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">build</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure></p>
-<p>项目中需要的每个依赖，都放在一个<code>&lt;dependency&gt;&lt;/dependency&gt;</code>标签对中，并且用<code>groupId</code>,<code>artifactId</code>,<code>version</code>进行描述。下载到本地之后，两个依赖的目录形式为:<code>MAVEN_REPO/junit/junit/4.8.1/</code>、<code>MAVEN_REPO/org/jsoup/jsoup/1.7.1/</code>。目录内容中除了JAR包，还有一个该依赖的<code>pom.xml</code>文件和一些用于校对内容完整性的文件。</p>
-<p><strong>将本地JAR包作为依赖</strong><br>有时候某些开源项目没有放在Maven的中央仓库，需要单独下载。这时候需要将下载到本地的JAR包作为一个项目依赖来使用，具体用法如下:</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>mydependency<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>mydependency<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">scope</span>&gt;</span>system<span class="tag">&lt;/<span class="name">scope</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">systemPath</span>&gt;</span>$&#123;basedir&#125;/war/WEB-INF/lib/mydependency.jar<span class="tag">&lt;/<span class="name">systemPath</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>这里需要注意的是: <code>groupId</code>和<code>artifactId</code>可以乱填（但一般是依赖的名字），<code>scope</code>必须填<code>system</code>,表明是本系统的文件，<code>version</code>同样可以乱填，<code>systemPath</code>就是JAR包的位置，<code>${basedir}</code>代表<code>pom.xml</code>所在的目录。</p>
-<p><strong>快照依赖</strong><br>所谓快照依赖，就是一些仍处于开发状态的依赖。当使用快照依赖时，你不需要经常性地去手动更新版本号来获得最新的依赖。你可以设置一个时间间隔，Maven会自动的每隔一段时间将依赖下载的本地，即使中央仓库的依赖并未更新。但前提是，该依赖的版本号中的大版本号与<code>pom.xml</code>中的对应:</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">dependency</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0-SNAPSHOT<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependency</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>假如中央仓库的版本号变成了2.0-SNAPSHOT,则Maven不会下载该依赖。</p>
-<h4 id="中央仓库与远程仓库的区别"><a href="#中央仓库与远程仓库的区别" class="headerlink" title="中央仓库与远程仓库的区别"></a>中央仓库与远程仓库的区别</h4><p>中央仓库是Maven官方的一个仓库，而远程仓库放在一个其他的服务器上，Maven可以从该服务器下载依赖。github就可以作为一个远程仓库，当我们把开源项目以约定好的的形式放到到github上之后，可以通过如下方式引用:</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">repositories</span>&gt;</span></div><div class="line">    <span class="tag">&lt;<span class="name">repository</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">id</span>&gt;</span>your-mvn-repository<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">        <span class="tag">&lt;<span class="name">url</span>&gt;</span>https://raw.github.com/yourGitHubId/mvn-repository/master/releases<span class="tag">&lt;/<span class="name">url</span>&gt;</span></div><div class="line">    <span class="tag">&lt;/<span class="name">repository</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;<span class="name">dependencies</span>&gt;</span></div><div class="line"><span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div></pre></td></tr></table></figure>
-<h4 id="Maven-Build-Life-Cycles-Phases-and-Goals"><a href="#Maven-Build-Life-Cycles-Phases-and-Goals" class="headerlink" title="Maven Build Life Cycles, Phases and Goals"></a>Maven Build Life Cycles, Phases and Goals</h4><p>生命周期这个概念听上去感觉很模糊，可以把生命周期理解成一个完整的过程。Maven有3种内置的构建生命周期，相当于3种不同功能的过程:</p>
-<ol>
-<li>default</li>
-<li>clean</li>
-<li>site </li>
-</ol>
-<p>3者之间相互独立，分开执行。</p>
-<p><code>clean</code>的功能是就是将已生成的资源文件，编译后文件，JAR包，WAR包等清除，使用方法为:<br><code>mvn clean</code>。</p>
-<p><code>site</code>的功能是将当前项目的信息整理成一个文档，执行<code>mvn site</code>后，在项目的<code>target</code>目录下会生成一个<code>site</code>文件夹，其中的内容便是项目文档的html文件。</p>
-<p><code>default</code>生命周期做的事就是Maven主要功能，无法直接执行<code>mvn default</code>，只能执行它的阶段(Phases)或者目标(Goals)。</p>
-<p>它最常用的阶段(Phases)如下：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">Build Phase</th>
-<th style="text-align:left">Description</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">validate</td>
-<td style="text-align:left">验证项目是否无错误，所有的必须的信息都具备了，包括所需要的依赖是否已经下载。</td>
-</tr>
-<tr>
-<td style="text-align:center">compile</td>
-<td style="text-align:left">编译项目源代码</td>
-</tr>
-<tr>
-<td style="text-align:center">test</td>
-<td style="text-align:left">运行单元测试中的代码，这些测试的代码不应该没被打包或者部署。</td>
-</tr>
-<tr>
-<td style="text-align:center">package</td>
-<td style="text-align:left">将编译好的代码打包成某种格式，比如JAR或者WAR等</td>
-</tr>
-<tr>
-<td style="text-align:center">install</td>
-<td style="text-align:left">将package后的包安装到本地仓库，可以作为一个依赖来使用</td>
-</tr>
-<tr>
-<td style="text-align:center">deploy</td>
-<td style="text-align:left">将最终的包拷贝到远程仓库，供他人使用</td>
-</tr>
-</tbody>
-</table>
-<p>当我想使用<code>package</code>，只需在<code>pom.xml</code>目录执行<code>mvn package</code>,这时候在项目的<code>target</code>下会出现一个WAR包（如果是webapp）。但是我都没编译，怎么就可以打包了呢？事实上，当执行某个阶段命令时，该命令所属的生命周期之前的所有阶段步骤都会按照顺序被执行一遍。所以在<code>mvn package</code>被执行时，之前的命令（包括 mvn compile）已经执行过了。</p>
-<p>现在构建阶段已经知道了是怎么回事，现在就剩下目标了，目标可以理解为构建阶段中的一个具体任务。比如<code>dependency:copy-dependencies</code>就是一个目标（任务），执行<code>mvn dependency:copy-dependencies</code>时,会在<code>target</code>目录下生成一个<code>dependency</code>文件夹，内容为该项目使用的所有依赖(JAR files)。</p>
-<p>关于这三者的完整的信息可以查看官网，<a href="http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html" target="_blank" rel="external">http://maven.apache.org/guides/introduction/introduction-to-the-lifecycle.html</a></p>
-<h4 id="Maven-Build-Profiles"><a href="#Maven-Build-Profiles" class="headerlink" title="Maven Build Profiles"></a>Maven Build Profiles</h4><p>上面提到过，profile可以简单地认为是一个环境。使用方法很简单，如下:</p>
-<figure class="highlight xml"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div></pre></td><td class="code"><pre><div class="line"><span class="tag">&lt;<span class="name">project</span> <span class="attr">xmlns</span>=<span class="string">"http://maven.apache.org/POM/4.0.0"</span></span></div><div class="line">         <span class="attr">xmlns:xsi</span>=<span class="string">"http://www.w3.org/2001/XMLSchema-instance"</span></div><div class="line">         <span class="attr">xsi:schemaLocation</span>=<span class="string">"http://maven.apache.org/POM/4.0.0</span></div><div class="line">   http://maven.apache.org/xsd/maven-4.0.0.xsd"&gt;</div><div class="line">  <span class="tag">&lt;<span class="name">modelVersion</span>&gt;</span>4.0.0<span class="tag">&lt;/<span class="name">modelVersion</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">groupId</span>&gt;</span>com.vino<span class="tag">&lt;/<span class="name">groupId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">artifactId</span>&gt;</span>maven-app<span class="tag">&lt;/<span class="name">artifactId</span>&gt;</span></div><div class="line">  <span class="tag">&lt;<span class="name">version</span>&gt;</span>1.0.0<span class="tag">&lt;/<span class="name">version</span>&gt;</span></div><div class="line"></div><div class="line">  <span class="tag">&lt;<span class="name">profiles</span>&gt;</span></div><div class="line">      <span class="tag">&lt;<span class="name">profile</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">id</span>&gt;</span>test<span class="tag">&lt;/<span class="name">id</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">activation</span>&gt;</span>...<span class="tag">&lt;/<span class="name">activation</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">build</span>&gt;</span>...<span class="tag">&lt;/<span class="name">build</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">modules</span>&gt;</span>...<span class="tag">&lt;/<span class="name">modules</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">repositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">repositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">pluginRepositories</span>&gt;</span>...<span class="tag">&lt;/<span class="name">pluginRepositories</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencies</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencies</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">reporting</span>&gt;</span>...<span class="tag">&lt;/<span class="name">reporting</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">dependencyManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">dependencyManagement</span>&gt;</span></div><div class="line">          <span class="tag">&lt;<span class="name">distributionManagement</span>&gt;</span>...<span class="tag">&lt;/<span class="name">distributionManagement</span>&gt;</span></div><div class="line">      <span class="tag">&lt;/<span class="name">profile</span>&gt;</span></div><div class="line">  <span class="tag">&lt;/<span class="name">profiles</span>&gt;</span></div><div class="line"></div><div class="line"><span class="tag">&lt;/<span class="name">project</span>&gt;</span></div></pre></td></tr></table></figure>
-<p>其中的<code>activation</code>用来表明当前profile是否正在使用，如果正在使用，则该profile中的元素会覆盖掉原来的值。</p>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>以上是我整理的一些Maven相关的信息，主要是一些基础的原理性的内容。</p>
-<blockquote>
-<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> </blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;什么是Maven&quot;&gt;&lt;a href=&quot;#什么是Maven&quot; class=&quot;headerlink&quot; title=&quot;什么是Maven&quot;&gt;&lt;/a&gt;什么是Maven&lt;/h4&gt;&lt;p&gt;Maven最令人印象深刻的也许是它所提供依赖管理，但是Maven的功能远不止这些，Maven
     
     </summary>
     
