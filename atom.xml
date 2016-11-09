@@ -5,7 +5,7 @@
   <link href="/atom.xml" rel="self"/>
   
   <link href="http://vinoit.me/"/>
-  <updated>2016-11-09T00:47:05.000Z</updated>
+  <updated>2016-11-09T03:06:43.000Z</updated>
   <id>http://vinoit.me/</id>
   
   <author>
@@ -14,6 +14,62 @@
   </author>
   
   <generator uri="http://hexo.io/">Hexo</generator>
+  
+  <entry>
+    <title>位图法以及相关应用</title>
+    <link href="http://vinoit.me/2016/11/09/bitmap/"/>
+    <id>http://vinoit.me/2016/11/09/bitmap/</id>
+    <published>2016-11-09T01:53:56.000Z</published>
+    <updated>2016-11-09T03:06:43.000Z</updated>
+    
+    <content type="html"><![CDATA[<h4 id="概述"><a href="#概述" class="headerlink" title="概述"></a>概述</h4><p>位图（bitmap）是一种非常常用的结构，在索引，数据压缩等方面有广泛应用。例如在ext2文件系统中的索引节点位图，linux内核中的pid位图等。正因为位图运算在空间方面的优越性，很多语言都有直接对它的支持。如在C++的STL库中就有一个bitset容器。而在Java中，在java.util包下也有一个BitSet类用来实现位图运算。在位图中，每一位只有0或1，一般情况下就表示存在或者不存在。下图为所有位都为0的位图,其存储空间为2字节：<br><img src="/images/data-structure/bitmap-0.png" alt="位图"></p>
+<h4 id="c语言实现"><a href="#c语言实现" class="headerlink" title="c语言实现"></a>c语言实现</h4><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div><div class="line">15</div><div class="line">16</div><div class="line">17</div><div class="line">18</div><div class="line">19</div><div class="line">20</div><div class="line">21</div><div class="line">22</div><div class="line">23</div><div class="line">24</div><div class="line">25</div><div class="line">26</div><div class="line">27</div><div class="line">28</div><div class="line">29</div><div class="line">30</div><div class="line">31</div><div class="line">32</div><div class="line">33</div><div class="line">34</div><div class="line">35</div><div class="line">36</div><div class="line">37</div><div class="line">38</div><div class="line">39</div><div class="line">40</div><div class="line">41</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> INT_BITS sizeof(int)</span></div><div class="line"> </div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> SHIFT 5 <span class="comment">// 2^5=32</span></span></div><div class="line"> </div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MASK 0x1f <span class="comment">//掩码</span></span></div><div class="line"> </div><div class="line"><span class="meta">#<span class="meta-keyword">define</span> MAX 1024*1024*1024 <span class="comment">//max number</span></span></div><div class="line"> </div><div class="line"><span class="keyword">int</span> bitmap[MAX / INT_BITS];<span class="comment">//位图数组</span></div><div class="line"> </div><div class="line"><span class="comment">/*</span></div><div class="line"> </div><div class="line">* 设置第i位为1(先找到i所在的int元素，再设置对应的位)</div><div class="line"> </div><div class="line">* i &gt;&gt; SHIFT 相当于 i / (2 ^ SHIFT)，结果为所在int的下标</div><div class="line"> </div><div class="line">* i&amp;MASK相当于取i的最后5位，结果为所在int的对应位</div><div class="line"> </div><div class="line">*/</div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">void</span> <span class="title">set</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</div><div class="line"> </div><div class="line">	bitmap[i &gt;&gt; SHIFT] |= <span class="number">1</span> &lt;&lt; (i &amp; MASK);</div><div class="line"> </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">//获取第i位</span></div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">get</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</div><div class="line"> </div><div class="line">	<span class="keyword">return</span> bitmap[i &gt;&gt; SHIFT] &amp; (<span class="number">1</span> &lt;&lt; (i &amp; MASK));</div><div class="line"> </div><div class="line">&#125;</div><div class="line"> </div><div class="line"><span class="comment">//清除第i位（置0）</span></div><div class="line"> </div><div class="line"><span class="function"><span class="keyword">int</span> <span class="title">clear</span><span class="params">(<span class="keyword">int</span> i)</span> </span>&#123;</div><div class="line"> </div><div class="line">	<span class="keyword">return</span> bitmap[i &gt;&gt; SHIFT] &amp; ~(<span class="number">1</span> &lt;&lt; (i &amp; MASK));</div><div class="line"> </div><div class="line">&#125;</div></pre></td></tr></table></figure>
+<h4 id="应用"><a href="#应用" class="headerlink" title="应用"></a>应用</h4><ul>
+<li><p>判断是否重复（存在）、去重</p>
+<p>  给40亿个不重复的无符号整数，没排过序。给一个无符号整数，如何快速判断一个数是否在这40亿个数中。</p>
+<p>  解决方法：申请512M的内存一个bit位代表一个unsigned int值读入40亿个数，设置相应的bit位读入要查询的数，查看相应bit位是否为1，为1表示存在，为0表示不存在。</p>
+</li>
+<li><p>排序</p>
+<p>  假设无重复数据，则位图法排序只需将存入位图的数据依次输出，便得到了排序后的数据。</p>
+</li>
+<li><p>存储数据（压缩）</p>
+<p>  压缩和判重很多时候都是组合使用的。</p>
+<ul>
+<li>在2.5亿个整数中找出不重复的整数，注，内存不足以容纳这2.5亿个整数？</li>
+<li>给40亿个不重复的unsigned int的整数，没排过序的，然后再给一个数，如何快速判断这个数是否在那40亿个数当中？</li>
+</ul>
+</li>
+<li><p>搜索</p>
+<p>  设计搜索剪枝时，需要保存已经搜索过的历史信息，有些情况下，可以使用位图减小历史信息数据所占空间。</p>
+</li>
+</ul>
+<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>位图适用于数据规模大，但数据状态少的情况。同时位图在存在以下一些不足：</p>
+<ul>
+<li>存储离散数据利用率低 Bitmap申请空间时要根据最大的数来决定申请的空间大小，如果数据是离散的，那空间的利用率就会非常低。</li>
+<li>不适合多状态 一个bit只能表示两种状态，如果要表示更多的状态，就需要更多的状态位来实现。如果一个数字需要多个状态位来表示的话，Bitmap的优越性也会大打折扣，而且复杂度却在增加。</li>
+<li>可读性差 将数据抽象为bit不利于理解，尤其是用多个bit位来表示一个数时。</li>
+<li>性能一般 需要维护额外的逻辑，计算速度会受到一定的影响。</li>
+</ul>
+]]></content>
+    
+    <summary type="html">
+    
+      &lt;h4 id=&quot;概述&quot;&gt;&lt;a href=&quot;#概述&quot; class=&quot;headerlink&quot; title=&quot;概述&quot;&gt;&lt;/a&gt;概述&lt;/h4&gt;&lt;p&gt;位图（bitmap）是一种非常常用的结构，在索引，数据压缩等方面有广泛应用。例如在ext2文件系统中的索引节点位图，linux内核中的pid
+    
+    </summary>
+    
+      <category term="算法与数据结构" scheme="http://vinoit.me/categories/%E7%AE%97%E6%B3%95%E4%B8%8E%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+    
+      <category term="位图" scheme="http://vinoit.me/tags/%E4%BD%8D%E5%9B%BE/"/>
+    
+      <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
+    
+      <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="压缩" scheme="http://vinoit.me/tags/%E5%8E%8B%E7%BC%A9/"/>
+    
+  </entry>
   
   <entry>
     <title>堆</title>
@@ -254,9 +310,9 @@
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
-      <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
-    
       <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
     
       <category term="红黑树" scheme="http://vinoit.me/tags/%E7%BA%A2%E9%BB%91%E6%A0%91/"/>
     
@@ -336,9 +392,9 @@
     
       <category term="数据结构" scheme="http://vinoit.me/tags/%E6%95%B0%E6%8D%AE%E7%BB%93%E6%9E%84/"/>
     
-      <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
-    
       <category term="算法" scheme="http://vinoit.me/tags/%E7%AE%97%E6%B3%95/"/>
+    
+      <category term="二叉树" scheme="http://vinoit.me/tags/%E4%BA%8C%E5%8F%89%E6%A0%91/"/>
     
   </entry>
   
@@ -489,9 +545,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
-    
       <category term="Ext3" scheme="http://vinoit.me/tags/Ext3/"/>
+    
+      <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
   </entry>
   
@@ -599,9 +655,9 @@
       <category term="文件系统" scheme="http://vinoit.me/categories/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
     
     
-      <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
-    
       <category term="文件系统" scheme="http://vinoit.me/tags/%E6%96%87%E4%BB%B6%E7%B3%BB%E7%BB%9F/"/>
+    
+      <category term="Ext2" scheme="http://vinoit.me/tags/Ext2/"/>
     
   </entry>
   
@@ -1590,137 +1646,6 @@
       <category term="maven" scheme="http://vinoit.me/tags/maven/"/>
     
       <category term="tools" scheme="http://vinoit.me/tags/tools/"/>
-    
-  </entry>
-  
-  <entry>
-    <title>linux内核笔记之进程（二）</title>
-    <link href="http://vinoit.me/2016/08/16/linux-kernel-note-process-two/"/>
-    <id>http://vinoit.me/2016/08/16/linux-kernel-note-process-two/</id>
-    <published>2016-08-16T12:31:04.000Z</published>
-    <updated>2016-10-31T08:43:35.000Z</updated>
-    
-    <content type="html"><![CDATA[<h4 id="进程描述符"><a href="#进程描述符" class="headerlink" title="进程描述符"></a>进程描述符</h4><p>进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来对进程进行管理。进程描述符的数据结构是<code>struct task_struct</code>,与进程相关的所有信息都包含在该数据结构中，可想而知该数据结构是十分复杂的。</p>
-<p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L1458" target="_blank" rel="external"><strong>这里</strong></a>可以查看<code>task_struct</code>的完整结构，下图示意性地描述了该数据结构：<br><img src="/images/linux-kernel-note/process-two-0.png" alt=""><br>在这里只讨论进程的某几个属性，其余属性在之后有关其他内容的文章中会逐渐涉及到，内核的学习需要联系的思维。</p>
-<h4 id="进程状态"><a href="#进程状态" class="headerlink" title="进程状态"></a>进程状态</h4><p>在<a href="http://lxr.free-electrons.com/source/include/linux/sched.h#L207" target="_blank" rel="external"><strong>这里</strong></a>可以查看进程的所有状态，下面是一些常见的状态：</p>
-<table>
-<thead>
-<tr>
-<th style="text-align:center">状态</th>
-<th style="text-align:left">说明</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:center">TASK_RUNNING</td>
-<td style="text-align:left">进程正在执行或者进程已经就绪，正在等待cpu时间片的调度。</td>
-</tr>
-<tr>
-<td style="text-align:center">TASK_INTERRUPTIBLE</td>
-<td style="text-align:left">进程因为等待一些条件而被挂起（阻塞）时的状态。此时的进程可以被硬中断、资源的释放、信号等事件（这些事件可以认为是等待的条件）唤醒，然后进程就会从该状态（阻塞）迅速转化成为就绪状态TASK_RUNNING。</td>
-</tr>
-<tr>
-<td style="text-align:center">TASK_UNINTERRUPTIBLE</td>
-<td style="text-align:left">意义与TASK_INTERRUPTIBLE类似，但是该状态的进程只有当等待的条件为true时才能被唤醒。一般情况下很少用到，但是在一些驱动程序中很有用。特别是对于驱动探测相关的硬件过程很重要，这个探测过程不能被一些其他的东西给中断，否则就会让进程进入不可预测的状态。</td>
-</tr>
-<tr>
-<td style="text-align:center">__TASK_STOPPED</td>
-<td style="text-align:left">进程停止执行，当进程接收到SIGSTOP、SIGTTIN、SIGTSTP或者SIGTTOU信号之后就会进入该状态。</td>
-</tr>
-<tr>
-<td style="text-align:center">__TASK_TRACED</td>
-<td style="text-align:left">表示进程被debugger等进程所暂停（<a href="/2016/08/12/how-debugger-work/">ptrac()调用与调试器相关</a>），此时任何一个信号都会让进程进入该状态</td>
-</tr>
-<tr>
-<td style="text-align:center">EXIT_DEAD</td>
-<td style="text-align:left">进程的执行被终止，但是其父进程还没有使用wait()等系统调用来获知它的终止信息，此时进程成为僵尸进程</td>
-</tr>
-<tr>
-<td style="text-align:center">EXIT_ZOMBIE</td>
-<td style="text-align:left">进程的最终状态，由于父进程进行了wait4()或者waitpid()系统调用，进程被系统删除</td>
-</tr>
-</tbody>
-</table>
-<h4 id="进程标识"><a href="#进程标识" class="headerlink" title="进程标识"></a>进程标识</h4><p>类Unix操作系统通过进程标识符（PID）来标识一个进程(包括轻量级进程) ，每个进程的PID存放在进程描述符的pid字段中。PID是按顺序编号的，新创建的进程通常是前一个进程的PID+1。不过，32位系统的PID值在缺省情况中的上限为32767，64位是4194303，系统管理员可以通过修改<code>/proc/sys/kernel/pid_max</code>来改变这些值。</p>
-<p>内核通过管理一个<code>pidmap_array</code>位图来记录当前已使用的PID，因为一个页框的大小为4KB,恰好为32767bit,所以32位体系结构中一个<code>pidmap_array</code>刚好占据一个单独的页。系统会一直保存这些页不被释放。</p>
-<h4 id="标识当前进程"><a href="#标识当前进程" class="headerlink" title="标识当前进程"></a>标识当前进程</h4><p>在内核代码中，经常通过current宏来获得当前在CPU上运行的进程描述符指针，例如，current-&gt;pid返回当前正在执行的进程的PID。我们来看下current宏究竟干了什么：</p>
-<p>(Linux/arch/tile/include/asm/current.h)</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> current get_current()</span></div></pre></td></tr></table></figure>
-<p>(Linux/include/asm-generic/current.h)</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="meta">#<span class="meta-keyword">define</span> get_current() (current_thread_info()-&gt;task)</span></div></pre></td></tr></table></figure>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="number">__</span><span class="function">inline__ <span class="keyword">struct</span> task_struct *<span class="title">get_current</span><span class="params">(<span class="keyword">void</span>)</span></span></div><div class="line">&#123;</div><div class="line">      <span class="keyword">return</span> current_thread_info()-&gt;task;</div><div class="line">&#125;</div></pre></td></tr></table></figure>
-<p><code>current_thread_info()</code>返回一个<code>struct thread_info</code>结构的指针<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div><div class="line">10</div><div class="line">11</div><div class="line">12</div><div class="line">13</div><div class="line">14</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> thread_info &#123;</div><div class="line">          <span class="keyword">struct</span> task_struct      *task;          <span class="comment">/* main task structure */</span></div><div class="line">          <span class="keyword">unsigned</span> <span class="keyword">long</span>           flags;          <span class="comment">/* low level flags */</span></div><div class="line">          <span class="keyword">unsigned</span> <span class="keyword">long</span>           status;         <span class="comment">/* thread-synchronous flags */</span></div><div class="line">          <span class="number">__u</span>32                   cpu;            <span class="comment">/* current CPU */</span></div><div class="line">          <span class="keyword">int</span>                     preempt_count;  <span class="comment">/* 0 =&gt; preemptable, &lt;0 =&gt; BUG */</span></div><div class="line">  </div><div class="line">          <span class="keyword">mm_segment_t</span>            addr_limit;     <span class="comment">/* thread address space:</span></div><div class="line">                                                     0-0xBFFFFFFF for user-thread</div><div class="line">                                                     0-0xFFFFFFFF for kernel-thread</div><div class="line">                                                  */</div><div class="line">  </div><div class="line">          <span class="number">__u</span>8                    supervisor_stack[<span class="number">0</span>];</div><div class="line">  &#125;;</div></pre></td></tr></table></figure></p>
-<p>返回的<code>thread_info</code>指针就是当前进程描述符中的thread_info字段的指针，而该结构中保存着所属进程的进程描述符指针。<code>为什么不直接把进程描述符指针记录在一个全局变量中？</code>早先的Linux版本的确是这么做的,通过强制引入一个全局静态变量current来标识正在运行进程的描述符。</p>
-<p>既然现在是通过<code>thread_info</code>来标识当前进程的，那么如何获得该<code>thread_info</code>的地址呢？</p>
-<p>Linux都把两个不同的数据结构紧凑地存放在一个单独为进程分配的存储区域内，一个是与进程描述符相关的小数据结构thread_info，叫做线程描述符。另一个是内核态的进程堆栈。</p>
-<p>内核态的进程堆栈大小通常为8192个字节。考虑到效率的因素，内核让这8K空间占据连续的两个页框并让第一个页框的起始地址是2^13的倍数。当几乎没有可用的动态内存空间时，就会很难找到这两个连续页框，因为空闲空间可能存在大量碎片。因此，在80x86体系结构中，在编译时可以设置，以使内核堆栈和线程描述符跨越一个单独的页框。<br><img src="/images/linux-kernel-note/process-two-1.png" alt=""></p>
-<p><code>esp</code>寄存器保存着内核态堆栈的栈顶地址，因为内核态堆栈和<code>thread_info</code>处于连续的2个页框，而<code>thread_info</code>处于页框的首地址，只需进行下列的汇编指令就能获得<code>thread_info</code>地址：</p>
-<figure class="highlight plain"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line">movl $0xffffe000, %ecx</div><div class="line">andl $esp, %ecx</div><div class="line">movl %ecx, p</div></pre></td></tr></table></figure>
-<p>其中变量p中的值便是<code>thread_info</code>的地址，而这3条汇编指令其实也就是<code>current_thread_info()</code>函数所做的事。</p>
-<p>当进程切换到内核态之后，esp指针便保存内核栈的栈顶地址。内核直接通过寄存器的值，进行少许计算便能获得当前进程描述符，相比较于早先的全局静态变量，效率是明显提升了。</p>
-<h4 id="如何组织进程"><a href="#如何组织进程" class="headerlink" title="如何组织进程"></a>如何组织进程</h4><p>对于<code>TASK_RUNNING</code>的进程，内核早先把所有的这些进程放到一个进程双向链表中，但是随着进程数量的增加，维护成本会越来越高。调度程序在扫描链表时花费的时间也随之线性上升。Linix2.6中，优先级相同的进程才会放在一个对应优先级的链表中。如果优先级有n个级别，那么就有n个运行队列。在多处理器系统中，每个CPU都有着n个这样的运行队列。</p>
-<p>关于运行队列，在之后整理进程调度的文章中会再次涉及到。</p>
-<p>对于<code>__TASK_STOPPED</code>、<code>EXIT_DEAD</code>、<code>EXIT_ZOMBIE</code>状态的进程，内核没有建立相应的双向链表。对于这些进程的访问比较简单，或者通过PID，或者通过特定父进程的子进程链表。</p>
-<p>对于<code>TASK_INTERRUPTIBLE</code>、<code>TASK_UNINTERRUPTIBLE</code>状态的进程，由于这些进程所等待的条件并不是同一个。而且进程所提供的信息无法满足快速检索的需要，因此有了等待队列。</p>
-<p>在这里讨论的等待队列都表示进程在特定事件上的等待。一个等待队列表示一组睡眠的进程，这些进程所等待的条件都是同一个。当条件满足时，内核会唤醒这些进程。然而，当两个或多个进程互斥的访问某个资源时，此时内核必须只能唤醒一个进程，其余的进程需要继续睡眠。</p>
-<p>等待队列由双向链表组成，每个等待队列都有一个队列头:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="number">__</span>wait_queue_head &#123;</div><div class="line">         <span class="keyword">spinlock_t</span>              lock;<span class="comment">//自旋锁</span></div><div class="line">         <span class="keyword">struct</span> list_head        task_list;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure>
-<p>等待队列中的元素:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> <span class="number">__</span>wait_queue &#123;</div><div class="line">         <span class="keyword">unsigned</span> <span class="keyword">int</span>            flags;</div><div class="line">         <span class="keyword">void</span>                    *<span class="keyword">private</span>;<span class="comment">//指向进程描述符</span></div><div class="line">         <span class="keyword">wait_queue_func_t</span>       func;<span class="comment">//唤醒时需要调用的方法</span></div><div class="line">         <span class="keyword">struct</span> list_head        task_list;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure>
-<p><code>struct list_head</code>在内核中是实现双向链表的关键，在这里不做讨论。</p>
-<h4 id="根据PID找到进程描述符"><a href="#根据PID找到进程描述符" class="headerlink" title="根据PID找到进程描述符"></a>根据PID找到进程描述符</h4><p>Linux中有4个pid类型:</p>
-<ul>
-<li>PID：这是 Linux 中在其命名空间中唯一标识进程而分配给它的一个号码，称做进程ID号，简称PID。在使用 fork 或 clone 系统调用时产生的进程均会由内核分配一个新的唯一的PID值。</li>
-<li>TGID：在一个进程中，如果以CLONE_THREAD标志来调用clone建立的进程就是该进程的一个线程，它们处于一个线程组，该线程组的ID叫做TGID。处于相同的线程组中的所有进程都有相同的TGID；线程组组长的TGID与其PID相同；一个进程没有使用线程，则其TGID与PID也相同。</li>
-<li>PGID：另外，独立的进程可以组成进程组（使用setpgrp系统调用），进程组可以简化向所有组内进程发送信号的操作，例如用管道连接的进程处在同一进程组内。进程组ID叫做PGID，进程组内的所有进程都有相同的PGID，等于该组组长的PID。</li>
-<li>SID：几个进程组可以合并成一个会话组（使用setsid系统调用），可以用于终端程序设计。会话组中所有进程都有相同的SID。</li>
-</ul>
-<p>既然每个进程都有一个与之关联的PID，在进程描述符中的pid字段保存着PID值，如果通过遍历进程链表来比较PID值，虽然可行，但是相当低效。那么内核肯定维护着PID与进程描述符之间的某种映射关系。内核可以通过这种关系，快速地根据PID找到对应的进程描述符。</p>
-<p>内核是通过hash表来解决这个问题的。在内核初始化的时候会动态地为一个散列表数组分配空间,数组长度和机器内存有关。</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">static</span> <span class="keyword">struct</span> hlist_head *pid_hash;</div></pre></td></tr></table></figure>
-<p>初始化函数为:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">void</span> <span class="number">__</span><span class="function">init <span class="title">pidhash_init</span><span class="params">(<span class="keyword">void</span>)</span></span>;</div></pre></td></tr></table></figure>
-<p>散列表数组的元素类型为 <code>struct hlist_head</code>，看下具体是什么:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_head &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_node *first;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>其中包含一个<code>struct hlist_node</code>类型的指针:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> hlist_node &#123;</div><div class="line">        <span class="keyword">struct</span> hlist_node *next, **pprev;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p><code>struct hlist_node</code>中包含一个<code>struct hlist_node</code>类型的指针和<code>struct hlist_node*</code>类型的指针。</p>
-<p>现在散列表和进程之间还没有建立联系，来看下进程中的<code>pids</code>(不是pid)字段的数据结构:<br><figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> pid_link</div><div class="line"> &#123;</div><div class="line">         <span class="keyword">struct</span> hlist_node node;</div><div class="line">         <span class="keyword">struct</span> pid *pid;</div><div class="line"> &#125;;</div></pre></td></tr></table></figure></p>
-<p>再看下<code>struct pid</code>是什么东西:</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div><div class="line">7</div><div class="line">8</div><div class="line">9</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> pid</div><div class="line">&#123;</div><div class="line">        <span class="keyword">atomic_t</span> count;</div><div class="line">        <span class="keyword">unsigned</span> <span class="keyword">int</span> level;</div><div class="line">        <span class="comment">/* lists of tasks that use this pid */</span></div><div class="line">        <span class="keyword">struct</span> hlist_head tasks[PIDTYPE_MAX];</div><div class="line">        <span class="keyword">struct</span> rcu_head rcu;</div><div class="line">        <span class="keyword">struct</span> upid numbers[<span class="number">1</span>];</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>其中的<code>tasks</code>字段，这是一个<code>struct hlist_head</code>类型的数组，长度为pid类型数量，也就是4。</p>
-<p>再看下其中的<code>struct upid</code>类型：</p>
-<figure class="highlight c"><table><tr><td class="gutter"><pre><div class="line">1</div><div class="line">2</div><div class="line">3</div><div class="line">4</div><div class="line">5</div><div class="line">6</div></pre></td><td class="code"><pre><div class="line"><span class="keyword">struct</span> upid &#123;</div><div class="line">        <span class="comment">/* Try to keep pid_chain in the same cacheline as nr for find_vpid */</span></div><div class="line">        <span class="keyword">int</span> nr;<span class="comment">//用于计算hsah值</span></div><div class="line">        <span class="keyword">struct</span> pid_namespace *ns;</div><div class="line">        <span class="keyword">struct</span> hlist_node pid_chain;</div><div class="line">&#125;;</div></pre></td></tr></table></figure>
-<p>下图用来帮助理解几者之间的联系:<br><img src="/images/linux-kernel-note/process-two-2.png" alt=""></p>
-<ol>
-<li>内核初始化期间为pid_hash数组分配好合适的空间。</li>
-<li>当创建了一个新的进程之后，内核随之分配一个进程描述符，然后初始化其中的字段。</li>
-<li>根据 task_struct-&gt;pids（struct pid_link类型）-&gt;pid-&gt;numbers(struct upid类型)-&gt;nr的值，调用hash函数，取模，然后定位到pid_hash数组中的某一项。</li>
-<li>遍历该项的链表，如果其中没有一项的pid与新创建的相同（线程组的所有进程pid相同），则将该进程插入到链表尾。具体做法是将pids字段(struct pid_link类型)中的node插入到链表末尾。</li>
-<li>如果存在一项pid与新创建的进程相同，说明是同一线程组的进程。则通过task_struct-&gt;pids（struct pid_link类型）-&gt;pid-&gt;numbers(struct upid类型)-&gt;pid_chain（struct hlist_node类型）,将其链接到已存在项的tasks数组中对应pid类型的链表中去，这样的链表一共有4条。</li>
-</ol>
-<h4 id="总结"><a href="#总结" class="headerlink" title="总结"></a>总结</h4><p>本文主要讨论了进程描述符中的某几个属性，包括pid,进程状态。还简单介绍了current宏、进程链表以及如何通过pid快速找到对应进程描述符的地址。</p>
-<blockquote>
-<font color="Darkorange">因本人水平有限，若文章内容存在问题，恳请指出。允许转载，转载请在正文明显处注明<a href="http://vinoit.me">原站地址</a>以及原文地址，谢谢！</font> 
-
-
-
-
-</blockquote>
-]]></content>
-    
-    <summary type="html">
-    
-      &lt;h4 id=&quot;进程描述符&quot;&gt;&lt;a href=&quot;#进程描述符&quot; class=&quot;headerlink&quot; title=&quot;进程描述符&quot;&gt;&lt;/a&gt;进程描述符&lt;/h4&gt;&lt;p&gt;进程在运行时的所有信息，如进程优先级、地址空间、访问的文件等等，都是通过进程描述符来记录的。内核正是通过进程描述符来
-    
-    </summary>
-    
-      <category term="Linux" scheme="http://vinoit.me/categories/Linux/"/>
-    
-    
-      <category term="Linux" scheme="http://vinoit.me/tags/Linux/"/>
-    
-      <category term="内核" scheme="http://vinoit.me/tags/%E5%86%85%E6%A0%B8/"/>
     
   </entry>
   

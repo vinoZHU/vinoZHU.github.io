@@ -2,6 +2,13 @@
 <urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
   
   <url>
+    <loc>http://vinoit.me/2016/11/09/bitmap/</loc>
+    
+    <lastmod>2016-11-09T03:06:43.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://vinoit.me/2016/10/30/rb-tree/</loc>
     
     <lastmod>2016-11-09T00:47:45.000Z</lastmod>
@@ -303,6 +310,34 @@
   </url>
   
   <url>
+    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
+    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
+    
+    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
+    
+  </url>
+  
+  <url>
     <loc>http://vinoit.me/2016/05/21/java-memeory-model-reorder/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
@@ -324,35 +359,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/16/git-object/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/16/start-my-blog/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
     <loc>http://vinoit.me/2016/05/19/java-memory-model-basis/</loc>
-    
-    <lastmod>2016-08-10T08:06:52.000Z</lastmod>
-    
-  </url>
-  
-  <url>
-    <loc>http://vinoit.me/2016/05/18/java-init-order/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
@@ -366,7 +373,7 @@
   </url>
   
   <url>
-    <loc>http://vinoit.me/2016/05/18/java-parameters-transfer/</loc>
+    <loc>http://vinoit.me/2016/05/18/java-intern-in-depth-analysis/</loc>
     
     <lastmod>2016-08-10T08:06:52.000Z</lastmod>
     
